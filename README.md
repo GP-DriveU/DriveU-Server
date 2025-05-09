@@ -1,2 +1,2 @@
 # DriveU-Server
-# DriveU-Client 2025 Graduation Project : DriveU Client repository
+2025 Graduation Project : DriveU Server repository
