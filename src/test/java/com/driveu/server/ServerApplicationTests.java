@@ -8,6 +8,7 @@ class ServerApplicationTests {
 
 	@Test
 	void contextLoads() {
+		System.out.println("Server started");
 	}
 
 }
