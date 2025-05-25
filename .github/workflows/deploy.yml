@@ -1,0 +1,56 @@
+name: CI/CD for Spring Boot with Docker
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+
+    - name: Setup Environment
+      run: |
+        mkdir -p ./src/main/resources
+        echo -e "${{ secrets.APPLICATION }}" > ./src/main/resources/application.yml
+
+    - name: Build with Gradle
+      run: ./gradlew clean build -x test
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+
+    - name: Build and Push Docker image
+      run: |
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/driveu .
+        docker push ${{ secrets.DOCKER_USERNAME }}/driveu:latest
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - name: SSH to EC2 and deploy
+      uses: appleboy/ssh-action@v0.1.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ubuntu
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          docker pull ${{ secrets.DOCKER_USERNAME }}/driveu:latest
+          docker stop driveu || true
+          docker rm driveu || true
+          docker run -d -p 8080:8080 --name driveu ${{ secrets.DOCKER_USERNAME }}/driveu:latest
