@@ -26,6 +26,7 @@ import java.util.List;
 public class SecurityConfig {
 //    private final JwtProvider jwtProvider;
 
+    // Spring Security 필터 무시
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return web -> web.ignoring()
@@ -36,19 +37,23 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
 
         return httpSecurity
+                // 아래 정의된 corsConfigurationSource()를 사용해 CORS 허용
                 .cors(c -> c.configurationSource(corsConfigurationSource()))
+                // CSRF 보호 비활성화
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
+                // formLogin 비활성화시키고 JWT 검사 필터추가
                 .formLogin(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable)
                 .headers(c -> c.frameOptions(
                         HeadersConfigurer.FrameOptionsConfig::disable).disable())
+                // session 생성 X
                 .sessionManagement(c ->
                         c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .authorizeHttpRequests((registry) ->
                         registry
-                                .requestMatchers("/api/**").permitAll() // api 엔드포인트 허용
+                                .requestMatchers("/api/auth/google").permitAll() // 로그인 api 허용
                                 .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/swagger-resources/**", "/webjars/**").permitAll() // 스웨거 허용
                                 .anyRequest().authenticated()
                 )
