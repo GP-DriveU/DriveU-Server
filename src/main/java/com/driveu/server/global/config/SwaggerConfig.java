@@ -35,6 +35,10 @@ public class SwaggerConfig {
                 .addList("Bearer Token");
 
 
+        Server httpsServer = new Server();
+        httpsServer.setUrl("https://www.driveu.site");
+        httpsServer.setDescription("driveu https server url");
+
         Server prodServer = new Server();
         prodServer.setUrl("http://43.202.232.100:8080");
         prodServer.setDescription("AWS EC2 서버");
