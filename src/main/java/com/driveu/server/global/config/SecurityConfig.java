@@ -1,5 +1,7 @@
 package com.driveu.server.global.config;
 
+import com.driveu.server.domain.auth.enhancer.JwtAuthenticationFilter;
+import com.driveu.server.domain.auth.infra.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +15,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -24,7 +27,7 @@ import java.util.List;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
-//    private final JwtProvider jwtProvider;
+    private final JwtProvider jwtProvider;
 
     // Spring Security 필터 무시
     @Bean
@@ -54,12 +57,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests((registry) ->
                         registry
                                 .requestMatchers("/api/auth/google").permitAll() // 로그인 api 허용
+                                .requestMatchers("/api/auth/login").permitAll() // dev: api test 용 jwt 발급 api
                                 .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/swagger-resources/**", "/webjars/**").permitAll() // 스웨거 허용
                                 .anyRequest().authenticated()
                 )
-//                .addFilterBefore(new JwtAuthenticationFilter(jwtProvider),
-//                        UsernamePasswordAuthenticationFilter.class
-//                )
+                .addFilterBefore(new JwtAuthenticationFilter(jwtProvider),
+                        UsernamePasswordAuthenticationFilter.class
+                )
                 .build();
     }
 
