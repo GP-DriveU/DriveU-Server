@@ -57,7 +57,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests((registry) ->
                         registry
                                 .requestMatchers("/api/auth/google").permitAll() // 로그인 api 허용
-                                .requestMatchers("/api/auth/login").permitAll() // dev: api test 용 jwt 발급 api
+                                .requestMatchers("/api/auth/login/**").permitAll() // dev: api test 용 jwt 발급 api
                                 .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/swagger-resources/**", "/webjars/**").permitAll() // 스웨거 허용
                                 .anyRequest().authenticated()
                 )

@@ -27,7 +27,7 @@ public class AuthApi {
 
     }
     @PostMapping("/login/{userId}")
-    @Operation(summary = "test api : test 를 위한 토큰 발급 api")
+    @Operation(summary = "test: 임시 토큰 발급 api")
     public ResponseEntity<JwtToken> login(@PathVariable Long userId) {
         try {
             JwtToken JwtToken = jwtGenerator.generateToken(userId);
