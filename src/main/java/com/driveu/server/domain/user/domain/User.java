@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Builder
 @Getter
 @Table(name = "user")
 public class User {
@@ -29,7 +28,7 @@ public class User {
     @Column(name = "o_auth_provider")
     private OauthProvider oauthProvider;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @Builder
@@ -51,10 +50,5 @@ public class User {
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
-    }
-
-    public void updateNameAndEmail(String name, String email) {
-        this.name = name;
-        this.email = email;
     }
 }
