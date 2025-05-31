@@ -20,9 +20,9 @@ public class AuthApi {
 
     @GetMapping("/google")
     @Operation(summary = "google login page 로 redirect")
-    public ResponseEntity<?> googleLoginStart() {
+    public ResponseEntity<?> googleLoginStart(@RequestParam("redirect") String redirectUri) {
         try {
-            String oauthUrl = oauthTokenService.buildGoogleLoginUrl();
+            String oauthUrl = oauthTokenService.buildGoogleLoginUrl(redirectUri);
             HttpHeaders headers = new HttpHeaders();
             headers.setLocation(URI.create(oauthUrl));
             return new ResponseEntity<>(headers, HttpStatus.FOUND);
@@ -33,9 +33,12 @@ public class AuthApi {
 
     @GetMapping("/code/google")
     @Operation(summary = "oauth code 로 user 의 jwt 토큰 발급 api")
-    public ResponseEntity<?> googleCode(@RequestParam("code") String code) {
+    public ResponseEntity<?> googleCode(
+            @RequestParam("code") String code,
+            @RequestParam("redirect") String redirectUri
+    ) {
         try {
-            JwtToken jwt = oauthTokenService.handleGoogleLogin(code);
+            JwtToken jwt = oauthTokenService.handleGoogleLogin(code, redirectUri);
             return ResponseEntity.ok(Map.of("token", jwt));
         } catch (IllegalStateException e){
             return ResponseEntity.internalServerError().build();

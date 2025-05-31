@@ -26,16 +26,13 @@ public class OauthTokenService {
     @Value("${spring.security.oauth2.client.registration.google.client-secret}")
     private String clientSecret;
 
-    @Value("${spring.security.oauth2.client.registration.google.redirect-uri}")
-    private String redirectUri;
-
     private final RestTemplate restTemplate = new RestTemplate();
     private final JwtGenerator jwtGenerator;
     private final UserRepository userRepository;
 
     // google 인증 code 를 받아 사용자 정보 저장 또는 업데이트하여 JWT Token 반환
-    public JwtToken handleGoogleLogin(String code) {
-        String accessToken = getAccessToken(code);
+    public JwtToken handleGoogleLogin(String code, String redirectUri) {
+        String accessToken = getAccessToken(code, redirectUri);
         GoogleResponse userInfo = getUserInfo(accessToken);
 
         // 사용자 저장 또는 업데이트
@@ -49,7 +46,7 @@ public class OauthTokenService {
     }
 
     // google login 화면으로 redirect
-    public String buildGoogleLoginUrl() {
+    public String buildGoogleLoginUrl(String redirectUri) {
         return UriComponentsBuilder.fromUriString("https://accounts.google.com/o/oauth2/v2/auth")
                 .queryParam("client_id", clientId)
                 .queryParam("redirect_uri", redirectUri)
@@ -62,7 +59,7 @@ public class OauthTokenService {
     }
 
     // Exchange code for access_token
-    public String getAccessToken(String code) {
+    public String getAccessToken(String code, String redirectUri) {
         String tokenUri = "https://oauth2.googleapis.com/token";
 
         HttpHeaders headers = new HttpHeaders();
