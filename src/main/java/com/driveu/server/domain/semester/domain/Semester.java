@@ -16,6 +16,7 @@ public class Semester {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private int year;
 
     @Enumerated(EnumType.STRING)

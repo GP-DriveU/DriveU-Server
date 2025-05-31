@@ -18,14 +18,14 @@ public class User {
     @Column(nullable = false)
     private Long id;
 
-    @Column(name = "name")
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "email")
+    @Column(name = "email", nullable = false)
     private String email;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "o_auth_provider")
+    @Column(name = "o_auth_provider", nullable = false)
     private OauthProvider oauthProvider;
 
     @Column(name = "created_at", updatable = false)
