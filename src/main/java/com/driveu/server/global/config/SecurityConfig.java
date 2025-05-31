@@ -50,14 +50,15 @@ public class SecurityConfig {
                 .logout(AbstractHttpConfigurer::disable)
                 .headers(c -> c.frameOptions(
                         HeadersConfigurer.FrameOptionsConfig::disable).disable())
+
                 // session 생성 X
                 .sessionManagement(c ->
                         c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
+                // AuthorizationFilter
                 .authorizeHttpRequests((registry) ->
                         registry
-                                .requestMatchers("/api/auth/google").permitAll() // 로그인 api 허용
-                                .requestMatchers("/api/auth/login/**").permitAll() // dev: api test 용 jwt 발급 api
+                                .requestMatchers("/api/auth/google", "/api/auth/code/google").permitAll() // 로그인 api 허용
                                 .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/swagger-resources/**", "/webjars/**").permitAll() // 스웨거 허용
                                 .anyRequest().authenticated()
                 )
