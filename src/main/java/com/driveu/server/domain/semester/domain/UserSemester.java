@@ -25,6 +25,7 @@ public class UserSemester {
     @JoinColumn(name = "semester_id", nullable = false)
     private Semester semester;
 
+    @Setter
     @Column(name = "is_current", nullable = false)
     private boolean isCurrent;
 

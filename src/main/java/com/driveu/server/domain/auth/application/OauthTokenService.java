@@ -39,11 +39,10 @@ public class OauthTokenService {
         GoogleResponse userInfo = getUserInfo(accessToken);
 
         // 사용자 저장 또는 업데이트
-        User user = userRepository.findByEmail(userInfo.getEmail());
-        if (user == null) {
-            user = User.of(userInfo.getName(), userInfo.getEmail(), OauthProvider.GOOGLE);
-            userRepository.save(user);
-        }
+        User user = userRepository.findByEmail(userInfo.getEmail())
+                .orElseGet(() -> userRepository.save(
+                        User.of(userInfo.getName(), userInfo.getEmail(), OauthProvider.GOOGLE)
+                ));
 
         // JWT Token 생성
         JwtToken jwtToken = jwtGenerator.generateToken(user.getEmail());
