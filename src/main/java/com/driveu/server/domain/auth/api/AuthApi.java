@@ -2,6 +2,7 @@ package com.driveu.server.domain.auth.api;
 
 import com.driveu.server.domain.auth.application.OauthTokenService;
 import com.driveu.server.domain.auth.domain.jwt.JwtToken;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -18,9 +19,10 @@ public class AuthApi {
     private final OauthTokenService oauthTokenService;
 
     @GetMapping("/google")
-    public ResponseEntity<?> googleLoginStart() {
+    @Operation(summary = "google login page 로 redirect")
+    public ResponseEntity<?> googleLoginStart(@RequestParam("redirect") String redirectUri) {
         try {
-            String oauthUrl = oauthTokenService.buildGoogleLoginUrl();
+            String oauthUrl = oauthTokenService.buildGoogleLoginUrl(redirectUri);
             HttpHeaders headers = new HttpHeaders();
             headers.setLocation(URI.create(oauthUrl));
             return new ResponseEntity<>(headers, HttpStatus.FOUND);
@@ -30,9 +32,13 @@ public class AuthApi {
     }
 
     @GetMapping("/code/google")
-    public ResponseEntity<?> googleCode(@RequestParam("code") String code) {
+    @Operation(summary = "oauth code 로 user 의 jwt 토큰 발급 api")
+    public ResponseEntity<?> googleCode(
+            @RequestParam("code") String code,
+            @RequestParam("redirect") String redirectUri
+    ) {
         try {
-            JwtToken jwt = oauthTokenService.handleGoogleLogin(code);
+            JwtToken jwt = oauthTokenService.handleGoogleLogin(code, redirectUri);
             return ResponseEntity.ok(Map.of("token", jwt));
         } catch (IllegalStateException e){
             return ResponseEntity.internalServerError().build();
