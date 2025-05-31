@@ -44,7 +44,7 @@ public class Semester {
                 .build();
     }
 
-    // 인자로 들어온 것 보다 나중인가
+    // 인자로 들어온 것 보다 나중인가 = this 가 current 가 되어야하는가
     public boolean isAfter(Semester other) {
         if (this.year != other.year) return this.year > other.year;
         return this.term.ordinal() > other.term.ordinal();

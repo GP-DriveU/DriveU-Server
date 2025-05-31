@@ -1,7 +1,7 @@
 package com.driveu.server.domain.semester.api;
 
 import com.driveu.server.domain.semester.application.SemesterService;
-import com.driveu.server.domain.semester.dto.request.UserSemesterCreateRequest;
+import com.driveu.server.domain.semester.dto.request.UserSemesterRequest;
 import com.driveu.server.domain.semester.dto.response.UserSemesterResponse;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -18,10 +18,26 @@ public class UserSemesterApi {
     @PostMapping
     public ResponseEntity<?> createUserSemester(
             @RequestHeader("Authorization") String token,
-            @RequestBody UserSemesterCreateRequest request
+            @RequestBody UserSemesterRequest request
     ){
         try {
             UserSemesterResponse userSemesterResponse = semesterService.createUserSemester(token, request);
+            return ResponseEntity.ok(userSemesterResponse);
+        } catch (EntityNotFoundException e){
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e){
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> createUserSemester(
+            @PathVariable Long id,
+            @RequestBody UserSemesterRequest request,
+            @RequestHeader("Authorization") String token
+    ){
+        try {
+            UserSemesterResponse userSemesterResponse = semesterService.updateUserSemester(token, id, request);
             return ResponseEntity.ok(userSemesterResponse);
         } catch (EntityNotFoundException e){
             return ResponseEntity.notFound().build();

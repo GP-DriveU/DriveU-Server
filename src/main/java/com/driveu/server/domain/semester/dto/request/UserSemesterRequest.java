@@ -7,7 +7,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 @Builder
-public class UserSemesterCreateRequest {
+public class UserSemesterRequest {
     int year;
     String term;
 }

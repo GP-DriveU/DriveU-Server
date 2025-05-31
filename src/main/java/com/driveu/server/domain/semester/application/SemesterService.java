@@ -6,7 +6,7 @@ import com.driveu.server.domain.semester.dao.UserSemesterRepository;
 import com.driveu.server.domain.semester.domain.Semester;
 import com.driveu.server.domain.semester.domain.Term;
 import com.driveu.server.domain.semester.domain.UserSemester;
-import com.driveu.server.domain.semester.dto.request.UserSemesterCreateRequest;
+import com.driveu.server.domain.semester.dto.request.UserSemesterRequest;
 import com.driveu.server.domain.semester.dto.response.UserSemesterResponse;
 import com.driveu.server.domain.user.dao.UserRepository;
 import com.driveu.server.domain.user.domain.User;
@@ -44,7 +44,7 @@ public class SemesterService {
     }
 
     @Transactional
-    public UserSemesterResponse createUserSemester(String token, UserSemesterCreateRequest request){
+    public UserSemesterResponse createUserSemester(String token, UserSemesterRequest request){
         String email = jwtProvider.getUserEmailFromToken(token);
 
         User user = userRepository.findByEmail(email)
@@ -62,7 +62,8 @@ public class SemesterService {
             isCurrent = true;
         } else {
             UserSemester current = currentOpt.get();
-            if (semester.isAfter(current.getSemester())) {
+            // 원래 current 였던 것이 더 과거라면
+            if (!current.getSemester().isAfter(semester)) {
                 current.setCurrent(false); // 기존 학기 비활성화
                 isCurrent = true;
             }
@@ -71,5 +72,39 @@ public class SemesterService {
         UserSemester userSemester = UserSemester.of(user, semester, isCurrent);
         UserSemester savedUserSemester = userSemesterRepository.save(userSemester);
         return UserSemesterResponse.from(savedUserSemester);
+    }
+
+    @Transactional
+    public UserSemesterResponse updateUserSemester(String token, Long userSemesterId ,UserSemesterRequest request){
+        String email = jwtProvider.getUserEmailFromToken(token);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(()-> new EntityNotFoundException("User not found"));
+
+        Term term = Term.valueOf(request.getTerm().toUpperCase());
+
+        // update 하려는 학기 조회
+        Semester semester = semesterRepository.findByYearAndTerm(request.getYear(), term)
+                .orElseGet(() -> semesterRepository.save(Semester.of(request.getYear(), term)));
+
+        UserSemester userSemester = userSemesterRepository.findById(userSemesterId)
+                .orElseThrow(()-> new EntityNotFoundException("UserSemester not found"));
+
+        Optional<UserSemester> currentOpt = userSemesterRepository.findByUserAndIsCurrentTrue(user);
+
+        boolean isCurrent = false;
+        if (currentOpt.isEmpty()) {
+            System.out.println("currentOpt.isEmpty()");
+            isCurrent = true;
+        } else {
+            UserSemester current = currentOpt.get();
+            if (!current.getSemester().isAfter(semester)) {
+                current.setCurrent(false); // 기존 학기 비활성화
+                isCurrent = true;
+            }
+        }
+
+        userSemester.updateSemester(semester, isCurrent);
+        return UserSemesterResponse.from(userSemester);
     }
 }

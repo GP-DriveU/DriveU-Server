@@ -1,5 +1,6 @@
 package com.driveu.server.domain.semester.domain;
 
+import com.driveu.server.domain.semester.dto.request.UserSemesterRequest;
 import com.driveu.server.domain.user.domain.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -50,5 +51,10 @@ public class UserSemester {
                 .semester(semester)
                 .isCurrent(isCurrent)
                 .build();
+    }
+
+    public void updateSemester(Semester newSemester, boolean isCurrent) {
+        this.semester = newSemester;
+        this.isCurrent = isCurrent;
     }
 }
