@@ -2,10 +2,7 @@ package com.driveu.server.domain.user.domain;
 
 import com.driveu.server.domain.auth.domain.oauth.OauthProvider;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -13,6 +10,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+@Getter
 @Table(name = "user")
 public class User {
 
@@ -53,5 +51,10 @@ public class User {
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+    }
+
+    public void updateNameAndEmail(String name, String email) {
+        this.name = name;
+        this.email = email;
     }
 }

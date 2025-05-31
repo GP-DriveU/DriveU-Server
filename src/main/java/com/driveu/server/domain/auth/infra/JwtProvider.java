@@ -80,9 +80,10 @@ public class JwtProvider {
             return e.getClaims();
         }
     }
-    // 사용자 ID 가져오기
-    public Long getUserIdFromToken(String accessToken) {
+
+    // 사용자 email 가져오기
+    public String getUserEmailFromToken(String accessToken) {
         Claims claims = parseClaims(accessToken);
-        return Long.valueOf(claims.getSubject()); // claims.getSubject()를 Long으로 변환
+        return claims.getSubject();
     }
 }

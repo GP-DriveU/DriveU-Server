@@ -14,7 +14,6 @@ import java.util.Date;
 import static com.driveu.server.domain.auth.domain.jwt.JwtTokenExpireTime.ACCESS_TOKEN_EXPIRE_TIME;
 import static com.driveu.server.domain.auth.domain.jwt.JwtTokenExpireTime.REFRESH_TOKEN_EXPIRE_TIME;
 
-
 @Component
 public class JwtGenerator {
 
@@ -26,18 +25,16 @@ public class JwtGenerator {
         this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 
-    // Member 정보를 가지고 AccessToken, RefreshToken을 생성하는 메서드
-    public JwtToken generateToken(Long userId) {
-        // 권한 가져오기
-
+    // user email 로 토큰을 생성
+    public JwtToken generateToken(String userEmail) {
         long now = (new Date()).getTime();
 
         // Access Token 생성
         Date accessTokenExpiresIn = new Date(now + ACCESS_TOKEN_EXPIRE_TIME.getExpireTime());
 
         String accessToken = Jwts.builder()
-                .setSubject(String.valueOf(userId))
-//                .claim("auth", authorities)
+                .setSubject(userEmail)
+                .claim("auth", "ROLE_USER")
                 .setExpiration(accessTokenExpiresIn)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
