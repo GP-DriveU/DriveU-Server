@@ -2,7 +2,9 @@ package com.driveu.server.domain.directory.api;
 
 import com.driveu.server.domain.directory.application.DirectoryService;
 import com.driveu.server.domain.directory.dto.request.DirectoryCreateRequest;
+import com.driveu.server.domain.directory.dto.request.DirectoryRenameRequest;
 import com.driveu.server.domain.directory.dto.response.DirectoryCreateResponse;
+import com.driveu.server.domain.directory.dto.response.DirectoryRenameResponse;
 import com.driveu.server.domain.directory.dto.response.DirectoryTreeResponse;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +47,24 @@ public class DirectoryApi {
     ) {
         try {
             DirectoryCreateResponse response = directoryService.createDirectory(token, userSemesterId, request);
+            return ResponseEntity.ok(response);
+        } catch (EntityNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", e.getMessage()));
+        } catch (IllegalStateException e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/directories/{id}/name")
+    public ResponseEntity<?> renameDirectory(
+            @PathVariable Long id,
+            @RequestBody DirectoryRenameRequest request,
+            @RequestHeader("Authorization") String token
+    ) {
+        try {
+            DirectoryRenameResponse response = directoryService.renameDirectory(id, request);
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

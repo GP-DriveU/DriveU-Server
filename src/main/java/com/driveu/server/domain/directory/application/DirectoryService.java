@@ -6,7 +6,9 @@ import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.directory.domain.DirectoryHierarchy;
 import com.driveu.server.domain.directory.dto.request.DirectoryCreateRequest;
+import com.driveu.server.domain.directory.dto.request.DirectoryRenameRequest;
 import com.driveu.server.domain.directory.dto.response.DirectoryCreateResponse;
+import com.driveu.server.domain.directory.dto.response.DirectoryRenameResponse;
 import com.driveu.server.domain.directory.dto.response.DirectoryTreeResponse;
 import com.driveu.server.domain.semester.dao.UserSemesterRepository;
 import com.driveu.server.domain.semester.domain.UserSemester;
@@ -172,4 +174,16 @@ public class DirectoryService {
         }
         return userSemester;
     }
+
+    @Transactional
+    public DirectoryRenameResponse renameDirectory(Long directoryId, DirectoryRenameRequest request) {
+        Directory directory = directoryRepository.findById(directoryId)
+                .orElseThrow(() -> new EntityNotFoundException("Directory not found"));
+
+        directory.updateName(request.getName());
+        Directory savedDirectory = directoryRepository.save(directory);
+        return DirectoryRenameResponse.from(savedDirectory);
+    }
+
+
 }

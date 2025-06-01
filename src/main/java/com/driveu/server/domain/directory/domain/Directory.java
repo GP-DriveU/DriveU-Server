@@ -65,4 +65,8 @@ public class Directory {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
+
+    public void updateName(String name) {
+        this.name = name;
+    }
 }
