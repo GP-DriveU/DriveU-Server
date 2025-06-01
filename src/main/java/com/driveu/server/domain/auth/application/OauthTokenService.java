@@ -4,6 +4,8 @@ import com.driveu.server.domain.auth.domain.jwt.JwtToken;
 import com.driveu.server.domain.auth.domain.oauth.OauthProvider;
 import com.driveu.server.domain.auth.dto.GoogleResponse;
 import com.driveu.server.domain.auth.infra.JwtGenerator;
+import com.driveu.server.domain.semester.application.SemesterService;
+import com.driveu.server.domain.semester.domain.UserSemester;
 import com.driveu.server.domain.user.dao.UserRepository;
 import com.driveu.server.domain.user.domain.User;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,7 @@ public class OauthTokenService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final JwtGenerator jwtGenerator;
     private final UserRepository userRepository;
+    private final SemesterService semesterService;
 
     // google 인증 code 를 받아 사용자 정보 저장 또는 업데이트하여 JWT Token 반환
     public JwtToken handleGoogleLogin(String code, String redirectUri) {
@@ -36,13 +39,18 @@ public class OauthTokenService {
         GoogleResponse userInfo = getUserInfo(accessToken);
 
         // 사용자 저장 또는 업데이트
-        User user = userRepository.findByEmail(userInfo.getEmail());
-        if (user == null) {
-            user = User.of(userInfo.getName(), userInfo.getEmail(), OauthProvider.GOOGLE);
-            userRepository.save(user);
-        }
-        // JWT Token 반환
-        return jwtGenerator.generateToken(user.getEmail());
+        User user = userRepository.findByEmail(userInfo.getEmail())
+                .orElseGet(() -> userRepository.save(
+                        User.of(userInfo.getName(), userInfo.getEmail(), OauthProvider.GOOGLE)
+                ));
+
+        // JWT Token 생성
+        JwtToken jwtToken = jwtGenerator.generateToken(user.getEmail());
+
+        // 현재 날짜 기준 Semester 자동 생성
+        UserSemester userSemester = semesterService.createUserSemesterFromNow(user);
+
+        return jwtToken; //Todo: directory/file 구현 후 loginResponse 로 변경
     }
 
     // google login 화면으로 redirect
