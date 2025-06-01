@@ -1,6 +1,7 @@
 package com.driveu.server.domain.semester.application;
 
 import com.driveu.server.domain.auth.infra.JwtProvider;
+import com.driveu.server.domain.directory.application.DirectoryService;
 import com.driveu.server.domain.semester.dao.SemesterRepository;
 import com.driveu.server.domain.semester.dao.UserSemesterRepository;
 import com.driveu.server.domain.semester.domain.Semester;
@@ -28,6 +29,7 @@ public class SemesterService {
     private final UserSemesterRepository userSemesterRepository;
     private final JwtProvider jwtProvider;
     private final UserRepository userRepository;
+    private final DirectoryService directoryService;
 
     // user 최초 로그인 시 자동으로 생성되는 UserSemester
     @Transactional
@@ -41,8 +43,12 @@ public class SemesterService {
                 .orElseGet(() -> semesterRepository.save(Semester.of(year, term)));
 
         UserSemester userSemester = UserSemester.of(user, semester, true);
+        UserSemester savedUserSemester = userSemesterRepository.save(userSemester);
 
-        return userSemesterRepository.save(userSemester);
+        // semester 의 디폴트 디렉토리 생성
+        directoryService.createDefaultDirectories(savedUserSemester);
+
+        return savedUserSemester;
     }
 
     @Transactional
