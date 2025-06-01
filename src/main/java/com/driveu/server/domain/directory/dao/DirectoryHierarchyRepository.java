@@ -21,4 +21,13 @@ public interface DirectoryHierarchyRepository extends JpaRepository<DirectoryHie
     List<Object[]> findAllHierarchiesWithDescendantsByUserSemesterId(@Param("userSemesterId") Long userSemesterId);
 
     List<DirectoryHierarchy> findAllByDescendantId(Long descendantId);
+
+    // 자기 자신 제외 자식 ID만 조회
+    @Query("""
+        SELECT dh.descendantId FROM DirectoryHierarchy dh
+        WHERE dh.ancestorId = :ancestorId
+        AND dh.depth > 0
+    """)
+    List<Long> findAllDescendantIdsByAncestorId(@Param("ancestorId") Long ancestorId);
+
 }

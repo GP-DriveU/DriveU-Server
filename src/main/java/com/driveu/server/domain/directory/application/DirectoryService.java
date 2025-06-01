@@ -76,6 +76,7 @@ public class DirectoryService {
 
     @Transactional
     public List<DirectoryTreeResponse> getDirectoryTree(String token, Long userSemesterId) {
+        System.out.println("start getDirectoryTree");
         validateUserSemester(token, userSemesterId);
 
         List<Object[]> result = directoryHierarchyRepository.findAllHierarchiesWithDescendantsByUserSemesterId(userSemesterId);
@@ -212,5 +213,22 @@ public class DirectoryService {
         return DirectoryRenameResponse.from(savedDirectory);
     }
 
+    @Transactional
+    public void softDeleteDirectory(Long directoryId) {
+        System.out.println("start delete");
+        Directory directory = directoryRepository.findById(directoryId)
+                .orElseThrow(() -> new EntityNotFoundException("Directory not found"));
 
+        // 재귀적으로 삭제
+        List<Long> descendantIds = directoryHierarchyRepository.findAllDescendantIdsByAncestorId(directoryId);
+        List<Directory> toDelete = new ArrayList<>(directoryRepository.findAllById(descendantIds)); // 수정 가능한 리스트로 변환
+
+        toDelete.add(directory); // 자기 자신 포함
+
+        for (Directory dir : toDelete) {
+            dir.softDelete(); // isDeleted = true, deletedAt = now
+            directoryRepository.save(dir); // 명시적 저장
+        }
+
+    }
 }

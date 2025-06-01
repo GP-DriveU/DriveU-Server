@@ -77,4 +77,19 @@ public class DirectoryApi {
         }
     }
 
+    @DeleteMapping("/directories/{id}")
+    public ResponseEntity<?> deleteDirectory(
+            @PathVariable Long id,
+            @RequestHeader("Authorization") String token
+    ) {
+        try {
+            directoryService.softDeleteDirectory(id);
+            return ResponseEntity.ok(Map.of("message", "디렉토리가 삭제되었습니다."));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        }
+    }
+
 }
