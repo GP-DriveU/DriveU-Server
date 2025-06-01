@@ -6,6 +6,7 @@ import com.driveu.server.domain.directory.dto.request.DirectoryRenameRequest;
 import com.driveu.server.domain.directory.dto.response.DirectoryCreateResponse;
 import com.driveu.server.domain.directory.dto.response.DirectoryRenameResponse;
 import com.driveu.server.domain.directory.dto.response.DirectoryTreeResponse;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -40,6 +41,7 @@ public class DirectoryApi {
     }
 
     @PostMapping("/user-semesters/{userSemesterId}/directories")
+    @Operation(description = "최상위 디렉토리 추가는 parentDirectoryId = 0 값을 요청해주세요.")
     public ResponseEntity<?> createDirectory(
             @PathVariable Long userSemesterId,
             @RequestBody DirectoryCreateRequest request,
