@@ -14,6 +14,7 @@ import com.driveu.server.domain.user.dao.UserRepository;
 import com.driveu.server.domain.user.domain.User;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -73,16 +74,7 @@ public class DirectoryService {
 
     @Transactional
     public List<DirectoryTreeResponse> getDirectoryTree(String token, Long userSemesterId) {
-        String email = jwtProvider.getUserEmailFromToken(token);
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
-
-        UserSemester userSemester = userSemesterRepository.findById(userSemesterId)
-                .orElseThrow(() -> new EntityNotFoundException("UserSemester not found"));
-
-        if (!userSemester.getUser().equals(user)) {
-            throw new IllegalStateException("해당 유저의 학기가 아닙니다.");
-        }
+        validateUserSemester(token, userSemesterId);
 
         List<Object[]> result = directoryHierarchyRepository.findAllHierarchiesWithDescendantsByUserSemesterId(userSemesterId);
 
@@ -129,17 +121,7 @@ public class DirectoryService {
 
     @Transactional
     public CreateDirectoryResponse createDirectory(String token, Long userSemesterId, CreateDirectoryRequest request) {
-        String email = jwtProvider.getUserEmailFromToken(token);
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
-
-        UserSemester userSemester = userSemesterRepository.findById(userSemesterId)
-                .orElseThrow(() -> new EntityNotFoundException("UserSemester not found"));
-
-        if (!userSemester.getUser().equals(user)) {
-            throw new IllegalStateException("해당 유저의 학기가 아닙니다.");
-        }
+        UserSemester userSemester = validateUserSemester(token, userSemesterId);
 
         // 부모 디렉토리 존재 확인
         Directory parent = directoryRepository.findById(request.getParentDirectoryId())
@@ -174,5 +156,20 @@ public class DirectoryService {
             ));
         }
         return CreateDirectoryResponse.from(newDirectory);
+    }
+
+    private @NotNull UserSemester validateUserSemester(String token, Long userSemesterId) {
+        String email = jwtProvider.getUserEmailFromToken(token);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        UserSemester userSemester = userSemesterRepository.findById(userSemesterId)
+                .orElseThrow(() -> new EntityNotFoundException("UserSemester not found"));
+
+        if (!userSemester.getUser().equals(user)) {
+            throw new IllegalStateException("해당 유저의 학기가 아닙니다.");
+        }
+        return userSemester;
     }
 }
