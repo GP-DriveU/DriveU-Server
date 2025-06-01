@@ -30,4 +30,14 @@ public interface DirectoryHierarchyRepository extends JpaRepository<DirectoryHie
     """)
     List<Long> findAllDescendantIdsByAncestorId(@Param("ancestorId") Long ancestorId);
 
+    void deleteAllByDescendantId(Long descendantId);
+
+    // 조상 id 만 조회
+    @Query("""
+        SELECT dh.id FROM DirectoryHierarchy dh
+        WHERE dh.descendantId = :descendantId
+        AND dh.depth > 1
+    """)
+    List<Long> findAllAncestorIdsByDescendantId(@Param("descendantId") Long descendantId);
+
 }

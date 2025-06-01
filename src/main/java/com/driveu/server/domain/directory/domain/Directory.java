@@ -69,4 +69,8 @@ public class Directory {
     public void updateName(String name) {
         this.name = name;
     }
+
+    public void setOrder(int order) {
+        this.order = order;
+    }
 }

@@ -2,8 +2,10 @@ package com.driveu.server.domain.directory.api;
 
 import com.driveu.server.domain.directory.application.DirectoryService;
 import com.driveu.server.domain.directory.dto.request.DirectoryCreateRequest;
+import com.driveu.server.domain.directory.dto.request.DirectoryMoveParentRequest;
 import com.driveu.server.domain.directory.dto.request.DirectoryRenameRequest;
 import com.driveu.server.domain.directory.dto.response.DirectoryCreateResponse;
+import com.driveu.server.domain.directory.dto.response.DirectoryMoveParentResponse;
 import com.driveu.server.domain.directory.dto.response.DirectoryRenameResponse;
 import com.driveu.server.domain.directory.dto.response.DirectoryTreeResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -85,6 +87,22 @@ public class DirectoryApi {
         try {
             directoryService.softDeleteDirectory(id);
             return ResponseEntity.ok(Map.of("message", "디렉토리가 삭제되었습니다."));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/directories/{id}/parent")
+    public ResponseEntity<?> moveDirectoryParent(
+            @PathVariable Long id,
+            @RequestBody DirectoryMoveParentRequest request,
+            @RequestHeader("Authorization") String token
+    ) {
+        try {
+            DirectoryMoveParentResponse response = directoryService.moveDirectoryParent(id, request);
+            return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         } catch (IllegalStateException e) {

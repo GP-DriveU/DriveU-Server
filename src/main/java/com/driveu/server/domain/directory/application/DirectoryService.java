@@ -6,8 +6,10 @@ import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.directory.domain.DirectoryHierarchy;
 import com.driveu.server.domain.directory.dto.request.DirectoryCreateRequest;
+import com.driveu.server.domain.directory.dto.request.DirectoryMoveParentRequest;
 import com.driveu.server.domain.directory.dto.request.DirectoryRenameRequest;
 import com.driveu.server.domain.directory.dto.response.DirectoryCreateResponse;
+import com.driveu.server.domain.directory.dto.response.DirectoryMoveParentResponse;
 import com.driveu.server.domain.directory.dto.response.DirectoryRenameResponse;
 import com.driveu.server.domain.directory.dto.response.DirectoryTreeResponse;
 import com.driveu.server.domain.semester.dao.UserSemesterRepository;
@@ -38,12 +40,12 @@ public class DirectoryService {
     public void createDefaultDirectories(UserSemester userSemester) {
         // 최상위 디렉토리들
         Directory academic = directoryRepository.save(Directory.of(userSemester, "학업", true, 0));
-        Directory subject = directoryRepository.save(Directory.of(userSemester, "과목", true,  1));
-        Directory activity = directoryRepository.save(Directory.of(userSemester, "대외활동", true,  2));
+        Directory subject = directoryRepository.save(Directory.of(userSemester, "과목", true, 1));
+        Directory activity = directoryRepository.save(Directory.of(userSemester, "대외활동", true, 2));
 
         // 학업 하위 디렉토리
-        Directory notes = directoryRepository.save(Directory.of(userSemester, "강의필기", true,  0));
-        Directory assignments = directoryRepository.save(Directory.of(userSemester, "과제", true,  1));
+        Directory notes = directoryRepository.save(Directory.of(userSemester, "강의필기", true, 0));
+        Directory assignments = directoryRepository.save(Directory.of(userSemester, "과제", true, 1));
 
         // 대외활동 하위 디렉토리
         Directory club = directoryRepository.save(Directory.of(userSemester, "동아리", true, 0));
@@ -70,6 +72,7 @@ public class DirectoryService {
     private void saveSelfHierarchy(Directory directory) {
         directoryHierarchyRepository.save(DirectoryHierarchy.of(directory.getId(), directory.getId(), 0));
     }
+
     private void saveHierarchy(Directory parent, Directory descendant, int depth) {
         directoryHierarchyRepository.save(DirectoryHierarchy.of(parent.getId(), descendant.getId(), depth));
     }
@@ -126,7 +129,7 @@ public class DirectoryService {
     public DirectoryCreateResponse createDirectory(String token, Long userSemesterId, DirectoryCreateRequest request) {
         UserSemester userSemester = validateUserSemester(token, userSemesterId);
 
-        if (request.getParentDirectoryId() == 0){
+        if (request.getParentDirectoryId() == 0) {
             return createTopLevelDirectory(userSemester, request);
         }
 
@@ -229,6 +232,64 @@ public class DirectoryService {
             dir.softDelete(); // isDeleted = true, deletedAt = now
             directoryRepository.save(dir); // 명시적 저장
         }
+        //Todo: 디렉토리 내부 리소스도 soft delete
+    }
 
+    @Transactional
+    public DirectoryMoveParentResponse moveDirectoryParent(Long directoryId, DirectoryMoveParentRequest request) {
+        Directory directory = directoryRepository.findById(directoryId)
+                .orElseThrow(() -> new EntityNotFoundException("디렉토리를 찾을 수 없습니다."));
+
+        Long newParentId = request.getNewParentId();
+
+        // 최상위 테이블로 옮길 때
+        int nextOrder = (newParentId == 0)
+                ? directoryRepository.findMaxOrderOfTopLevel(directory.getUserSemester().getId()).orElse(0)
+                : directoryRepository.findMaxOrderUnderParent(newParentId).orElse(0);
+
+        // 기존 클로저 테이블 삭제
+        directoryHierarchyRepository.deleteAllByDescendantId(directory.getId());
+
+        // 새로운 클로저 테이블 갱신
+        saveSelfHierarchy(directory);
+
+        // 최상위 디렉토리로 옮기는 것이 아닐 경우 -> 부모+조상
+        if (newParentId != 0) {
+            Directory newParent = directoryRepository.findById(newParentId)
+                    .orElseThrow(() -> new EntityNotFoundException("새 부모 디렉토리를 찾을 수 없습니다."));
+
+            List<DirectoryHierarchy> ancestors = directoryHierarchyRepository.findAllByDescendantId(newParent.getId())
+                    .stream().filter(h -> h.getId().equals(newParent.getId())).toList();
+
+            List<Long> descendantIds = directoryHierarchyRepository.findAllDescendantIdsByAncestorId(directory.getId());
+
+            // 자식 디렉토리들의 기존 부모 연결 삭제
+            for (Long descendantId : descendantIds) {
+                directoryHierarchyRepository.deleteAllById(
+                        directoryHierarchyRepository.findAllAncestorIdsByDescendantId(descendantId)
+                );
+            }
+
+            for (DirectoryHierarchy ancestor : ancestors) {
+                directoryHierarchyRepository.save(DirectoryHierarchy.of(
+                        ancestor.getAncestorId(),
+                        directory.getId(),
+                        ancestor.getDepth() + 1
+                ));
+                for (Long descendantId : descendantIds) {
+                    directoryHierarchyRepository.save(DirectoryHierarchy.of(
+                            ancestor.getAncestorId(),
+                            descendantId,
+                            ancestor.getDepth() + 2
+                    ));
+                }
+            }
+        }
+
+        // 디렉토리 엔티티 순서 업데이트
+        directory.setOrder(nextOrder);
+        directoryRepository.save(directory);
+
+        return DirectoryMoveParentResponse.from(directory, newParentId);
     }
 }
