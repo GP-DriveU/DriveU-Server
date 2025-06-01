@@ -17,4 +17,16 @@ public interface DirectoryRepository extends JpaRepository<Directory, Long> {
         ) AND d.isDeleted = false
     """)
     Optional<Integer> findMaxOrderUnderParent(@Param("parentId") Long parentId);
+
+    // 최상위 디렉토리만을 대상으로 order 값을 계산
+    @Query("""
+        SELECT MAX(d.order) + 1 FROM Directory d
+        WHERE d.userSemester.id = :userSemesterId
+        AND d.id NOT IN (
+            SELECT h.descendantId FROM DirectoryHierarchy h WHERE h.depth = 1
+        )
+        AND d.isDeleted = false
+    """)
+    Optional<Integer> findMaxOrderOfTopLevel(@Param("userSemesterId") Long userSemesterId);
+
 }

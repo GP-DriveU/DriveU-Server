@@ -125,6 +125,33 @@ public class DirectoryService {
     public DirectoryCreateResponse createDirectory(String token, Long userSemesterId, DirectoryCreateRequest request) {
         UserSemester userSemester = validateUserSemester(token, userSemesterId);
 
+        if (request.getParentDirectoryId() == 0){
+            return createTopLevelDirectory(userSemester, request);
+        }
+
+        return createDescendentDirectory(userSemester, request);
+    }
+
+    private DirectoryCreateResponse createTopLevelDirectory(UserSemester userSemester, DirectoryCreateRequest request) {
+        int nextOrder = directoryRepository.findMaxOrderOfTopLevel(userSemester.getId())
+                .orElse(0);
+
+        Directory newDirectory = Directory.builder()
+                .userSemester(userSemester)
+                .name(request.getName())
+                .isDefault(false)
+                .order(nextOrder)
+                .build();
+
+        directoryRepository.save(newDirectory);
+
+        // 자기 자신에 대한 클로저 테이블 등록 (depth = 0)
+        saveSelfHierarchy(newDirectory);
+
+        return DirectoryCreateResponse.from(newDirectory);
+    }
+
+    private DirectoryCreateResponse createDescendentDirectory(UserSemester userSemester, DirectoryCreateRequest request) {
         // 부모 디렉토리 존재 확인
         Directory parent = directoryRepository.findById(request.getParentDirectoryId())
                 .orElseThrow(() -> new EntityNotFoundException("Parent directory not found"));
