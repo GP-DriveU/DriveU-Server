@@ -37,7 +37,7 @@ public class Directory {
     private boolean isDeleted = false; // soft delete 플래그
 
     @Column(name = "deleted_at")
-    private LocalDateTime deletedAt; // 지워졌을때만 Null 이 아닌 값을 가짐
+    private LocalDateTime deletedAt = null; // 지워졌을때만 Null 이 아닌 값을 가짐
 
     @Builder
     private Directory(UserSemester userSemester, String name, boolean isDefault, Integer order) {
