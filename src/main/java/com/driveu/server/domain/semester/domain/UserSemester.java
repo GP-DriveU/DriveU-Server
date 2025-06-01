@@ -29,7 +29,7 @@ public class UserSemester {
     @Column(name = "is_current", nullable = false)
     private boolean isCurrent;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", updatable = false, nullable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "is_deleted", nullable = false)
