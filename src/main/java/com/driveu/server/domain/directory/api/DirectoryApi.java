@@ -3,11 +3,9 @@ package com.driveu.server.domain.directory.api;
 import com.driveu.server.domain.directory.application.DirectoryService;
 import com.driveu.server.domain.directory.dto.request.DirectoryCreateRequest;
 import com.driveu.server.domain.directory.dto.request.DirectoryMoveParentRequest;
+import com.driveu.server.domain.directory.dto.request.DirectoryOrderUpdateRequest;
 import com.driveu.server.domain.directory.dto.request.DirectoryRenameRequest;
-import com.driveu.server.domain.directory.dto.response.DirectoryCreateResponse;
-import com.driveu.server.domain.directory.dto.response.DirectoryMoveParentResponse;
-import com.driveu.server.domain.directory.dto.response.DirectoryRenameResponse;
-import com.driveu.server.domain.directory.dto.response.DirectoryTreeResponse;
+import com.driveu.server.domain.directory.dto.response.*;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -110,4 +108,18 @@ public class DirectoryApi {
         }
     }
 
+    @PatchMapping("/directories/order")
+    public ResponseEntity<?> updateDirectoryOrder(
+            @RequestBody DirectoryOrderUpdateRequest request,
+            @RequestHeader("Authorization") String token
+    ) {
+        try {
+            DirectoryOrderUpdateResponse response = directoryService.updateDirectoryOrder(request);
+            return ResponseEntity.ok(response);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        }
+    }
 }

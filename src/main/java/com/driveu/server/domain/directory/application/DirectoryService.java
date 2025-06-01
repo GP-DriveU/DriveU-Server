@@ -5,13 +5,8 @@ import com.driveu.server.domain.directory.dao.DirectoryHierarchyRepository;
 import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.directory.domain.DirectoryHierarchy;
-import com.driveu.server.domain.directory.dto.request.DirectoryCreateRequest;
-import com.driveu.server.domain.directory.dto.request.DirectoryMoveParentRequest;
-import com.driveu.server.domain.directory.dto.request.DirectoryRenameRequest;
-import com.driveu.server.domain.directory.dto.response.DirectoryCreateResponse;
-import com.driveu.server.domain.directory.dto.response.DirectoryMoveParentResponse;
-import com.driveu.server.domain.directory.dto.response.DirectoryRenameResponse;
-import com.driveu.server.domain.directory.dto.response.DirectoryTreeResponse;
+import com.driveu.server.domain.directory.dto.request.*;
+import com.driveu.server.domain.directory.dto.response.*;
 import com.driveu.server.domain.semester.dao.UserSemesterRepository;
 import com.driveu.server.domain.semester.domain.UserSemester;
 import com.driveu.server.domain.user.dao.UserRepository;
@@ -291,5 +286,28 @@ public class DirectoryService {
         directoryRepository.save(directory);
 
         return DirectoryMoveParentResponse.from(directory, newParentId);
+    }
+
+    @Transactional
+    public DirectoryOrderUpdateResponse updateDirectoryOrder(DirectoryOrderUpdateRequest request){
+        Long parentId = request.getParentDirectoryId();
+
+        List<DirectoryOrderResult> resultList = new ArrayList<>();
+
+        //Todo: update directory id 들이 parentId 의 자식인지(depth=1) 검증
+
+        for (DirectoryOrderPair update: request.getUpdates()){
+            Directory directory = directoryRepository.findById(update.getDirectoryId())
+                    .orElseThrow(() -> new EntityNotFoundException("Directory not found: " + update.getDirectoryId()));
+
+            directory.setOrder(update.getOrder());
+            Directory savedDirectory = directoryRepository.save(directory);
+
+            resultList.add(DirectoryOrderResult.from(savedDirectory));
+        }
+        return DirectoryOrderUpdateResponse.builder()
+                .parentDirectoryId(parentId)
+                .reorderedDirectories(resultList)
+                .build();
     }
 }
