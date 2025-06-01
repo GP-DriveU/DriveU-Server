@@ -5,6 +5,8 @@ import com.driveu.server.domain.directory.dao.DirectoryHierarchyRepository;
 import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.directory.domain.DirectoryHierarchy;
+import com.driveu.server.domain.directory.dto.request.CreateDirectoryRequest;
+import com.driveu.server.domain.directory.dto.response.CreateDirectoryResponse;
 import com.driveu.server.domain.directory.dto.response.DirectoryTreeResponse;
 import com.driveu.server.domain.semester.dao.UserSemesterRepository;
 import com.driveu.server.domain.semester.domain.UserSemester;
@@ -125,4 +127,52 @@ public class DirectoryService {
         return roots;
     }
 
+    @Transactional
+    public CreateDirectoryResponse createDirectory(String token, Long userSemesterId, CreateDirectoryRequest request) {
+        String email = jwtProvider.getUserEmailFromToken(token);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        UserSemester userSemester = userSemesterRepository.findById(userSemesterId)
+                .orElseThrow(() -> new EntityNotFoundException("UserSemester not found"));
+
+        if (!userSemester.getUser().equals(user)) {
+            throw new IllegalStateException("해당 유저의 학기가 아닙니다.");
+        }
+
+        // 부모 디렉토리 존재 확인
+        Directory parent = directoryRepository.findById(request.getParentDirectoryId())
+                .orElseThrow(() -> new EntityNotFoundException("Parent directory not found"));
+
+        // order 계산 (동일한 부모 아래 최대 order + 1)
+        int nextOrder = directoryRepository.findMaxOrderUnderParent(request.getParentDirectoryId())
+                .orElse(0);
+
+        // 새 디렉토리 생성
+        Directory newDirectory = Directory.builder()
+                .userSemester(userSemester)
+                .name(request.getName())
+                .isDefault(false)
+                .order(nextOrder)
+                .build();
+
+        directoryRepository.save(newDirectory);
+
+        // 클로저 테이블 갱신
+        // 자기 자신에 대한 관계
+        saveSelfHierarchy(newDirectory);
+
+        // 부모의 조상들과 연결
+        // 부모를 자식으로 가지고 있는 모든 hierarchy 찾기
+        List<DirectoryHierarchy> ancestors = directoryHierarchyRepository.findAllByDescendantId(parent.getId());
+        for (DirectoryHierarchy ancestor : ancestors) {
+            directoryHierarchyRepository.save(DirectoryHierarchy.of(
+                    ancestor.getAncestorId(), // 조상 ID
+                    newDirectory.getId(), // 새로 만든 디렉토리 ID
+                    ancestor.getDepth() + 1 // 조상 → 자손까지의 깊이 + 1
+            ));
+        }
+        return CreateDirectoryResponse.from(newDirectory);
+    }
 }

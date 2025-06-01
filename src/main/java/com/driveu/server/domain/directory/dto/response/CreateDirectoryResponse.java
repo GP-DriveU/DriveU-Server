@@ -13,7 +13,7 @@ public class CreateDirectoryResponse {
     private String name;
     private int order;
 
-    public static CreateDirectoryResponse of(Directory directory) {
+    public static CreateDirectoryResponse from(Directory directory) {
         return CreateDirectoryResponse.builder()
                 .id(directory.getId())
                 .name(directory.getName())
