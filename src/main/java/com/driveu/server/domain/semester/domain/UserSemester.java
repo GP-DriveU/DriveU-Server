@@ -1,6 +1,5 @@
 package com.driveu.server.domain.semester.domain;
 
-import com.driveu.server.domain.semester.dto.request.UserSemesterRequest;
 import com.driveu.server.domain.user.domain.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -33,6 +32,9 @@ public class UserSemester {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false; // soft delete 플래그
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
@@ -56,5 +58,10 @@ public class UserSemester {
     public void updateSemester(Semester newSemester, boolean isCurrent) {
         this.semester = newSemester;
         this.isCurrent = isCurrent;
+    }
+
+    public void softDelete() {
+        this.isDeleted = true;
+        this.isCurrent = false;
     }
 }

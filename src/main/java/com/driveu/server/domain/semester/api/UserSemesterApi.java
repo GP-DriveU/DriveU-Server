@@ -52,4 +52,22 @@ public class UserSemesterApi {
                     .body(Map.of("message", e.getMessage()));
         }
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> createUserSemester(
+            @PathVariable Long id,
+            @RequestHeader("Authorization") String token
+    ){
+        try {
+            semesterService.deleteUserSemester(token, id);
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(Map.of("message", "해당 학기 및 관련 리소스가 성공적으로 삭제되었습니다."));
+        } catch (EntityNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", e.getMessage()));
+        } catch (IllegalStateException e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", e.getMessage()));
+        }
+    }
 }

@@ -165,4 +165,44 @@ public class SemesterService {
         userSemester.updateSemester(newSemester, isCurrent);
         return UserSemesterResponse.from(userSemester);
     }
+
+    @Transactional
+    public void deleteUserSemester(String token, Long userSemesterId){
+        String email = jwtProvider.getUserEmailFromToken(token);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(()-> new EntityNotFoundException("User not found"));
+
+        UserSemester userSemester = userSemesterRepository.findById(userSemesterId)
+                .orElseThrow(()-> new EntityNotFoundException("UserSemester not found"));
+
+        if (!userSemester.getUser().equals(user)) {
+            throw new IllegalStateException("해당 유저의 학기가 아닙니다.");
+        }
+
+        boolean CurrentDelete = userSemester.isCurrent();
+
+        System.out.println("Before delete: " + userSemester.isDeleted());
+        userSemester.softDelete();
+        System.out.println("After delete: " + userSemester.isDeleted());
+
+        userSemesterRepository.save(userSemester); // 명시적으로 변경사항 반영
+
+        System.out.println(userSemesterRepository.findById(userSemesterId).get().isDeleted());
+        if (CurrentDelete) {
+            updateCurrentSemester(user);
+        }
+    }
+
+    private void updateCurrentSemester(User user) {
+        List<UserSemester> latestYearSemesters = userSemesterRepository.findAllByUserAndLatestYear(user);
+
+        Optional<UserSemester> latest = latestYearSemesters.stream()
+                .max(Comparator.comparing(us -> us.getSemester().getTerm().ordinal()));
+
+        latest.ifPresent(us -> {
+            us.setCurrent(true);
+            userSemesterRepository.save(us); // 명시적으로 save
+        });
+    }
 }
