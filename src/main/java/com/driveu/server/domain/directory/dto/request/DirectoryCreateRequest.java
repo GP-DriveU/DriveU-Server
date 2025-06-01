@@ -7,7 +7,7 @@ import lombok.Getter;
 @Getter
 @Builder
 @AllArgsConstructor
-public class CreateDirectoryRequest {
+public class DirectoryCreateRequest {
     private Long parentDirectoryId;
     private String name;
 }

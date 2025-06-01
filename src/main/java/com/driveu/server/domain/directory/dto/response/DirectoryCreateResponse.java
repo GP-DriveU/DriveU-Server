@@ -8,13 +8,13 @@ import lombok.Getter;
 @Getter
 @Builder
 @AllArgsConstructor
-public class CreateDirectoryResponse {
+public class DirectoryCreateResponse {
     private Long id;
     private String name;
     private int order;
 
-    public static CreateDirectoryResponse from(Directory directory) {
-        return CreateDirectoryResponse.builder()
+    public static DirectoryCreateResponse from(Directory directory) {
+        return DirectoryCreateResponse.builder()
                 .id(directory.getId())
                 .name(directory.getName())
                 .order(directory.getOrder())

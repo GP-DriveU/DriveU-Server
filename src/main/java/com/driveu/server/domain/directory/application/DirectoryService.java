@@ -5,8 +5,8 @@ import com.driveu.server.domain.directory.dao.DirectoryHierarchyRepository;
 import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.directory.domain.DirectoryHierarchy;
-import com.driveu.server.domain.directory.dto.request.CreateDirectoryRequest;
-import com.driveu.server.domain.directory.dto.response.CreateDirectoryResponse;
+import com.driveu.server.domain.directory.dto.request.DirectoryCreateRequest;
+import com.driveu.server.domain.directory.dto.response.DirectoryCreateResponse;
 import com.driveu.server.domain.directory.dto.response.DirectoryTreeResponse;
 import com.driveu.server.domain.semester.dao.UserSemesterRepository;
 import com.driveu.server.domain.semester.domain.UserSemester;
@@ -120,7 +120,7 @@ public class DirectoryService {
     }
 
     @Transactional
-    public CreateDirectoryResponse createDirectory(String token, Long userSemesterId, CreateDirectoryRequest request) {
+    public DirectoryCreateResponse createDirectory(String token, Long userSemesterId, DirectoryCreateRequest request) {
         UserSemester userSemester = validateUserSemester(token, userSemesterId);
 
         // 부모 디렉토리 존재 확인
@@ -155,7 +155,7 @@ public class DirectoryService {
                     ancestor.getDepth() + 1 // 조상 → 자손까지의 깊이 + 1
             ));
         }
-        return CreateDirectoryResponse.from(newDirectory);
+        return DirectoryCreateResponse.from(newDirectory);
     }
 
     private @NotNull UserSemester validateUserSemester(String token, Long userSemesterId) {
