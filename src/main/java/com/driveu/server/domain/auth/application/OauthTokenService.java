@@ -3,8 +3,12 @@ package com.driveu.server.domain.auth.application;
 import com.driveu.server.domain.auth.domain.jwt.JwtToken;
 import com.driveu.server.domain.auth.domain.oauth.OauthProvider;
 import com.driveu.server.domain.auth.dto.GoogleResponse;
+import com.driveu.server.domain.auth.dto.LoginResponse;
 import com.driveu.server.domain.auth.infra.JwtGenerator;
+import com.driveu.server.domain.directory.application.DirectoryService;
+import com.driveu.server.domain.directory.dto.response.DirectoryTreeResponse;
 import com.driveu.server.domain.semester.application.SemesterService;
+import com.driveu.server.domain.semester.dao.SemesterRepository;
 import com.driveu.server.domain.semester.domain.UserSemester;
 import com.driveu.server.domain.user.dao.UserRepository;
 import com.driveu.server.domain.user.domain.User;
@@ -17,6 +21,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -32,9 +37,10 @@ public class OauthTokenService {
     private final JwtGenerator jwtGenerator;
     private final UserRepository userRepository;
     private final SemesterService semesterService;
+    private final DirectoryService directoryService;
 
     // google 인증 code 를 받아 사용자 정보 저장 또는 업데이트하여 JWT Token 반환
-    public JwtToken handleGoogleLogin(String code, String redirectUri) {
+    public LoginResponse handleGoogleLogin(String code, String redirectUri) {
         String accessToken = getAccessToken(code, redirectUri);
         GoogleResponse userInfo = getUserInfo(accessToken);
 
@@ -47,10 +53,29 @@ public class OauthTokenService {
         // JWT Token 생성
         JwtToken jwtToken = jwtGenerator.generateToken(user.getEmail());
 
-        // 현재 날짜 기준 Semester 자동 생성
-        UserSemester userSemester = semesterService.createUserSemesterFromNow(user);
+        // 현재 학기 조회 or 현재 날짜 기준 Semester 자동 생성
+        UserSemester userSemester = semesterService.getCurrentUserSemester(user)
+                .orElseGet(() -> semesterService.createUserSemesterFromNow(user));
 
-        return jwtToken; //Todo: directory/file 구현 후 loginResponse 로 변경
+        // 디렉토리 트리 조회
+        List<DirectoryTreeResponse> directories = directoryService.getDirectoryTree("Bearer " + jwtToken.getAccessToken(), userSemester.getId());
+
+        return LoginResponse.builder()
+                .user(LoginResponse.UserInfo.builder()
+                        .userId(user.getId())
+                        .name(user.getName())
+                        .build())
+                .semester(LoginResponse.SemesterInfo.builder()
+                        .id(userSemester.getId())
+                        .year(userSemester.getSemester().getYear())
+                        .term(userSemester.getSemester().getTerm().name())
+                        .build())
+                .token(LoginResponse.TokenInfo.builder()
+                        .accessToken(jwtToken.getAccessToken())
+                        .refreshToken(jwtToken.getRefreshToken())
+                        .build())
+                .directories(directories)
+                .build();
     }
 
     // google login 화면으로 redirect
