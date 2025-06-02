@@ -211,4 +211,8 @@ public class SemesterService {
             userSemesterRepository.save(us); // 명시적으로 save
         });
     }
+
+    public Optional<UserSemester> getCurrentUserSemester(User user) {
+        return userSemesterRepository.findByUserAndIsCurrentTrue(user);
+    }
 }

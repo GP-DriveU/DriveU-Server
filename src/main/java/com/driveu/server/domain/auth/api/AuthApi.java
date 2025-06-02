@@ -2,6 +2,7 @@ package com.driveu.server.domain.auth.api;
 
 import com.driveu.server.domain.auth.application.OauthTokenService;
 import com.driveu.server.domain.auth.domain.jwt.JwtToken;
+import com.driveu.server.domain.auth.dto.LoginResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -45,7 +46,7 @@ public class AuthApi {
             @ApiResponse(
                     responseCode = "200",
                     description = "JWT 토큰 발급 성공",
-                    content = @Content(schema = @Schema(implementation = JwtToken.class))
+                    content = @Content(schema = @Schema(implementation = LoginResponse.class))
             ),
             @ApiResponse(responseCode = "500", description = "내부 서버 오류")
     })
@@ -54,8 +55,8 @@ public class AuthApi {
             @RequestParam("redirect") String redirectUri
     ) {
         try {
-            JwtToken jwt = oauthTokenService.handleGoogleLogin(code, redirectUri);
-            return ResponseEntity.ok(Map.of("token", jwt));
+            LoginResponse loginResponse = oauthTokenService.handleGoogleLogin(code, redirectUri);
+            return ResponseEntity.ok(loginResponse);
         } catch (IllegalStateException e){
             return ResponseEntity.internalServerError().build();
         }
