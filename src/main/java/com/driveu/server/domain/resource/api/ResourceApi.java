@@ -5,6 +5,7 @@ import com.driveu.server.domain.resource.dto.request.FileSaveMetaDataRequest;
 import com.driveu.server.domain.resource.dto.request.LinkSaveRequest;
 import com.driveu.server.domain.resource.dto.response.ResourceResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -121,6 +122,18 @@ public class ResourceApi {
     }
 
     @GetMapping("/directories/{directoryId}/resources")
+    @Operation(summary = "디렉토리 별 리소스(파일, 링크, 노트) 필터링 조회", description = "sort (선택): 정렬 기준 (name, updatedAt, createdAt)\t\n" +
+            "favoriteOnly (선택): true일 경우 즐겨찾기 파일만 조회")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "링크 바로가기 url 조회 성공",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ResourceResponse.class)))),
+            @ApiResponse(responseCode = "404", description = "해당 Link 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(example = "{\"message\": \"Link not found\"}")
+                    )),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
     public ResponseEntity<?> getResourcesByDirectoryID(
             @PathVariable Long directoryId,
             @RequestParam(required = false, defaultValue = "updatedAt") String sort,
