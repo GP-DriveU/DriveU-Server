@@ -8,7 +8,7 @@ import lombok.*;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Table(name = "resource-directory")
+@Table(name = "resource_directory")
 public class ResourceDirectory {
 
     @Id
