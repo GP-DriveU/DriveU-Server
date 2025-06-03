@@ -34,9 +34,12 @@ public class S3Api {
                     content = @Content(schema = @Schema(implementation = FileUploadResponse.class))),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    public ResponseEntity<?> getUploadUrl(@RequestParam String filename) {
+    public ResponseEntity<?> getUploadUrl(
+            @RequestParam String filename,
+            @RequestHeader("Authorization") String token
+    ) {
         try {
-            FileUploadResponse fileUploadResponse = s3Service.generateUploadUrl(filename);
+            FileUploadResponse fileUploadResponse = s3Service.generateUploadUrl(token, filename);
             return ResponseEntity.ok(fileUploadResponse);
         } catch (IllegalStateException e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

@@ -1,5 +1,6 @@
 package com.driveu.server.domain.resource.application;
 
+import com.driveu.server.domain.auth.infra.JwtProvider;
 import com.driveu.server.domain.resource.domain.File;
 import com.driveu.server.domain.resource.domain.Note;
 import com.driveu.server.domain.resource.domain.type.FileExtension;
@@ -23,12 +24,15 @@ public class S3Service {
 
     private final S3Presigner s3Presigner;
     private final ResourceService resourceService;
+    private final JwtProvider jwtProvider;
 
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucketName;
 
-    public FileUploadResponse generateUploadUrl(String filename) {
-        String key = "userName" + "image/" + filename;
+    public FileUploadResponse generateUploadUrl(String token, String filename) {
+        String email = jwtProvider.getUserEmailFromToken(token);
+
+        String key = "uploads/" + email  + "/" + filename; // user 마다 다른 디렉토리
         Duration duration = Duration.ofMinutes(10);
 
         FileExtension fileExtension = FileExtension.fromFilename(filename);
