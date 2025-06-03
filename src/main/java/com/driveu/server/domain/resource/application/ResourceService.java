@@ -72,4 +72,12 @@ public class ResourceService {
         Link saved = linkRepository.save(link);
         return saved.getId();
     }
+
+    @Transactional
+    public String getLinkUrl(Long linkId) {
+        Link link = linkRepository.findById(linkId)
+                .orElseThrow(() -> new NotFoundException("Link not found."));
+
+        return link.getUrl();
+    }
 }

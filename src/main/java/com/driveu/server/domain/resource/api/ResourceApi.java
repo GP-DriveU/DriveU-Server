@@ -18,12 +18,12 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/directories")
+@RequestMapping("/api")
 public class ResourceApi {
 
     private final ResourceService resourceService;
 
-    @PostMapping("/{directoryId}/files")
+    @PostMapping("/directories/{directoryId}/files")
     @Operation(summary = "파일 업로드 후 메타 데이터 등록", description = " 파일 업로드 후 메타 데이터 등록")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "파일 메타 데이터 등록 성공",
@@ -34,7 +34,7 @@ public class ResourceApi {
             @ApiResponse(responseCode = "404", description = "해당 Directory 없음",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(example = "{\"message\": \"User not found\"}")
+                            schema = @Schema(example = "{\"message\": \"Directory not found\"}")
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
@@ -55,7 +55,7 @@ public class ResourceApi {
         }
     }
 
-    @PostMapping("/{directoryId}/links")
+    @PostMapping("/directories/{directoryId}/links")
     @Operation(summary = "링크 등록")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "링크 등록 성공",
@@ -66,7 +66,7 @@ public class ResourceApi {
             @ApiResponse(responseCode = "404", description = "해당 Directory 없음",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(example = "{\"message\": \"User not found\"}")
+                            schema = @Schema(example = "{\"message\": \"Directory not found\"}")
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
@@ -78,6 +78,37 @@ public class ResourceApi {
         try {
             Long linkId = resourceService.saveLink(directoryId, request);
             return ResponseEntity.ok(Map.of("linkId", linkId));
+        } catch (EntityNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", e.getMessage()));
+        } catch (IllegalStateException e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/links/{linkId}")
+    @Operation(summary = "링크 바로가기")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "링크 바로가기 url 조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(example = "{\"url\": \"https://youtube.com/watch?v=abc123\"}")
+                    )),
+            @ApiResponse(responseCode = "404", description = "해당 Link 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(example = "{\"message\": \"Link not found\"}")
+                    )),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
+    public ResponseEntity<?> getLinkUrl(
+            @PathVariable Long linkId,
+            @RequestHeader("Authorization") String token
+    ) {
+        try {
+            String url = resourceService.getLinkUrl(linkId);
+            return ResponseEntity.ok(Map.of("url", url));
         } catch (EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", e.getMessage()));
