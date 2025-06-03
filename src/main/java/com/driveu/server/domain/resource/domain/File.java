@@ -1,6 +1,5 @@
 package com.driveu.server.domain.resource.domain;
 
-import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.resource.domain.type.FileExtension;
 import jakarta.persistence.*;
 import lombok.*;
@@ -9,6 +8,7 @@ import lombok.*;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Builder
 @Table(name = "file")
 public class File extends Resource {
 
@@ -25,18 +25,8 @@ public class File extends Resource {
     @Column(name = "size")
     private Long size;
 
-    @Builder
-    private File(Directory directory, String title, String s3Path, FileExtension extension, Long size) {
-        super(directory);
-        this.title = title;
-        this.s3Path = s3Path;
-        this.extension = extension;
-        this.size = size;
-    }
-
-    public static File of(Directory directory, String title, String s3Path, FileExtension extension, Long size) {
+    public static File of(String title, String s3Path, FileExtension extension, Long size) {
         return File.builder()
-                .directory(directory)
                 .title(title)
                 .s3Path(s3Path)
                 .extension(extension)

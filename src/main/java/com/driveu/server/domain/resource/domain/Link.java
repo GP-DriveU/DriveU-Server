@@ -1,6 +1,5 @@
 package com.driveu.server.domain.resource.domain;
 
-import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.resource.domain.type.IconType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -9,6 +8,7 @@ import lombok.*;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Builder
 @Table(name = "link")
 public class Link extends Resource {
 
@@ -19,16 +19,8 @@ public class Link extends Resource {
     @Column(name = "icon_type")
     private IconType iconType;
 
-    @Builder
-    private Link(Directory directory, String url, IconType iconType) {
-        super(directory);
-        this.url = url;
-        this.iconType = iconType;
-    }
-
-    public static Link of(Directory directory, String url, IconType iconType) {
+    public static Link of(String url, IconType iconType) {
         return Link.builder()
-                .directory(directory)
                 .url(url)
                 .iconType(iconType)
                 .build();

@@ -10,6 +10,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -22,10 +24,6 @@ public abstract class Resource {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; // Resource ID로, 하위 엔티티에서도 PK로 사용됨
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "directory_id")
-    private Directory directory;
 
     @Column(name = "is_favorite")
     private boolean isFavorite = false;
@@ -44,7 +42,11 @@ public abstract class Resource {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    public Resource(Directory directory) {
-        this.directory = directory;
+    @OneToMany(mappedBy = "resource", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ResourceDirectory> resourceDirectories = new ArrayList<>();
+
+    public void addDirectory(Directory directory) {
+        ResourceDirectory mapping = ResourceDirectory.of(this, directory);
+        this.resourceDirectories.add(mapping);
     }
 }
