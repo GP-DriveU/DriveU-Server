@@ -29,7 +29,13 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+
 	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+
+	implementation platform("software.amazon.awssdk:bom:2.25.17") // 최신 버전 BOM (버전은 필요 시 조정)
+	implementation "software.amazon.awssdk:s3"
+	implementation "software.amazon.awssdk:auth"
+	implementation "software.amazon.awssdk:regions"
 
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'
