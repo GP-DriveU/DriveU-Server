@@ -1,6 +1,7 @@
 package com.driveu.server.domain.resource.domain;
 
 import com.driveu.server.domain.directory.domain.Directory;
+import com.driveu.server.domain.resource.domain.type.IconType;
 import jakarta.persistence.*;
 import lombok.*;
 
