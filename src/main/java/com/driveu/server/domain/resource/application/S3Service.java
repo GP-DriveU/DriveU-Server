@@ -25,7 +25,7 @@ public class S3Service {
     private String bucketName;
 
     public FileUploadResponse generateUploadUrl(String filename) {
-        String key = "uploads/" + filename;
+        String key = "userName" + "image/" + filename;
         Duration duration = Duration.ofMinutes(10);
 
         FileExtension fileExtension = FileExtension.fromFilename(filename);
@@ -47,7 +47,6 @@ public class S3Service {
     }
 
     public URL generateDownloadUrl(String key) {
-        key = "uploads/" + key;
         Duration duration = Duration.ofMinutes(5);
 
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
