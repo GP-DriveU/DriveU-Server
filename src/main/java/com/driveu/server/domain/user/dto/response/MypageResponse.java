@@ -16,5 +16,5 @@ public class MypageResponse {
     private String name;
     private String email;
     private List<UserSemesterResponse> semesters;
-    private List<TagInfo> tags;
+    private TagInfo tags;
 }

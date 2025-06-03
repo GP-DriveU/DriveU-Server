@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface DirectoryRepository extends JpaRepository<Directory, Long> {
@@ -28,5 +29,39 @@ public interface DirectoryRepository extends JpaRepository<Directory, Long> {
         AND d.isDeleted = false
     """)
     Optional<Integer> findMaxOrderOfTopLevel(@Param("userSemesterId") Long userSemesterId);
+
+    @Query("""
+        SELECT d 
+        FROM Directory d
+        JOIN DirectoryHierarchy dh 
+          ON dh.descendantId = d.id 
+            AND dh.depth = 1
+        JOIN Directory parent 
+          ON parent.id = dh.ancestorId 
+        WHERE d.userSemester.id = :userSemesterId
+          AND d.isDeleted = false
+          AND parent.isDeleted = false
+          AND parent.name = '학업'
+    """)
+    List<Directory> findByUserSemesterAndParentNameAcademic(
+            @Param("userSemesterId") Long userSemesterId
+    );
+
+    @Query("""
+        SELECT d 
+        FROM Directory d
+        JOIN DirectoryHierarchy dh 
+          ON dh.descendantId = d.id 
+            AND dh.depth = 1
+        JOIN Directory parent 
+          ON parent.id = dh.ancestorId 
+        WHERE d.userSemester.id = :userSemesterId
+          AND d.isDeleted = false
+          AND parent.isDeleted = false
+          AND parent.name  = '과목'
+    """)
+    List<Directory> findByUserSemesterAndParentNameSubject(
+            @Param("userSemesterId") Long userSemesterId
+    );
 
 }
