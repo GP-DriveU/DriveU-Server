@@ -8,7 +8,6 @@ import lombok.*;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Builder
 @Table(name = "link")
 public class Link extends Resource {
 
@@ -19,8 +18,16 @@ public class Link extends Resource {
     @Column(name = "icon_type")
     private IconType iconType;
 
-    public static Link of(String url, IconType iconType) {
+    @Builder
+    private Link(String title, String url, IconType iconType) {
+        super(title);
+        this.url = url;
+        this.iconType = iconType;
+    }
+
+    public static Link of(String title, String url, IconType iconType) {
         return Link.builder()
+                .title(title)
                 .url(url)
                 .iconType(iconType)
                 .build();

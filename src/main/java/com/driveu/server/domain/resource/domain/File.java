@@ -8,12 +8,8 @@ import lombok.*;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Builder
 @Table(name = "file")
 public class File extends Resource {
-
-    @Column(name = "title")
-    private String title;
 
     @Column(name = "s3_path")
     private String s3Path;
@@ -25,6 +21,14 @@ public class File extends Resource {
     @Column(name = "size")
     private Long size;
 
+    @Builder
+    private File(String title, String s3Path, FileExtension extension, Long size) {
+        super(title);
+        this.s3Path = s3Path;
+        this.extension = extension;
+        this.size = size;
+    }
+
     public static File of(String title, String s3Path, FileExtension extension, Long size) {
         return File.builder()
                 .title(title)
@@ -33,5 +37,4 @@ public class File extends Resource {
                 .size(size)
                 .build();
     }
-
 }

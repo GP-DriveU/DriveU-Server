@@ -25,6 +25,9 @@ public abstract class Resource {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; // Resource ID로, 하위 엔티티에서도 PK로 사용됨
 
+    @Column(name = "title")
+    private String title;
+
     @Column(name = "is_favorite")
     private boolean isFavorite = false;
 
@@ -44,6 +47,10 @@ public abstract class Resource {
 
     @OneToMany(mappedBy = "resource", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ResourceDirectory> resourceDirectories = new ArrayList<>();
+
+    public Resource(String title) {
+        this.title = title;
+    }
 
     public void addDirectory(Directory directory) {
         ResourceDirectory mapping = ResourceDirectory.of(this, directory);
