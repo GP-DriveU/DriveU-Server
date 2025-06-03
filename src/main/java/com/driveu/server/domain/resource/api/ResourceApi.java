@@ -3,6 +3,7 @@ package com.driveu.server.domain.resource.api;
 import com.driveu.server.domain.resource.application.ResourceService;
 import com.driveu.server.domain.resource.dto.request.FileSaveMetaDataRequest;
 import com.driveu.server.domain.resource.dto.request.LinkSaveRequest;
+import com.driveu.server.domain.resource.dto.response.ResourceResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -14,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -109,6 +111,25 @@ public class ResourceApi {
         try {
             String url = resourceService.getLinkUrl(linkId);
             return ResponseEntity.ok(Map.of("url", url));
+        } catch (EntityNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", e.getMessage()));
+        } catch (IllegalStateException e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/directories/{directoryId}/resources")
+    public ResponseEntity<?> getResourcesByDirectoryID(
+            @PathVariable Long directoryId,
+            @RequestParam(required = false, defaultValue = "updatedAt") String sort,
+            @RequestParam(required = false, defaultValue = "false") Boolean favoriteOnly,
+            @RequestHeader("Authorization") String token
+    ){
+        try {
+            List<ResourceResponse> response = resourceService.getResourcesByDirectory(directoryId, sort, favoriteOnly);
+            return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", e.getMessage()));

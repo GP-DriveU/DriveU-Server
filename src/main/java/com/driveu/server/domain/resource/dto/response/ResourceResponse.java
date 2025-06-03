@@ -23,34 +23,37 @@ public class ResourceResponse {
     private FileExtension extension; // File
     private IconType iconType;  // Link
     private boolean isFavorite;
+    private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private TagResponse tag;
 
-    public ResourceResponse fromNote(Note note, TagResponse tag) {
+    public static ResourceResponse fromNote(Note note, TagResponse tag) {
         return ResourceResponse.builder()
                 .id(note.getId())
                 .type("NOTE")
                 .title(note.getTitle())
                 .previewLine(note.getPreviewLine())
                 .isFavorite(note.isFavorite())
+                .createdAt(note.getCreatedAt())
                 .updatedAt(note.getUpdatedAt())
                 .tag(tag)
                 .build();
     }
 
-    public ResourceResponse fromFile(File file, TagResponse tag) {
+    public static ResourceResponse fromFile(File file, TagResponse tag) {
         return ResourceResponse.builder()
                 .id(file.getId())
                 .type("FILE")
                 .title(file.getTitle())
                 .extension(file.getExtension())
                 .isFavorite(file.isFavorite())
+                .createdAt(file.getCreatedAt())
                 .updatedAt(file.getUpdatedAt())
                 .tag(tag)
                 .build();
     }
 
-    public ResourceResponse fromLink(Link link, TagResponse tag) {
+    public static ResourceResponse fromLink(Link link, TagResponse tag) {
         return ResourceResponse.builder()
                 .id(link.getId())
                 .type("LINK")
@@ -58,6 +61,7 @@ public class ResourceResponse {
                 .url(link.getUrl())
                 .iconType(link.getIconType())
                 .isFavorite(link.isFavorite())
+                .createdAt(link.getCreatedAt())
                 .updatedAt(link.getUpdatedAt())
                 .tag(tag)
                 .build();
