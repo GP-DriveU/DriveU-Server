@@ -29,4 +29,5 @@ public interface UserSemesterRepository extends JpaRepository<UserSemester, Long
     List<UserSemester> findAllByUserAndLatestYear(@Param("user") User user);
 
 
+    List<UserSemester> findAllByUser(User user);
 }
