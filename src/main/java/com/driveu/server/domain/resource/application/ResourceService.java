@@ -1,8 +1,10 @@
 package com.driveu.server.domain.resource.application;
 
 import com.amazonaws.services.kms.model.NotFoundException;
+import com.driveu.server.domain.directory.dao.DirectoryHierarchyRepository;
 import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.domain.Directory;
+import com.driveu.server.domain.directory.domain.DirectoryHierarchy;
 import com.driveu.server.domain.resource.dao.*;
 import com.driveu.server.domain.resource.domain.*;
 import com.driveu.server.domain.resource.domain.type.FileExtension;
@@ -13,6 +15,7 @@ import com.driveu.server.domain.resource.dto.response.ResourceResponse;
 import com.driveu.server.domain.resource.dto.response.TagResponse;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -31,6 +34,7 @@ public class ResourceService {
     private final NoteRepository noteRepository;
     private final ResourceDirectoryRepository resourceDirectoryRepository;
     private final ResourceRepository resourceRepository;
+    private final DirectoryHierarchyRepository directoryHierarchyRepository;
 
     @Transactional
     public Long saveFile(Long directoryId, FileSaveMetaDataRequest request) {
@@ -165,32 +169,53 @@ public class ResourceService {
         Pageable top3 = PageRequest.of(0, 3);
         List<Resource> recentResources = resourceRepository.findTop3ByUserSemesterIdAndIsDeletedFalseOrderByUpdatedAtDesc(userSemesterId, top3);
 
-        List<ResourceResponse> recentResponses = recentResources.stream()
-                .map(resource -> {
-
-                    TagResponse tagResponse = null;
-
-                    Object resourceObject = getResourceById(resource.getId());
-
-                    return switch (resourceObject) {
-                        case File file -> ResourceResponse.fromFile(file, tagResponse);
-                        case Note note -> ResourceResponse.fromNote(note, tagResponse);
-                        case Link link -> ResourceResponse.fromLink(link, tagResponse);
-                        default -> throw new IllegalStateException("잘못된 Resource 형식입니다.");
-                    };
-                })
-                .toList();
-        return recentResponses;
+        return getResourceResponseList(recentResources);
     }
 
     public List<ResourceResponse> getTop3FavoriteFiles(Long userSemesterId) {
         Pageable top3 = PageRequest.of(0, 3);
         List<Resource> recentResources = resourceRepository.findTop3FavoriteByUserSemesterIdAndIsDeletedFalseOrderByUpdatedAtDesc(userSemesterId, top3);
 
+        return getResourceResponseList(recentResources);
+    }
+
+    private @NotNull List<ResourceResponse> getResourceResponseList(List<Resource> recentResources) {
         List<ResourceResponse> recentResponses = recentResources.stream()
                 .map(resource -> {
 
-                    TagResponse tagResponse = null;
+                    // 이 리소스가 연결된 모든 ResourceDirectory 조회
+                    List<ResourceDirectory> allAssociations = resourceDirectoryRepository.findAllByResourceAndResource_IsDeletedFalse(resource);
+
+                    // tag는 부모로 name이 "과목"인 디렉토리를 가지는 디렉토리
+                    Directory tagDirectory = null;
+
+                    // 각 연결된 디렉토리마다, 해당 디렉토리의 부모(깊이 1)로 "과목" 디렉토리가 있는지 확인
+                    for (ResourceDirectory rd : allAssociations) {
+                        Directory dir = rd.getDirectory();
+
+                        // 이 디렉토리의 모든 계층 정보 조회 (ancestorId, depth)
+                        List<DirectoryHierarchy> hierarchies =
+                                directoryHierarchyRepository.findAllByDescendantId(dir.getId());
+
+                        // depth == 1인 엔트리를 찾아, 그 ancestor의 이름이 "과목"인지 비교
+                        for (DirectoryHierarchy dh : hierarchies) {
+                            if (dh.getDepth() == 1) {
+                                Long ancestorId = dh.getAncestorId();
+                                Directory parentDir = directoryRepository.findById(ancestorId)
+                                        .orElse(null);
+                                if (parentDir != null && "과목".equals(parentDir.getName())
+                                        && !parentDir.isDeleted()) { //과목 디렉토리 삭제여부 판단
+                                    tagDirectory = dir;
+                                    break;
+                                }
+                            }
+                        }
+                        if (tagDirectory != null) break;
+                    }
+
+                    TagResponse tagResponse = (tagDirectory != null)
+                            ? TagResponse.of(tagDirectory)
+                            : null;
 
                     Object resourceObject = getResourceById(resource.getId());
 
@@ -204,7 +229,4 @@ public class ResourceService {
                 .toList();
         return recentResponses;
     }
-
-
-
 }
