@@ -8,8 +8,9 @@ import com.driveu.server.domain.auth.infra.JwtGenerator;
 import com.driveu.server.domain.directory.application.DirectoryService;
 import com.driveu.server.domain.directory.dto.response.DirectoryTreeResponse;
 import com.driveu.server.domain.semester.application.SemesterService;
-import com.driveu.server.domain.semester.dao.SemesterRepository;
+import com.driveu.server.domain.semester.dao.UserSemesterRepository;
 import com.driveu.server.domain.semester.domain.UserSemester;
+import com.driveu.server.domain.semester.dto.response.UserSemesterResponse;
 import com.driveu.server.domain.user.dao.UserRepository;
 import com.driveu.server.domain.user.domain.User;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,7 @@ public class OauthTokenService {
     private final UserRepository userRepository;
     private final SemesterService semesterService;
     private final DirectoryService directoryService;
+    private final UserSemesterRepository userSemesterRepository;
 
     // google 인증 code 를 받아 사용자 정보 저장 또는 업데이트하여 JWT Token 반환
     public LoginResponse handleGoogleLogin(String code, String redirectUri) {
@@ -57,6 +59,11 @@ public class OauthTokenService {
         UserSemester userSemester = semesterService.getCurrentUserSemester(user)
                 .orElseGet(() -> semesterService.createUserSemesterFromNow(user));
 
+        List<UserSemesterResponse> semesterResponses = userSemesterRepository.findAllByUser(user)
+                .stream()
+                .map(UserSemesterResponse::from)
+                .toList();
+
         // 디렉토리 트리 조회
         List<DirectoryTreeResponse> directories = directoryService.getDirectoryTree("Bearer " + jwtToken.getAccessToken(), userSemester.getId());
 
@@ -65,11 +72,7 @@ public class OauthTokenService {
                         .userId(user.getId())
                         .name(user.getName())
                         .build())
-                .semester(LoginResponse.SemesterInfo.builder()
-                        .id(userSemester.getId())
-                        .year(userSemester.getSemester().getYear())
-                        .term(userSemester.getSemester().getTerm().name())
-                        .build())
+                .semesters(semesterResponses)
                 .token(LoginResponse.TokenInfo.builder()
                         .accessToken(jwtToken.getAccessToken())
                         .refreshToken(jwtToken.getRefreshToken())
