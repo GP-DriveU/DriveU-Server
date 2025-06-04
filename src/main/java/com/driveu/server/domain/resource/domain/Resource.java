@@ -60,4 +60,9 @@ public abstract class Resource {
     public void updateFavorite(boolean isFavorite) {
         this.isFavorite = isFavorite;
     }
+
+    public void softDelete() {
+        this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
+    }
 }

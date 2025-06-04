@@ -3,6 +3,7 @@ package com.driveu.server.domain.resource.api;
 import com.driveu.server.domain.resource.application.ResourceService;
 import com.driveu.server.domain.resource.dto.request.FileSaveMetaDataRequest;
 import com.driveu.server.domain.resource.dto.request.LinkSaveRequest;
+import com.driveu.server.domain.resource.dto.response.ResourceDeleteResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceFavoriteResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -172,6 +173,35 @@ public class ResourceApi {
     ){
         try {
             ResourceFavoriteResponse response = resourceService.toggleFavorite(resourceId);
+            return ResponseEntity.ok(response);
+        } catch (EntityNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", e.getMessage()));
+        } catch (IllegalStateException e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/resources/{resourceId}")
+    @Operation(summary = "리소스 삭제",
+            description = "해당 리소스를 soft delete 합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "리소스 삭제 성공",
+                    content = @Content(schema = @Schema(implementation = ResourceDeleteResponse.class))),
+            @ApiResponse(responseCode = "404", description = "해당 리소스 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(example = "{\"message\": \"resource not found\"}")
+                    )),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
+    public ResponseEntity<?> deleteResource(
+            @RequestHeader("Authorization") String token,
+            @PathVariable("resourceId") Long resourceId
+    ){
+        try {
+            ResourceDeleteResponse response = resourceService.deleteResource(resourceId);
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

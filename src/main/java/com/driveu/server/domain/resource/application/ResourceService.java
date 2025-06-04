@@ -11,6 +11,7 @@ import com.driveu.server.domain.resource.domain.type.FileExtension;
 import com.driveu.server.domain.resource.domain.type.IconType;
 import com.driveu.server.domain.resource.dto.request.FileSaveMetaDataRequest;
 import com.driveu.server.domain.resource.dto.request.LinkSaveRequest;
+import com.driveu.server.domain.resource.dto.response.ResourceDeleteResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceFavoriteResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceResponse;
 import com.driveu.server.domain.resource.dto.response.TagResponse;
@@ -241,6 +242,17 @@ public class ResourceService {
        resource.updateFavorite(!isFavorite);
 
        return ResourceFavoriteResponse.of(resourceId, !isFavorite);
+
+    }
+
+    @Transactional
+    public ResourceDeleteResponse deleteResource(Long resourceId) {
+        Resource resource = resourceRepository.findById(resourceId)
+                .orElseThrow(() -> new EntityNotFoundException("Resource not found."));
+
+        resource.softDelete();
+
+        return ResourceDeleteResponse.from(resource);
 
     }
 }
