@@ -2,6 +2,10 @@ package com.driveu.server.domain.semester.application;
 
 import com.driveu.server.domain.auth.infra.JwtProvider;
 import com.driveu.server.domain.directory.application.DirectoryService;
+import com.driveu.server.domain.directory.dto.response.DirectoryTreeResponse;
+import com.driveu.server.domain.resource.application.ResourceService;
+import com.driveu.server.domain.resource.dao.FileRepository;
+import com.driveu.server.domain.resource.domain.File;
 import com.driveu.server.domain.semester.dao.SemesterRepository;
 import com.driveu.server.domain.semester.dao.UserSemesterRepository;
 import com.driveu.server.domain.semester.domain.Semester;
@@ -11,6 +15,7 @@ import com.driveu.server.domain.semester.dto.request.UserSemesterRequest;
 import com.driveu.server.domain.semester.dto.response.UserSemesterResponse;
 import com.driveu.server.domain.user.dao.UserRepository;
 import com.driveu.server.domain.user.domain.User;
+import com.driveu.server.domain.user.dto.response.MainPageResponse;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,6 +35,7 @@ public class SemesterService {
     private final JwtProvider jwtProvider;
     private final UserRepository userRepository;
     private final DirectoryService directoryService;
+    private final ResourceService resourceService;
 
     // user 최초 로그인 시 자동으로 생성되는 UserSemester
     @Transactional
@@ -214,5 +220,18 @@ public class SemesterService {
 
     public Optional<UserSemester> getCurrentUserSemester(User user) {
         return userSemesterRepository.findByUserAndIsCurrentTrue(user);
+    }
+
+    @Transactional
+    public MainPageResponse getMainPage(String token, Long semesterId) {
+
+        List<DirectoryTreeResponse> directoryTreeResponses = directoryService.getDirectoryTree(token, semesterId);
+
+
+        return MainPageResponse.builder()
+                .directories(directoryTreeResponses)
+                .recentFiles(resourceService.getTop3RecentFiles(semesterId))
+                .favoriteFiles(resourceService.getTop3FavoriteFiles(semesterId))
+                .build();
     }
 }

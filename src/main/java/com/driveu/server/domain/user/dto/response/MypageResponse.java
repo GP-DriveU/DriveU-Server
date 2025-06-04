@@ -1,6 +1,5 @@
 package com.driveu.server.domain.user.dto.response;
 
-import com.driveu.server.domain.resource.dto.response.TagResponse;
 import com.driveu.server.domain.semester.dto.response.UserSemesterResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,12 +1,11 @@
 package com.driveu.server.domain.resource.application;
 
 import com.amazonaws.services.kms.model.NotFoundException;
+import com.driveu.server.domain.directory.dao.DirectoryHierarchyRepository;
 import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.domain.Directory;
-import com.driveu.server.domain.resource.dao.FileRepository;
-import com.driveu.server.domain.resource.dao.LinkRepository;
-import com.driveu.server.domain.resource.dao.NoteRepository;
-import com.driveu.server.domain.resource.dao.ResourceDirectoryRepository;
+import com.driveu.server.domain.directory.domain.DirectoryHierarchy;
+import com.driveu.server.domain.resource.dao.*;
 import com.driveu.server.domain.resource.domain.*;
 import com.driveu.server.domain.resource.domain.type.FileExtension;
 import com.driveu.server.domain.resource.domain.type.IconType;
@@ -16,13 +15,13 @@ import com.driveu.server.domain.resource.dto.response.ResourceResponse;
 import com.driveu.server.domain.resource.dto.response.TagResponse;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,6 +33,8 @@ public class ResourceService {
     private final LinkRepository linkRepository;
     private final NoteRepository noteRepository;
     private final ResourceDirectoryRepository resourceDirectoryRepository;
+    private final ResourceRepository resourceRepository;
+    private final DirectoryHierarchyRepository directoryHierarchyRepository;
 
     @Transactional
     public Long saveFile(Long directoryId, FileSaveMetaDataRequest request) {
@@ -114,7 +115,7 @@ public class ResourceService {
 
     @Transactional
     public List<ResourceResponse> getResourcesByDirectory(Long directoryId, String sort, Boolean favoriteOnly){
-        List<ResourceDirectory> resourceDirectories = resourceDirectoryRepository.findAllByDirectoryId(directoryId);
+        List<ResourceDirectory> resourceDirectories = resourceDirectoryRepository.findAllByDirectory_IdAndDirectory_IsDeletedFalse(directoryId);
 
         // 중복 제거를 위해 Resource를 기준으로 그룹핑
         Map<Resource, List<ResourceDirectory>> grouped = resourceDirectories.stream()
@@ -125,7 +126,7 @@ public class ResourceService {
                     Resource resource = entry.getKey();
 
                     // 이 리소스가 연결된 모든 ResourceDirectory 조회
-                    List<ResourceDirectory> allAssociations = resourceDirectoryRepository.findAllByResource(resource);
+                    List<ResourceDirectory> allAssociations = resourceDirectoryRepository.findAllByResourceAndResource_IsDeletedFalse(resource);
 
                     // tag는 현재 directoryId와 다른 연결 디렉토리 중 첫 번째
                     Directory tagDirectory = allAssociations.stream()
@@ -136,18 +137,15 @@ public class ResourceService {
 
                     TagResponse tagResponse = (tagDirectory != null) ? TagResponse.of(tagDirectory) : null;
 
-                    System.out.println("Resource class: " + resource.getClass().getName());
-
                     Object resourceObject = getResourceById(resource.getId());
 
-                    System.out.println("resourceObject class: " + resourceObject.getClass().getName());
 
-
-                    if (resourceObject instanceof File file) return ResourceResponse.fromFile(file, tagResponse);
-                    else if (resourceObject instanceof Note note) return ResourceResponse.fromNote(note, tagResponse);
-                    else if (resourceObject instanceof Link link) return ResourceResponse.fromLink(link, tagResponse);
-
-                    throw new IllegalStateException("잘못된 Resource 형식입니다.");
+                    return switch (resourceObject) {
+                        case File file -> ResourceResponse.fromFile(file, tagResponse);
+                        case Note note -> ResourceResponse.fromNote(note, tagResponse);
+                        case Link link -> ResourceResponse.fromLink(link, tagResponse);
+                        default -> throw new IllegalStateException("잘못된 Resource 형식입니다.");
+                    };
 
                 })
                 .filter(dto -> favoriteOnly == null || !favoriteOnly || dto.isFavorite()) // 즐겨찾기 필터링
@@ -166,4 +164,69 @@ public class ResourceService {
         }
     }
 
+    public List<ResourceResponse> getTop3RecentFiles(Long userSemesterId) {
+
+        Pageable top3 = PageRequest.of(0, 3);
+        List<Resource> recentResources = resourceRepository.findTop3ByUserSemesterIdAndIsDeletedFalseOrderByUpdatedAtDesc(userSemesterId, top3);
+
+        return getResourceResponseList(recentResources);
+    }
+
+    public List<ResourceResponse> getTop3FavoriteFiles(Long userSemesterId) {
+        Pageable top3 = PageRequest.of(0, 3);
+        List<Resource> recentResources = resourceRepository.findTop3FavoriteByUserSemesterIdAndIsDeletedFalseOrderByUpdatedAtDesc(userSemesterId, top3);
+
+        return getResourceResponseList(recentResources);
+    }
+
+    private @NotNull List<ResourceResponse> getResourceResponseList(List<Resource> recentResources) {
+        List<ResourceResponse> recentResponses = recentResources.stream()
+                .map(resource -> {
+
+                    // 이 리소스가 연결된 모든 ResourceDirectory 조회
+                    List<ResourceDirectory> allAssociations = resourceDirectoryRepository.findAllByResourceAndResource_IsDeletedFalse(resource);
+
+                    // tag는 부모로 name이 "과목"인 디렉토리를 가지는 디렉토리
+                    Directory tagDirectory = null;
+
+                    // 각 연결된 디렉토리마다, 해당 디렉토리의 부모(깊이 1)로 "과목" 디렉토리가 있는지 확인
+                    for (ResourceDirectory rd : allAssociations) {
+                        Directory dir = rd.getDirectory();
+
+                        // 이 디렉토리의 모든 계층 정보 조회 (ancestorId, depth)
+                        List<DirectoryHierarchy> hierarchies =
+                                directoryHierarchyRepository.findAllByDescendantId(dir.getId());
+
+                        // depth == 1인 엔트리를 찾아, 그 ancestor의 이름이 "과목"인지 비교
+                        for (DirectoryHierarchy dh : hierarchies) {
+                            if (dh.getDepth() == 1) {
+                                Long ancestorId = dh.getAncestorId();
+                                Directory parentDir = directoryRepository.findById(ancestorId)
+                                        .orElse(null);
+                                if (parentDir != null && "과목".equals(parentDir.getName())
+                                        && !parentDir.isDeleted()) { //과목 디렉토리 삭제여부 판단
+                                    tagDirectory = dir;
+                                    break;
+                                }
+                            }
+                        }
+                        if (tagDirectory != null) break;
+                    }
+
+                    TagResponse tagResponse = (tagDirectory != null)
+                            ? TagResponse.of(tagDirectory)
+                            : null;
+
+                    Object resourceObject = getResourceById(resource.getId());
+
+                    return switch (resourceObject) {
+                        case File file -> ResourceResponse.fromFile(file, tagResponse);
+                        case Note note -> ResourceResponse.fromNote(note, tagResponse);
+                        case Link link -> ResourceResponse.fromLink(link, tagResponse);
+                        default -> throw new IllegalStateException("잘못된 Resource 형식입니다.");
+                    };
+                })
+                .toList();
+        return recentResponses;
+    }
 }
