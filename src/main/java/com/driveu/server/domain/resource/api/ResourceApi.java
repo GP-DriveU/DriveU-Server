@@ -3,6 +3,7 @@ package com.driveu.server.domain.resource.api;
 import com.driveu.server.domain.resource.application.ResourceService;
 import com.driveu.server.domain.resource.dto.request.FileSaveMetaDataRequest;
 import com.driveu.server.domain.resource.dto.request.LinkSaveRequest;
+import com.driveu.server.domain.resource.dto.response.ResourceFavoriteResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -142,6 +143,35 @@ public class ResourceApi {
     ){
         try {
             List<ResourceResponse> response = resourceService.getResourcesByDirectory(directoryId, sort, favoriteOnly);
+            return ResponseEntity.ok(response);
+        } catch (EntityNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", e.getMessage()));
+        } catch (IllegalStateException e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/resources/{resourceId}/favorite")
+    @Operation(summary = "리소스 즐겨찾기 추가/삭제",
+            description = "해당 리소스의 isFavorite 플래그를 변경하고 변경된 상태를 반환합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "리소스 즐겨찾기 수정 조회 성공",
+                    content = @Content(schema = @Schema(implementation = ResourceFavoriteResponse.class))),
+            @ApiResponse(responseCode = "404", description = "해당 리소스 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(example = "{\"message\": \"resource not found\"}")
+                    )),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
+    public ResponseEntity<?> toggleFavorite(
+            @RequestHeader("Authorization") String token,
+            @PathVariable("resourceId") Long resourceId
+    ){
+        try {
+            ResourceFavoriteResponse response = resourceService.toggleFavorite(resourceId);
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
