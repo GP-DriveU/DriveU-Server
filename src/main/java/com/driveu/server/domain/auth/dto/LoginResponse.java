@@ -2,6 +2,7 @@ package com.driveu.server.domain.auth.dto;
 
 
 import com.driveu.server.domain.directory.dto.response.DirectoryTreeResponse;
+import com.driveu.server.domain.semester.dto.response.UserSemesterResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,7 +16,7 @@ import java.util.List;
 @Builder
 public class LoginResponse {
     private UserInfo user;
-    private SemesterInfo semester;
+    private List<UserSemesterResponse> semesters;
     private TokenInfo token;
     private List<DirectoryTreeResponse> directories;
 
@@ -26,16 +27,6 @@ public class LoginResponse {
     public static class UserInfo {
         private Long userId;
         private String name;
-    }
-
-    @Getter
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Builder
-    public static class SemesterInfo {
-        private Long id;
-        private int year;
-        private String term;
     }
 
     @Getter
