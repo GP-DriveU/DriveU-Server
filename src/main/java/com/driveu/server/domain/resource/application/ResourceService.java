@@ -3,10 +3,7 @@ package com.driveu.server.domain.resource.application;
 import com.amazonaws.services.kms.model.NotFoundException;
 import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.domain.Directory;
-import com.driveu.server.domain.resource.dao.FileRepository;
-import com.driveu.server.domain.resource.dao.LinkRepository;
-import com.driveu.server.domain.resource.dao.NoteRepository;
-import com.driveu.server.domain.resource.dao.ResourceDirectoryRepository;
+import com.driveu.server.domain.resource.dao.*;
 import com.driveu.server.domain.resource.domain.*;
 import com.driveu.server.domain.resource.domain.type.FileExtension;
 import com.driveu.server.domain.resource.domain.type.IconType;
@@ -16,13 +13,12 @@ import com.driveu.server.domain.resource.dto.response.ResourceResponse;
 import com.driveu.server.domain.resource.dto.response.TagResponse;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,6 +30,7 @@ public class ResourceService {
     private final LinkRepository linkRepository;
     private final NoteRepository noteRepository;
     private final ResourceDirectoryRepository resourceDirectoryRepository;
+    private final ResourceRepository resourceRepository;
 
     @Transactional
     public Long saveFile(Long directoryId, FileSaveMetaDataRequest request) {
@@ -114,7 +111,7 @@ public class ResourceService {
 
     @Transactional
     public List<ResourceResponse> getResourcesByDirectory(Long directoryId, String sort, Boolean favoriteOnly){
-        List<ResourceDirectory> resourceDirectories = resourceDirectoryRepository.findAllByDirectoryId(directoryId);
+        List<ResourceDirectory> resourceDirectories = resourceDirectoryRepository.findAllByDirectory_IdAndDirectory_IsDeletedFalse(directoryId);
 
         // 중복 제거를 위해 Resource를 기준으로 그룹핑
         Map<Resource, List<ResourceDirectory>> grouped = resourceDirectories.stream()
@@ -125,7 +122,7 @@ public class ResourceService {
                     Resource resource = entry.getKey();
 
                     // 이 리소스가 연결된 모든 ResourceDirectory 조회
-                    List<ResourceDirectory> allAssociations = resourceDirectoryRepository.findAllByResource(resource);
+                    List<ResourceDirectory> allAssociations = resourceDirectoryRepository.findAllByResourceAndResource_IsDeletedFalse(resource);
 
                     // tag는 현재 directoryId와 다른 연결 디렉토리 중 첫 번째
                     Directory tagDirectory = allAssociations.stream()
@@ -136,18 +133,15 @@ public class ResourceService {
 
                     TagResponse tagResponse = (tagDirectory != null) ? TagResponse.of(tagDirectory) : null;
 
-                    System.out.println("Resource class: " + resource.getClass().getName());
-
                     Object resourceObject = getResourceById(resource.getId());
 
-                    System.out.println("resourceObject class: " + resourceObject.getClass().getName());
 
-
-                    if (resourceObject instanceof File file) return ResourceResponse.fromFile(file, tagResponse);
-                    else if (resourceObject instanceof Note note) return ResourceResponse.fromNote(note, tagResponse);
-                    else if (resourceObject instanceof Link link) return ResourceResponse.fromLink(link, tagResponse);
-
-                    throw new IllegalStateException("잘못된 Resource 형식입니다.");
+                    return switch (resourceObject) {
+                        case File file -> ResourceResponse.fromFile(file, tagResponse);
+                        case Note note -> ResourceResponse.fromNote(note, tagResponse);
+                        case Link link -> ResourceResponse.fromLink(link, tagResponse);
+                        default -> throw new IllegalStateException("잘못된 Resource 형식입니다.");
+                    };
 
                 })
                 .filter(dto -> favoriteOnly == null || !favoriteOnly || dto.isFavorite()) // 즐겨찾기 필터링
@@ -165,5 +159,52 @@ public class ResourceService {
             return Comparator.comparing(ResourceResponse::getUpdatedAt, Comparator.nullsLast(Comparator.naturalOrder()));
         }
     }
+
+    public List<ResourceResponse> getTop3RecentFiles(Long userSemesterId) {
+
+        Pageable top3 = PageRequest.of(0, 3);
+        List<Resource> recentResources = resourceRepository.findTop3ByUserSemesterIdAndIsDeletedFalseOrderByUpdatedAtDesc(userSemesterId, top3);
+
+        List<ResourceResponse> recentResponses = recentResources.stream()
+                .map(resource -> {
+
+                    TagResponse tagResponse = null;
+
+                    Object resourceObject = getResourceById(resource.getId());
+
+                    return switch (resourceObject) {
+                        case File file -> ResourceResponse.fromFile(file, tagResponse);
+                        case Note note -> ResourceResponse.fromNote(note, tagResponse);
+                        case Link link -> ResourceResponse.fromLink(link, tagResponse);
+                        default -> throw new IllegalStateException("잘못된 Resource 형식입니다.");
+                    };
+                })
+                .toList();
+        return recentResponses;
+    }
+
+    public List<ResourceResponse> getTop3FavoriteFiles(Long userSemesterId) {
+        Pageable top3 = PageRequest.of(0, 3);
+        List<Resource> recentResources = resourceRepository.findTop3FavoriteByUserSemesterIdAndIsDeletedFalseOrderByUpdatedAtDesc(userSemesterId, top3);
+
+        List<ResourceResponse> recentResponses = recentResources.stream()
+                .map(resource -> {
+
+                    TagResponse tagResponse = null;
+
+                    Object resourceObject = getResourceById(resource.getId());
+
+                    return switch (resourceObject) {
+                        case File file -> ResourceResponse.fromFile(file, tagResponse);
+                        case Note note -> ResourceResponse.fromNote(note, tagResponse);
+                        case Link link -> ResourceResponse.fromLink(link, tagResponse);
+                        default -> throw new IllegalStateException("잘못된 Resource 형식입니다.");
+                    };
+                })
+                .toList();
+        return recentResponses;
+    }
+
+
 
 }

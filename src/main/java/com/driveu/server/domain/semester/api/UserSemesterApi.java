@@ -3,6 +3,7 @@ package com.driveu.server.domain.semester.api;
 import com.driveu.server.domain.semester.application.SemesterService;
 import com.driveu.server.domain.semester.dto.request.UserSemesterRequest;
 import com.driveu.server.domain.semester.dto.response.UserSemesterResponse;
+import com.driveu.server.domain.user.dto.response.MainPageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -111,4 +112,34 @@ public class UserSemesterApi {
                     .body(Map.of("message", e.getMessage()));
         }
     }
+
+    @GetMapping("/{semesterId}/mainpage")
+    @Operation(summary = "메인 페이지 조회", description = "메인 페이지 조회")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "메인 페이지가 정상 조회되었습니다.",
+                    content = @Content(schema = @Schema(implementation = MainPageResponse.class))),
+            @ApiResponse(responseCode = "404", description = "학기또는 디렉토리를 찾지 못함",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(example = "{\"message\": \"User not found\"}")
+                    )),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
+    public ResponseEntity<?> getMainPage(
+            @PathVariable Long semesterId,
+            @RequestHeader("Authorization") String token
+    ){
+        try {
+            MainPageResponse mainPageResponse = semesterService.getMainPage(token, semesterId);
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(mainPageResponse);
+        } catch (EntityNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", e.getMessage()));
+        } catch (IllegalStateException e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", e.getMessage()));
+        }
+    }
+
 }
