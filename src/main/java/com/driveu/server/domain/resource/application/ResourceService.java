@@ -21,6 +21,7 @@ import com.driveu.server.domain.user.domain.User;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -141,33 +142,39 @@ public class ResourceService {
                 .map(entry -> {
                     Resource resource = entry.getKey();
 
-                    // 이 리소스가 연결된 모든 ResourceDirectory 조회
-                    List<ResourceDirectory> allAssociations = resourceDirectoryRepository.findAllByResourceAndResource_IsDeletedFalse(resource);
+                    TagResponse tagResponse = getTagResponseByDirectoryIdAndResource(directoryId, resource);
 
-                    // tag는 현재 directoryId와 다른 연결 디렉토리 중 첫 번째
-                    Directory tagDirectory = allAssociations.stream()
-                            .map(ResourceDirectory::getDirectory)
-                            .filter(dir -> !dir.getId().equals(directoryId))
-                            .findFirst()
-                            .orElse(null);
-
-                    TagResponse tagResponse = (tagDirectory != null) ? TagResponse.of(tagDirectory) : null;
-
-                    Object resourceObject = getResourceById(resource.getId());
-
-
-                    return switch (resourceObject) {
-                        case File file -> ResourceResponse.fromFile(file, tagResponse);
-                        case Note note -> ResourceResponse.fromNote(note, tagResponse);
-                        case Link link -> ResourceResponse.fromLink(link, tagResponse);
-                        default -> throw new IllegalStateException("잘못된 Resource 형식입니다.");
-                    };
+                    return getResourceResponse(resource, tagResponse);
 
                 })
                 .filter(dto -> favoriteOnly == null || !favoriteOnly || dto.isFavorite()) // 즐겨찾기 필터링
                 .sorted(getComparator(sort)) // 정렬
                 .collect(Collectors.toList());
+    }
 
+    private ResourceResponse getResourceResponse(Resource resource, TagResponse tagResponse) {
+        Object resourceObject = getResourceById(resource.getId());
+
+        return switch (resourceObject) {
+            case File file -> ResourceResponse.fromFile(file, tagResponse);
+            case Note note -> ResourceResponse.fromNote(note, tagResponse);
+            case Link link -> ResourceResponse.fromLink(link, tagResponse);
+            default -> throw new IllegalStateException("잘못된 Resource 형식입니다.");
+        };
+    }
+
+    private @Nullable TagResponse getTagResponseByDirectoryIdAndResource(Long directoryId, Resource resource) {
+        // 이 리소스가 연결된 모든 ResourceDirectory 조회
+        List<ResourceDirectory> allAssociations = resourceDirectoryRepository.findAllByResourceAndResource_IsDeletedFalse(resource);
+
+        // tag는 현재 directoryId와 다른 연결 디렉토리 중 첫 번째
+        Directory tagDirectory = allAssociations.stream()
+                .map(ResourceDirectory::getDirectory)
+                .filter(dir -> !dir.getId().equals(directoryId))
+                .findFirst()
+                .orElse(null);
+
+        return (tagDirectory != null) ? TagResponse.of(tagDirectory) : null;
     }
 
     private Comparator<ResourceResponse> getComparator(String sort) {
@@ -196,54 +203,50 @@ public class ResourceService {
     }
 
     private @NotNull List<ResourceResponse> getResourceResponseList(List<Resource> recentResources) {
-        List<ResourceResponse> recentResponses = recentResources.stream()
+        return recentResources.stream()
                 .map(resource -> {
 
-                    // 이 리소스가 연결된 모든 ResourceDirectory 조회
-                    List<ResourceDirectory> allAssociations = resourceDirectoryRepository.findAllByResourceAndResource_IsDeletedFalse(resource);
+                    TagResponse tagResponse = getTagResponseByResource(resource);
 
-                    // tag는 부모로 name이 "과목"인 디렉토리를 가지는 디렉토리
-                    Directory tagDirectory = null;
-
-                    // 각 연결된 디렉토리마다, 해당 디렉토리의 부모(깊이 1)로 "과목" 디렉토리가 있는지 확인
-                    for (ResourceDirectory rd : allAssociations) {
-                        Directory dir = rd.getDirectory();
-
-                        // 이 디렉토리의 모든 계층 정보 조회 (ancestorId, depth)
-                        List<DirectoryHierarchy> hierarchies =
-                                directoryHierarchyRepository.findAllByDescendantId(dir.getId());
-
-                        // depth == 1인 엔트리를 찾아, 그 ancestor의 이름이 "과목"인지 비교
-                        for (DirectoryHierarchy dh : hierarchies) {
-                            if (dh.getDepth() == 1) {
-                                Long ancestorId = dh.getAncestorId();
-                                Directory parentDir = directoryRepository.findById(ancestorId)
-                                        .orElse(null);
-                                if (parentDir != null && "과목".equals(parentDir.getName())
-                                        && !parentDir.isDeleted()) { //과목 디렉토리 삭제여부 판단
-                                    tagDirectory = dir;
-                                    break;
-                                }
-                            }
-                        }
-                        if (tagDirectory != null) break;
-                    }
-
-                    TagResponse tagResponse = (tagDirectory != null)
-                            ? TagResponse.of(tagDirectory)
-                            : null;
-
-                    Object resourceObject = getResourceById(resource.getId());
-
-                    return switch (resourceObject) {
-                        case File file -> ResourceResponse.fromFile(file, tagResponse);
-                        case Note note -> ResourceResponse.fromNote(note, tagResponse);
-                        case Link link -> ResourceResponse.fromLink(link, tagResponse);
-                        default -> throw new IllegalStateException("잘못된 Resource 형식입니다.");
-                    };
+                    return getResourceResponse(resource, tagResponse);
                 })
                 .toList();
-        return recentResponses;
+    }
+
+    public @Nullable TagResponse getTagResponseByResource(Resource resource) {
+        // 이 리소스가 연결된 모든 ResourceDirectory 조회
+        List<ResourceDirectory> allAssociations = resourceDirectoryRepository.findAllByResourceAndResource_IsDeletedFalse(resource);
+
+        // tag는 부모로 name이 "과목"인 디렉토리를 가지는 디렉토리
+        Directory tagDirectory = null;
+
+        // 각 연결된 디렉토리마다, 해당 디렉토리의 부모(깊이 1)로 "과목" 디렉토리가 있는지 확인
+        for (ResourceDirectory rd : allAssociations) {
+            Directory dir = rd.getDirectory();
+
+            // 이 디렉토리의 모든 계층 정보 조회 (ancestorId, depth)
+            List<DirectoryHierarchy> hierarchies =
+                    directoryHierarchyRepository.findAllByDescendantId(dir.getId());
+
+            // depth == 1인 엔트리를 찾아, 그 ancestor의 이름이 "과목"인지 비교
+            for (DirectoryHierarchy dh : hierarchies) {
+                if (dh.getDepth() == 1) {
+                    Long ancestorId = dh.getAncestorId();
+                    Directory parentDir = directoryRepository.findById(ancestorId)
+                            .orElse(null);
+                    if (parentDir != null && "과목".equals(parentDir.getName())
+                            && !parentDir.isDeleted()) { //과목 디렉토리 삭제여부 판단
+                        tagDirectory = dir;
+                        break;
+                    }
+                }
+            }
+            if (tagDirectory != null) break;
+        }
+
+        return (tagDirectory != null)
+                ? TagResponse.of(tagDirectory)
+                : null;
     }
 
     @Transactional

@@ -10,4 +10,5 @@ import lombok.Getter;
 public class NoteCreateRequest {
     private String title;
     private String content;
+    private Long tagId;
 }
