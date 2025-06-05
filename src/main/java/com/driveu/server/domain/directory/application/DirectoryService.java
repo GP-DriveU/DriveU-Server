@@ -7,6 +7,9 @@ import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.directory.domain.DirectoryHierarchy;
 import com.driveu.server.domain.directory.dto.request.*;
 import com.driveu.server.domain.directory.dto.response.*;
+import com.driveu.server.domain.resource.dao.ResourceDirectoryRepository;
+import com.driveu.server.domain.resource.domain.Resource;
+import com.driveu.server.domain.resource.domain.ResourceDirectory;
 import com.driveu.server.domain.semester.dao.UserSemesterRepository;
 import com.driveu.server.domain.semester.domain.UserSemester;
 import com.driveu.server.domain.user.dao.UserRepository;
@@ -29,6 +32,7 @@ public class DirectoryService {
     private final JwtProvider jwtProvider;
     private final UserRepository userRepository;
     private final UserSemesterRepository userSemesterRepository;
+    private final ResourceDirectoryRepository resourceDirectoryRepository;
 
     // UserSemester 생성시 Default directory 생성
     @Transactional
@@ -219,15 +223,33 @@ public class DirectoryService {
 
         // 재귀적으로 삭제
         List<Long> descendantIds = directoryHierarchyRepository.findAllDescendantIdsByAncestorId(directoryId);
-        List<Directory> toDelete = new ArrayList<>(directoryRepository.findAllById(descendantIds)); // 수정 가능한 리스트로 변환
+        List<Directory> toDeleteDir = new ArrayList<>(directoryRepository.findAllById(descendantIds)); // 수정 가능한 리스트로 변환
 
-        toDelete.add(directory); // 자기 자신 포함
+        toDeleteDir.add(directory); // 자기 자신 포함
 
-        for (Directory dir : toDelete) {
+        for (Directory dir : toDeleteDir) {
             dir.softDelete(); // isDeleted = true, deletedAt = now
             directoryRepository.save(dir); // 명시적 저장
         }
-        //Todo: 디렉토리 내부 리소스도 soft delete
+        //디렉토리 내부 리소스도 soft delete
+        Set<Resource> resourcesToSoftDelete = new HashSet<>();
+        for (Directory delDir : toDeleteDir) {
+            Long delDirId = delDir.getId();
+            // 해당 디렉토리에 속한 모든 ResourceDirectory 엔티티 조회
+            List<ResourceDirectory> associations =
+                    resourceDirectoryRepository.findAllByDirectory_IdAndResource_IsDeletedFalse(delDirId);
+
+            // ResourceDirectory → Resource 객체를 모음
+            for (ResourceDirectory rd : associations) {
+                Resource r = rd.getResource();
+                resourcesToSoftDelete.add(r);
+            }
+        }
+
+        // Resource 들을 soft‐delete 처리
+        for (Resource res : resourcesToSoftDelete) {
+            res.softDelete();
+        }
     }
 
     @Transactional
