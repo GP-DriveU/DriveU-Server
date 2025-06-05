@@ -49,7 +49,7 @@ public class ResourceApi {
             @RequestHeader("Authorization") String token
     ) {
         try {
-            Long fileId = resourceService.saveFile(directoryId, request);
+            Long fileId = resourceService.saveFile(token, directoryId, request);
             return ResponseEntity.ok(Map.of("fileId", fileId));
         } catch (EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -201,7 +201,7 @@ public class ResourceApi {
             @PathVariable("resourceId") Long resourceId
     ){
         try {
-            ResourceDeleteResponse response = resourceService.deleteResource(resourceId);
+            ResourceDeleteResponse response = resourceService.deleteResource(token, resourceId);
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

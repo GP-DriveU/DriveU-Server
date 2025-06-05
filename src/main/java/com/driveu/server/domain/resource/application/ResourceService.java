@@ -1,6 +1,7 @@
 package com.driveu.server.domain.resource.application;
 
 import com.amazonaws.services.kms.model.NotFoundException;
+import com.driveu.server.domain.auth.infra.JwtProvider;
 import com.driveu.server.domain.directory.dao.DirectoryHierarchyRepository;
 import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.domain.Directory;
@@ -15,6 +16,8 @@ import com.driveu.server.domain.resource.dto.response.ResourceDeleteResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceFavoriteResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceResponse;
 import com.driveu.server.domain.resource.dto.response.TagResponse;
+import com.driveu.server.domain.user.dao.UserRepository;
+import com.driveu.server.domain.user.domain.User;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -37,9 +40,16 @@ public class ResourceService {
     private final ResourceDirectoryRepository resourceDirectoryRepository;
     private final ResourceRepository resourceRepository;
     private final DirectoryHierarchyRepository directoryHierarchyRepository;
+    private final JwtProvider jwtProvider;
+    private final UserRepository userRepository;
 
     @Transactional
-    public Long saveFile(Long directoryId, FileSaveMetaDataRequest request) {
+    public Long saveFile(String token, Long directoryId, FileSaveMetaDataRequest request) {
+        // 토큰에서 이메일 뽑아내고 유저 조회
+        String email = jwtProvider.getUserEmailFromToken(token);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
         Directory directory = directoryRepository.findById(directoryId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 디렉토리입니다."));
 
@@ -58,6 +68,10 @@ public class ResourceService {
         if (tagDirectory != null) {
             file.addDirectory(tagDirectory);
         }
+
+        // 사용자 usedStorage 누적 업데이트
+        user.setUsedStorage(user.getUsedStorage() + request.getSize());
+        userRepository.save(user);
 
         File saved = fileRepository.save(file); // cascade 설정으로 resource_directory도 함께 저장
 
@@ -246,11 +260,25 @@ public class ResourceService {
     }
 
     @Transactional
-    public ResourceDeleteResponse deleteResource(Long resourceId) {
+    public ResourceDeleteResponse deleteResource(String token, Long resourceId) {
+        // 토큰에서 이메일 뽑아내고 유저 조회
+        String email = jwtProvider.getUserEmailFromToken(token);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
         Resource resource = resourceRepository.findById(resourceId)
                 .orElseThrow(() -> new EntityNotFoundException("Resource not found."));
 
+        // resource soft delete
         resource.softDelete();
+
+        // 사용자 usedStorage 누적 업데이트
+        Object resourceObject = getResourceById(resource.getId());
+
+        if (resourceObject instanceof File file) {
+            user.setUsedStorage(user.getUsedStorage() - file.getSize());
+            userRepository.save(user);
+        }
 
         return ResourceDeleteResponse.from(resource);
 

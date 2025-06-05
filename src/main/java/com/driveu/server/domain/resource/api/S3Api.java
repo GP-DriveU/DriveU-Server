@@ -36,10 +36,11 @@ public class S3Api {
     })
     public ResponseEntity<?> getUploadUrl(
             @RequestParam String filename,
+            @RequestParam int fileSize,
             @RequestHeader("Authorization") String token
     ) {
         try {
-            FileUploadResponse fileUploadResponse = s3Service.generateUploadUrl(token, filename);
+            FileUploadResponse fileUploadResponse = s3Service.generateUploadUrl(token, filename, fileSize);
             return ResponseEntity.ok(fileUploadResponse);
         } catch (IllegalStateException e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
