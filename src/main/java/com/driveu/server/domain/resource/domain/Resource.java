@@ -56,4 +56,13 @@ public abstract class Resource {
         ResourceDirectory mapping = ResourceDirectory.of(this, directory);
         this.resourceDirectories.add(mapping);
     }
+
+    public void updateFavorite(boolean isFavorite) {
+        this.isFavorite = isFavorite;
+    }
+
+    public void softDelete() {
+        this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
+    }
 }

@@ -5,6 +5,9 @@ import com.driveu.server.domain.resource.domain.File;
 import com.driveu.server.domain.resource.domain.Note;
 import com.driveu.server.domain.resource.domain.type.FileExtension;
 import com.driveu.server.domain.resource.dto.response.FileUploadResponse;
+import com.driveu.server.domain.user.dao.UserRepository;
+import com.driveu.server.domain.user.domain.User;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -25,12 +28,22 @@ public class S3Service {
     private final S3Presigner s3Presigner;
     private final ResourceService resourceService;
     private final JwtProvider jwtProvider;
+    private final UserRepository userRepository;
 
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucketName;
 
-    public FileUploadResponse generateUploadUrl(String token, String filename) {
+    public FileUploadResponse generateUploadUrl(String token, String filename, int size) {
+        // 토큰에서 이메일 뽑아내고 유저 조회
         String email = jwtProvider.getUserEmailFromToken(token);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        // 업로드하려는 파일 크기 검증
+        if (user.getUsedStorage() + size > user.getMaxStorage()) {
+            throw new IllegalStateException("저장 용량을 초과했습니다. (used: "
+                    + user.getUsedStorage() + " bytes, max: " + user.getMaxStorage() + " bytes)");
+        }
 
         String key = "uploads/" + email  + "/" + filename; // user 마다 다른 디렉토리
         Duration duration = Duration.ofMinutes(10);
