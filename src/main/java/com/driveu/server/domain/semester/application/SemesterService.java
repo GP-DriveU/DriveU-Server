@@ -2,6 +2,7 @@ package com.driveu.server.domain.semester.application;
 
 import com.driveu.server.domain.auth.infra.JwtProvider;
 import com.driveu.server.domain.directory.application.DirectoryService;
+import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.dto.response.DirectoryTreeResponse;
 import com.driveu.server.domain.resource.application.ResourceService;
 import com.driveu.server.domain.resource.dao.FileRepository;
@@ -68,6 +69,10 @@ public class SemesterService {
 
         Semester semester = semesterRepository.findByYearAndTerm(request.getYear(), term)
                 .orElseGet(() -> semesterRepository.save(Semester.of(request.getYear(), term)));
+
+        if (userSemesterRepository.findByUserAndSemesterAndIsDeletedFalse(user, semester).isPresent()) {
+            throw new IllegalStateException("Cannot create to the same semester");
+        }
 
         Optional<UserSemester> currentOpt = userSemesterRepository.findByUserAndIsCurrentTrue(user);
 
@@ -205,6 +210,10 @@ public class SemesterService {
         userSemesterRepository.save(userSemester); // 명시적으로 변경사항 반영
 
         System.out.println(userSemesterRepository.findById(userSemesterId).get().isDeleted());
+
+        // 하위 디렉토리 전부 soft delete
+        directoryService.softDeleteDirectoryListNotHierarchyByUserSemester(userSemester);
+
         if (CurrentDelete) {
             updateCurrentSemester(user);
         }
@@ -230,7 +239,6 @@ public class SemesterService {
     public MainPageResponse getMainPage(String token, Long semesterId) {
 
         List<DirectoryTreeResponse> directoryTreeResponses = directoryService.getDirectoryTree(token, semesterId);
-
 
         return MainPageResponse.builder()
                 .directories(directoryTreeResponses)

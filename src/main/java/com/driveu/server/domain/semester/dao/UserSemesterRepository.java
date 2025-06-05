@@ -1,5 +1,6 @@
 package com.driveu.server.domain.semester.dao;
 
+import com.driveu.server.domain.semester.domain.Semester;
 import com.driveu.server.domain.semester.domain.UserSemester;
 import com.driveu.server.domain.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -28,6 +29,7 @@ public interface UserSemesterRepository extends JpaRepository<UserSemester, Long
 """)
     List<UserSemester> findAllByUserAndLatestYear(@Param("user") User user);
 
+    List<UserSemester> findByUserAndIsDeletedFalse(User user);
 
-    List<UserSemester> findAllByUser(User user);
+    Optional<UserSemester> findByUserAndSemesterAndIsDeletedFalse(User user, Semester semester);
 }
