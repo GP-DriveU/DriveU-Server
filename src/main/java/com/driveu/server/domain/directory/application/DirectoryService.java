@@ -232,6 +232,22 @@ public class DirectoryService {
             directoryRepository.save(dir); // 명시적 저장
         }
         //디렉토리 내부 리소스도 soft delete
+        deleteResourceFromDirectoryList(toDeleteDir);
+    }
+
+    // 학기 삭제 - userSemester 를 받아서 하위 디렉토리+리소스 모두 삭제
+    public void softDeleteDirectoryListNotHierarchyByUserSemester(UserSemester userSemester) {
+        List<Directory> toDeleteDirectoryList = directoryRepository.findByUserSemester(userSemester);
+
+        for (Directory dir : toDeleteDirectoryList) {
+            dir.softDelete(); // isDeleted = true, deletedAt = now
+            directoryRepository.save(dir); // 명시적 저장
+        }
+        //디렉토리 내부 리소스도 soft delete
+        deleteResourceFromDirectoryList(toDeleteDirectoryList);
+    }
+
+    private void deleteResourceFromDirectoryList(List<Directory> toDeleteDir) {
         Set<Resource> resourcesToSoftDelete = new HashSet<>();
         for (Directory delDir : toDeleteDir) {
             Long delDirId = delDir.getId();

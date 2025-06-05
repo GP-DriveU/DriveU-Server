@@ -1,6 +1,7 @@
 package com.driveu.server.domain.directory.dao;
 
 import com.driveu.server.domain.directory.domain.Directory;
+import com.driveu.server.domain.semester.domain.UserSemester;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -64,4 +65,5 @@ public interface DirectoryRepository extends JpaRepository<Directory, Long> {
             @Param("userSemesterId") Long userSemesterId
     );
 
+    List<Directory> findByUserSemester(UserSemester userSemester);
 }

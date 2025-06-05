@@ -64,7 +64,7 @@ public class UserSemesterApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    public ResponseEntity<?> createUserSemester(
+    public ResponseEntity<?> updateUserSemester(
             @PathVariable Long id,
             @RequestBody UserSemesterRequest request,
             @RequestHeader("Authorization") String token
@@ -96,7 +96,7 @@ public class UserSemesterApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    public ResponseEntity<?> createUserSemester(
+    public ResponseEntity<?> deleteUserSemester(
             @PathVariable Long id,
             @RequestHeader("Authorization") String token
     ){

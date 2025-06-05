@@ -2,6 +2,7 @@ package com.driveu.server.domain.semester.application;
 
 import com.driveu.server.domain.auth.infra.JwtProvider;
 import com.driveu.server.domain.directory.application.DirectoryService;
+import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.dto.response.DirectoryTreeResponse;
 import com.driveu.server.domain.resource.application.ResourceService;
 import com.driveu.server.domain.resource.dao.FileRepository;
@@ -36,6 +37,7 @@ public class SemesterService {
     private final UserRepository userRepository;
     private final DirectoryService directoryService;
     private final ResourceService resourceService;
+    private final DirectoryRepository directoryRepository;
 
     // user 최초 로그인 시 자동으로 생성되는 UserSemester
     @Transactional
@@ -205,6 +207,10 @@ public class SemesterService {
         userSemesterRepository.save(userSemester); // 명시적으로 변경사항 반영
 
         System.out.println(userSemesterRepository.findById(userSemesterId).get().isDeleted());
+
+        // 하위 디렉토리 전부 soft delete
+        directoryService.softDeleteDirectoryListNotHierarchyByUserSemester(userSemester);
+
         if (CurrentDelete) {
             updateCurrentSemester(user);
         }
