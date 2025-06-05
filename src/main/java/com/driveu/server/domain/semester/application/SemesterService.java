@@ -85,6 +85,10 @@ public class SemesterService {
 
         UserSemester userSemester = UserSemester.of(user, semester, isCurrent);
         UserSemester savedUserSemester = userSemesterRepository.save(userSemester);
+
+        // semester 의 디폴트 디렉토리 생성
+        directoryService.createDefaultDirectories(savedUserSemester);
+
         return UserSemesterResponse.from(savedUserSemester);
     }
 
