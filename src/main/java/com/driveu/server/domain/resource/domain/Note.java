@@ -32,4 +32,9 @@ public class Note extends Resource {
                 .previewLine(previewLine)
                 .build();
     }
+
+    public void updateContent(String content, String previewLine){
+        this.content = content;
+        this.previewLine = previewLine;
+    }
 }

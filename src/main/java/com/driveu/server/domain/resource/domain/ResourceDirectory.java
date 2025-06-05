@@ -37,4 +37,9 @@ public class ResourceDirectory {
                 .directory(directory)
                 .build();
     }
+
+    public void deleteRelation() {
+        this.resource = null;
+        this.directory = null;
+    }
 }
