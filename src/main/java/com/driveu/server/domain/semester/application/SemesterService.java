@@ -37,7 +37,6 @@ public class SemesterService {
     private final UserRepository userRepository;
     private final DirectoryService directoryService;
     private final ResourceService resourceService;
-    private final DirectoryRepository directoryRepository;
 
     // user 최초 로그인 시 자동으로 생성되는 UserSemester
     @Transactional
@@ -70,6 +69,10 @@ public class SemesterService {
 
         Semester semester = semesterRepository.findByYearAndTerm(request.getYear(), term)
                 .orElseGet(() -> semesterRepository.save(Semester.of(request.getYear(), term)));
+
+        if (userSemesterRepository.findByUserAndSemesterAndIsDeletedIsFalse(user, semester).isPresent()) {
+            throw new IllegalStateException("Cannot create to the same semester");
+        }
 
         Optional<UserSemester> currentOpt = userSemesterRepository.findByUserAndIsCurrentTrue(user);
 
