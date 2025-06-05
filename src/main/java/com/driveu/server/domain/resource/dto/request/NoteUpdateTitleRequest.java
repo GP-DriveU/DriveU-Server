@@ -7,6 +7,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 @Builder
-public class NoteUpdateRequest {
+public class NoteUpdateTitleRequest {
     private String title;
 }

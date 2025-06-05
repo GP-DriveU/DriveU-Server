@@ -2,7 +2,8 @@ package com.driveu.server.domain.resource.api;
 
 import com.driveu.server.domain.resource.application.NoteService;
 import com.driveu.server.domain.resource.dto.request.NoteCreateRequest;
-import com.driveu.server.domain.resource.dto.request.NoteUpdateRequest;
+import com.driveu.server.domain.resource.dto.request.NoteUpdateContentRequest;
+import com.driveu.server.domain.resource.dto.request.NoteUpdateTitleRequest;
 import com.driveu.server.domain.resource.dto.response.NoteCreateResponse;
 import com.driveu.server.domain.resource.dto.response.NoteResponse;
 import com.driveu.server.domain.resource.dto.response.NoteUpdateTitleResponse;
@@ -102,10 +103,42 @@ public class NoteApi {
     public ResponseEntity<?> updateNoteTitle(
             @RequestHeader("Authorization") String token,
             @PathVariable Long noteId,
-            @RequestBody NoteUpdateRequest request
+            @RequestBody NoteUpdateTitleRequest request
     ){
         try {
             NoteUpdateTitleResponse response = noteService.updateNoteTitle(noteId, request);
+            return ResponseEntity.ok(response);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "서버 에러가 발생했습니다."));
+        }
+    }
+
+    @PatchMapping("/notes/{noteId}/content")
+    @Operation(summary = "노트 content 수정", description = "노트의 내용을 수정합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공적으로 노트 내용이 수정되었습니다.",
+                    content = @Content(schema = @Schema(implementation = NoteCreateResponse.class))),
+            @ApiResponse(responseCode = "404", description = "해당 Note 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(example = "{\"message\": \"Directory not found\"}")
+                    )),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
+    public ResponseEntity<?> updateNoteTitle(
+            @RequestHeader("Authorization") String token,
+            @PathVariable Long noteId,
+            @RequestBody NoteUpdateContentRequest request
+    ){
+        try {
+            NoteCreateResponse response = noteService.updateNoteContent(noteId, request);
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
