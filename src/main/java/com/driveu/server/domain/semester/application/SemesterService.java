@@ -70,7 +70,7 @@ public class SemesterService {
         Semester semester = semesterRepository.findByYearAndTerm(request.getYear(), term)
                 .orElseGet(() -> semesterRepository.save(Semester.of(request.getYear(), term)));
 
-        if (userSemesterRepository.findByUserAndSemesterAndIsDeletedIsFalse(user, semester).isPresent()) {
+        if (userSemesterRepository.findByUserAndSemesterAndIsDeletedFalse(user, semester).isPresent()) {
             throw new IllegalStateException("Cannot create to the same semester");
         }
 
@@ -239,7 +239,6 @@ public class SemesterService {
     public MainPageResponse getMainPage(String token, Long semesterId) {
 
         List<DirectoryTreeResponse> directoryTreeResponses = directoryService.getDirectoryTree(token, semesterId);
-
 
         return MainPageResponse.builder()
                 .directories(directoryTreeResponses)

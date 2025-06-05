@@ -28,7 +28,7 @@ public class MyPageService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->  new EntityNotFoundException("User not found"));
 
-        List<UserSemesterResponse> semesterResponses = userSemesterRepository.findAllByUser(user)
+        List<UserSemesterResponse> semesterResponses = userSemesterRepository.findByUserAndIsDeletedFalse(user)
                 .stream()
                 .map(UserSemesterResponse::from)
                 .toList();

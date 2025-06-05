@@ -59,7 +59,7 @@ public class OauthTokenService {
         UserSemester userSemester = semesterService.getCurrentUserSemester(user)
                 .orElseGet(() -> semesterService.createUserSemesterFromNow(user));
 
-        List<UserSemesterResponse> semesterResponses = userSemesterRepository.findAllByUser(user)
+        List<UserSemesterResponse> semesterResponses = userSemesterRepository.findByUserAndIsDeletedFalse(user)
                 .stream()
                 .map(UserSemesterResponse::from)
                 .toList();

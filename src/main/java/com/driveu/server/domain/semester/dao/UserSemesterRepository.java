@@ -29,8 +29,7 @@ public interface UserSemesterRepository extends JpaRepository<UserSemester, Long
 """)
     List<UserSemester> findAllByUserAndLatestYear(@Param("user") User user);
 
+    List<UserSemester> findByUserAndIsDeletedFalse(User user);
 
-    List<UserSemester> findAllByUser(User user);
-
-    Optional<UserSemester> findByUserAndSemesterAndIsDeletedIsFalse(User user, Semester semester);
+    Optional<UserSemester> findByUserAndSemesterAndIsDeletedFalse(User user, Semester semester);
 }
