@@ -6,8 +6,10 @@ import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.resource.dao.NoteRepository;
 import com.driveu.server.domain.resource.domain.Note;
 import com.driveu.server.domain.resource.dto.request.NoteCreateRequest;
+import com.driveu.server.domain.resource.dto.request.NoteUpdateRequest;
 import com.driveu.server.domain.resource.dto.response.NoteCreateResponse;
 import com.driveu.server.domain.resource.dto.response.NoteResponse;
+import com.driveu.server.domain.resource.dto.response.NoteUpdateTitleResponse;
 import com.driveu.server.domain.resource.dto.response.TagResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -62,5 +64,16 @@ public class NoteService {
         TagResponse tagResponse = resourceService.getTagResponseByResource(note);
 
         return NoteResponse.from(note, tagResponse);
+    }
+
+    @Transactional
+    public NoteUpdateTitleResponse updateNoteTitle(Long noteId, NoteUpdateRequest request) {
+        Note note = noteRepository.findById(noteId)
+                .orElseThrow(() -> new NotFoundException("Note not found"));
+
+        note.updateTitle(request.getTitle());
+        Note savedNote = noteRepository.save(note);
+
+        return NoteUpdateTitleResponse.from(savedNote);
     }
 }

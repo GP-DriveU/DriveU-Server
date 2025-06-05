@@ -65,4 +65,8 @@ public abstract class Resource {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
     }
+
+    public void updateTitle(String title){
+        this.title = title;
+    }
 }
