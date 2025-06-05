@@ -11,6 +11,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 @Entity
@@ -55,6 +56,24 @@ public abstract class Resource {
     public void addDirectory(Directory directory) {
         ResourceDirectory mapping = ResourceDirectory.of(this, directory);
         this.resourceDirectories.add(mapping);
+    }
+
+    public void removeDirectory(Directory d) {
+        Iterator<ResourceDirectory> it = this.resourceDirectories.iterator();
+        while (it.hasNext()) {
+            ResourceDirectory rd = it.next();
+            if (rd.getDirectory().equals(d)) {
+                // 1) 컬렉션에서 rd 객체 제거 (orphanRemoval을 트리거함)
+                it.remove();
+
+                // 2) rd 양쪽 참조를 null 처리
+                rd.deleteRelation();
+
+                // 마지막 수정 시간 수동 업데이트
+                this.updatedAt = LocalDateTime.now();
+                break;
+            }
+        }
     }
 
     public void updateFavorite(boolean isFavorite) {

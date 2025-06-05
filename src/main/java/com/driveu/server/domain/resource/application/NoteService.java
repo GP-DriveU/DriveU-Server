@@ -7,11 +7,9 @@ import com.driveu.server.domain.resource.dao.NoteRepository;
 import com.driveu.server.domain.resource.domain.Note;
 import com.driveu.server.domain.resource.dto.request.NoteCreateRequest;
 import com.driveu.server.domain.resource.dto.request.NoteUpdateContentRequest;
+import com.driveu.server.domain.resource.dto.request.NoteUpdateTagRequest;
 import com.driveu.server.domain.resource.dto.request.NoteUpdateTitleRequest;
-import com.driveu.server.domain.resource.dto.response.NoteCreateResponse;
-import com.driveu.server.domain.resource.dto.response.NoteResponse;
-import com.driveu.server.domain.resource.dto.response.NoteUpdateTitleResponse;
-import com.driveu.server.domain.resource.dto.response.TagResponse;
+import com.driveu.server.domain.resource.dto.response.*;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
@@ -90,7 +88,7 @@ public class NoteService {
     }
 
     @Transactional
-    public NoteCreateResponse updateNoteContent(Long noteId, NoteUpdateContentRequest request) {
+    public NoteCreateResponse updateNoteTag(Long noteId, NoteUpdateContentRequest request) {
         Note note = noteRepository.findById(noteId)
                 .orElseThrow(() -> new NotFoundException("Note not found"));
 
@@ -101,5 +99,22 @@ public class NoteService {
         Note savedNote = noteRepository.save(note);
 
         return NoteCreateResponse.from(savedNote);
+    }
+
+    @Transactional
+    public NoteUpdateTagResponse updateNoteTag(Long noteId, NoteUpdateTagRequest request) {
+        Note note = noteRepository.findById(noteId)
+                .orElseThrow(() -> new NotFoundException("Note not found"));
+
+        Directory oldTagDirectory = directoryRepository.findById(request.getOldTagId())
+                .orElseThrow(()-> new NotFoundException("Tag not found"));
+
+        Directory newTagDirectory = directoryRepository.findById(request.getNewTagId())
+                .orElseThrow(()-> new NotFoundException("Tag not found"));
+
+        // transaction 메소드가 종료되며 자동 remove & save
+        TagResponse tagResponse = resourceService.updateTag(note, oldTagDirectory, newTagDirectory);
+
+        return NoteUpdateTagResponse.from(note, tagResponse);
     }
 }

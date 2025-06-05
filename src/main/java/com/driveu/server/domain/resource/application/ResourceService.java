@@ -286,4 +286,10 @@ public class ResourceService {
         return ResourceDeleteResponse.from(resource);
 
     }
+
+    public TagResponse updateTag(Resource resource, Directory deleteTagDirectory, Directory newTagDirectory) {
+        resource.removeDirectory(deleteTagDirectory);
+        resource.addDirectory(newTagDirectory);
+        return TagResponse.of(newTagDirectory);
+    }
 }
