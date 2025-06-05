@@ -183,7 +183,7 @@ public class ResourceService {
         } else if ("createdAt".equalsIgnoreCase(sort)) {
             return Comparator.comparing(ResourceResponse::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()));
         } else { // 기본은 updatedAt
-            return Comparator.comparing(ResourceResponse::getUpdatedAt, Comparator.nullsLast(Comparator.naturalOrder()));
+            return Comparator.comparing(ResourceResponse::getUpdatedAt, Comparator.nullsLast(Comparator.naturalOrder())).reversed();
         }
     }
 
