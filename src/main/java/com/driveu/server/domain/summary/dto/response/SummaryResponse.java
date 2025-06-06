@@ -12,7 +12,7 @@ public class SummaryResponse {
     private Long summaryId;
     private String summary;
 
-    public SummaryResponse from(Summary summary) {
+    public static SummaryResponse from(Summary summary) {
         return SummaryResponse.builder()
                 .summaryId(summary.getId())
                 .summary(summary.getContent())
