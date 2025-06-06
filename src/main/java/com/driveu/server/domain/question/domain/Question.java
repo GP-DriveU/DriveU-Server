@@ -1,8 +1,6 @@
 package com.driveu.server.domain.question.domain;
 
-import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.resource.domain.Resource;
-import com.driveu.server.domain.resource.domain.ResourceDirectory;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -54,7 +52,7 @@ public class Question {
                 .build();
     }
 
-    public void addDirectory(Resource resource) {
+    public void addResource(Resource resource) {
         QuestionResource mapping = QuestionResource.of(this, resource);
         this.questionResources.add(mapping);
     }
