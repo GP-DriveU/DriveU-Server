@@ -8,7 +8,8 @@ import lombok.*;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Table(name = "resource_directory")
+@Table(name = "resource_directory",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"resource_id", "directory_id"}))
 public class ResourceDirectory {
 
     @Id

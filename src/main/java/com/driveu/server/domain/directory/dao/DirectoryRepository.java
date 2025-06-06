@@ -66,4 +66,6 @@ public interface DirectoryRepository extends JpaRepository<Directory, Long> {
     );
 
     List<Directory> findByUserSemester(UserSemester userSemester);
+
+    List<Directory> findByUserSemesterIdAndIsDeletedFalse(Long userSemesterId);
 }
