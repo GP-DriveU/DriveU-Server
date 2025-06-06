@@ -4,6 +4,7 @@ import com.driveu.server.domain.question.application.QuestionService;
 import com.driveu.server.domain.question.dto.request.QuestionCreateRequest;
 import com.driveu.server.domain.question.dto.response.QuestionListResponse;
 import com.driveu.server.domain.question.dto.response.QuestionResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -50,6 +51,9 @@ public class QuestionApi {
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "서버 에러가 발생했습니다."));
@@ -79,6 +83,9 @@ public class QuestionApi {
                     .body(Map.of("message", e.getMessage()));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", e.getMessage()));
+        }  catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
