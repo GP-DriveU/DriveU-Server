@@ -1,7 +1,6 @@
 package com.driveu.server.domain.summary.domain;
 
 import com.driveu.server.domain.resource.domain.Note;
-import com.driveu.server.domain.semester.domain.UserSemester;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
