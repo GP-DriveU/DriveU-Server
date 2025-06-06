@@ -1,4 +1,4 @@
-package com.driveu.server.domain.question.dao.request;
+package com.driveu.server.domain.question.dto.request;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;

@@ -1,8 +1,8 @@
 package com.driveu.server.domain.question.application;
 
-import com.driveu.server.domain.question.dao.request.QuestionCreateRequest;
-import com.driveu.server.domain.question.dao.response.QuestionListResponse;
-import com.driveu.server.domain.question.dao.response.QuestionResponse;
+import com.driveu.server.domain.question.dto.request.QuestionCreateRequest;
+import com.driveu.server.domain.question.dto.response.QuestionListResponse;
+import com.driveu.server.domain.question.dto.response.QuestionResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

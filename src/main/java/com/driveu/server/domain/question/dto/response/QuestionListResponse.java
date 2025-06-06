@@ -1,4 +1,4 @@
-package com.driveu.server.domain.question.dao.response;
+package com.driveu.server.domain.question.dto.response;
 
 import com.driveu.server.domain.question.domain.Question;
 import lombok.AllArgsConstructor;
