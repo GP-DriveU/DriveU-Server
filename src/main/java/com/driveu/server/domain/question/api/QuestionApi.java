@@ -108,7 +108,7 @@ public class QuestionApi {
             @RequestHeader("Authorization") String token,
             @PathVariable Long userSemesterId){
         try {
-            QuestionListResponse response = questionService.getQuestionsByUserSemester(userSemesterId);
+            List<QuestionListResponse> response = questionService.getQuestionsByUserSemester(userSemesterId);
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
