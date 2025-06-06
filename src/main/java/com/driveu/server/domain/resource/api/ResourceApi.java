@@ -29,7 +29,7 @@ public class ResourceApi {
     private final ResourceService resourceService;
 
     @PostMapping("/directories/{directoryId}/files")
-    @Operation(summary = "파일 업로드 후 메타 데이터 등록", description = "extension 은 TXT, PDF, MD, DOCS, PNG, JPEG, JPG 만 가능합니다.")
+    @Operation(summary = "파일 업로드 후 메타 데이터 등록", description = "extension 은 TXT, PDF, MD, DOCS, PNG, JPEG, JPG 만 가능합니다.\n size 는 byte 단위 입니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "파일 메타 데이터 등록 성공",
                     content = @Content(
