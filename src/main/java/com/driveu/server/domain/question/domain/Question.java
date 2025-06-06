@@ -4,10 +4,7 @@ import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.resource.domain.Resource;
 import com.driveu.server.domain.resource.domain.ResourceDirectory;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -32,12 +29,30 @@ public class Question {
     @Column(nullable = false)
     private int version;
 
+    @Column(columnDefinition = "JSON")
+    private String questionsData;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<QuestionResource> questionResources = new ArrayList<>();
+
+    @Builder
+    private Question(String title, int version, String questionsData) {
+        this.title = title;
+        this.version = version;
+        this.questionsData = questionsData;
+    }
+
+    public static Question of(String title, int version, String questionsData) {
+        return Question.builder()
+                .title(title)
+                .version(version)
+                .questionsData(questionsData)
+                .build();
+    }
 
     public void addDirectory(Resource resource) {
         QuestionResource mapping = QuestionResource.of(this, resource);
