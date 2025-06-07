@@ -30,6 +30,11 @@ public class SummaryService {
         Note note = noteRepository.findById(noteId)
                 .orElseThrow(() -> new NotFoundException("Note not found"));
 
+        Summary findSummary = summaryRepository.findByNote(note);
+        if (findSummary != null) {
+            throw new IllegalStateException("Summary already exists");
+        }
+
         // ai 서버 호출, 응답에서 summary 파싱
         String content = summarizeNote(noteId, note.getContent());
 
