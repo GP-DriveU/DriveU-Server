@@ -7,7 +7,8 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
@@ -35,9 +36,12 @@ public class S3Config {
 
     @Bean
     public S3Presigner s3Presigner() {
+        // AWS SDK v2용 자격 증명 객체 생성
+        AwsBasicCredentials awsCreds = AwsBasicCredentials.create(accessKey, secretKey);
+
         return S3Presigner.builder()
                 .region(Region.of(region))
-                .credentialsProvider(ProfileCredentialsProvider.create()) // 또는 환경변수/EC2Role 등
+                .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
                 .build();
     }
 
