@@ -88,7 +88,8 @@ public class NoteService {
     }
 
     @Transactional
-    public NoteCreateResponse updateNoteTag(Long noteId, NoteUpdateContentRequest request) {
+    public NoteCreateResponse updateNoteContent(Long noteId, NoteUpdateContentRequest request) {
+        System.out.println(request.getContent());
         Note note = noteRepository.findById(noteId)
                 .orElseThrow(() -> new NotFoundException("Note not found"));
 
