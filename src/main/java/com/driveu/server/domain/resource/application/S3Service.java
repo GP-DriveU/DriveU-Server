@@ -81,11 +81,16 @@ public class S3Service {
             throw new IllegalArgumentException("link 는 다운로드 할 수 없습니다.");
         }
 
+        // S3 객체 키에서 파일명만 뽑아내기
+        String filename = key.substring(key.lastIndexOf('/') + 1);
+
         Duration duration = Duration.ofMinutes(5);
 
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
+                // 여기서 Content-Disposition 헤더를 attachment 로 지정
+                .responseContentDisposition("attachment; filename=\"" + filename + "\"")
                 .build();
 
         GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
