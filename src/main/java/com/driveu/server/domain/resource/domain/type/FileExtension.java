@@ -3,14 +3,15 @@ package com.driveu.server.domain.resource.domain.type;
 import java.util.Locale;
 
 public enum FileExtension {
-    TXT, PDF, MD, DOCS, PNG, JPEG, JPG;
+    TXT, PDF, MD, DOC, DOCX, PNG, JPEG, JPG;
 
     public String getContentType() {
         return switch (this) {
             case TXT -> "text/plain";
             case PDF -> "application/pdf";
             case MD -> "text/markdown";
-            case DOCS -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            case DOC -> "application/msword";
+            case DOCX -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
             case PNG -> "image/png";
             case JPEG, JPG -> "image/jpeg";
         };
