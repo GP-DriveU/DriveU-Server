@@ -26,7 +26,7 @@ public class QuestionApi {
     private final QuestionService questionService;
 
     @PostMapping("/directories/{directoryId}/questions")
-    @Operation(summary = "ai 문제 생성", description = "해당 리소스들에 대한 ai 문제를 생성합니다.")
+    @Operation(summary = "ai 문제 생성", description = "해당 리소스들에 대한 ai 문제를 생성합니다. (questions의 type: multiple_choice /  short_answer, short_answer의 경우 options = null)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "성공적으로 ai 문제가 생성되었습니다.",
                     content = @Content(schema = @Schema(implementation = QuestionResponse.class))),
@@ -60,7 +60,7 @@ public class QuestionApi {
     }
 
     @GetMapping("/questions/{questionId}")
-    @Operation(summary = "ai 문제 조회", description = "해당 문제 아이디에 대한 ai 문제를 조회합니다.")
+    @Operation(summary = "ai 문제 조회", description = "해당 문제 아이디에 대한 ai 문제를 조회합니다. (questions의 type: multiple_choice /  short_answer, short_answer의 경우 options = null)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "성공적으로 ai 문제가 조회되었습니다.",
                     content = @Content(schema = @Schema(implementation = QuestionResponse.class))),
@@ -93,7 +93,7 @@ public class QuestionApi {
     }
 
     @GetMapping("/user-semesters/{userSemesterId}/questions")
-    @Operation(summary = "현재 학기의 모든 AI 문제 조회", description = "사용자의 현재 학기의 모든 AI 문제 조회를 조회합니다.")
+    @Operation(summary = "현재 학기의 모든 AI 문제 조회", description = "사용자의 현재 학기의 모든 AI 문제 조회를 조회합니다. (questions의 type: multiple_choice /  short_answer, short_answer의 경우 options = null)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "성공적으로 현재 학기의 모든 ai 문제가 조회되었습니다.",
                     content = @Content(schema = @Schema(implementation = QuestionListResponse.class))),

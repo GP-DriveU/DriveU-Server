@@ -134,13 +134,13 @@ public class NoteApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    public ResponseEntity<?> updateNoteTitle(
+    public ResponseEntity<?> updateNoteContent(
             @RequestHeader("Authorization") String token,
             @PathVariable Long noteId,
             @RequestBody NoteUpdateContentRequest request
     ){
         try {
-            NoteCreateResponse response = noteService.updateNoteTag(noteId, request);
+            NoteCreateResponse response = noteService.updateNoteContent(noteId, request);
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -150,7 +150,7 @@ public class NoteApi {
                     .body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "서버 에러가 발생했습니다."));
+                    .body(Map.of("message", e.getMessage()));
         }
     }
 
@@ -182,7 +182,7 @@ public class NoteApi {
                     .body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "서버 에러가 발생했습니다."));
+                    .body(Map.of("message", e.getMessage()));
         }
     }
 }

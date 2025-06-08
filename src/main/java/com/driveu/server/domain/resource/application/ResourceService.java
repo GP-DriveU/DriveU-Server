@@ -217,6 +217,10 @@ public class ResourceService {
         // 이 리소스가 연결된 모든 ResourceDirectory 조회
         List<ResourceDirectory> allAssociations = resourceDirectoryRepository.findAllByResourceAndResource_IsDeletedFalse(resource);
 
+        // 리소스를 생성한 디렉토리에만 연결이 존재한다면 태그가 없다고 판단하고 리턴
+        if (allAssociations.size() == 1)
+            return null;
+
         // tag는 부모로 name이 "과목"인 디렉토리를 가지는 디렉토리
         Directory tagDirectory = null;
 

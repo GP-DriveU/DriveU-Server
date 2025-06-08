@@ -4,7 +4,9 @@ import com.amazonaws.services.kms.model.NotFoundException;
 import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.resource.dao.NoteRepository;
+import com.driveu.server.domain.resource.dao.ResourceDirectoryRepository;
 import com.driveu.server.domain.resource.domain.Note;
+import com.driveu.server.domain.resource.domain.Resource;
 import com.driveu.server.domain.resource.dto.request.NoteCreateRequest;
 import com.driveu.server.domain.resource.dto.request.NoteUpdateContentRequest;
 import com.driveu.server.domain.resource.dto.request.NoteUpdateTagRequest;
@@ -15,6 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class NoteService {
@@ -22,6 +26,7 @@ public class NoteService {
     private final DirectoryRepository directoryRepository;
     private final NoteRepository noteRepository;
     private final ResourceService resourceService;
+    private final ResourceDirectoryRepository resourceDirectoryRepository;
 
     @Transactional
     public NoteCreateResponse createNote(Long directoryId, NoteCreateRequest request) {
@@ -88,7 +93,8 @@ public class NoteService {
     }
 
     @Transactional
-    public NoteCreateResponse updateNoteTag(Long noteId, NoteUpdateContentRequest request) {
+    public NoteCreateResponse updateNoteContent(Long noteId, NoteUpdateContentRequest request) {
+        System.out.println(request.getContent());
         Note note = noteRepository.findById(noteId)
                 .orElseThrow(() -> new NotFoundException("Note not found"));
 
@@ -106,10 +112,35 @@ public class NoteService {
         Note note = noteRepository.findById(noteId)
                 .orElseThrow(() -> new NotFoundException("Note not found"));
 
-        Directory oldTagDirectory = directoryRepository.findById(request.getOldTagId())
+        Directory newTagDirectory;
+        Directory oldTagDirectory;
+
+        if (request.getNewTagId() == null && request.getOldTagId() == null) {
+            throw new IllegalArgumentException("Illegal Tag ID");
+        }
+
+        // 태그가 없는 리소스에 태그 달기
+        if (request.getOldTagId() == null) {
+            newTagDirectory = directoryRepository.findById(request.getNewTagId())
+                    .orElseThrow(()-> new NotFoundException("Tag not found"));
+
+            note.addDirectory(newTagDirectory);
+            return NoteUpdateTagResponse.from(note, TagResponse.of(newTagDirectory));
+        }
+
+        // 이미 있는 태그를 삭제
+        if (request.getNewTagId() == null) {
+            oldTagDirectory = directoryRepository.findById(request.getOldTagId())
+                    .orElseThrow(()-> new NotFoundException("Tag not found"));
+
+            note.removeDirectory(oldTagDirectory);
+            return NoteUpdateTagResponse.from(note, null);
+        }
+
+        newTagDirectory = directoryRepository.findById(request.getNewTagId())
                 .orElseThrow(()-> new NotFoundException("Tag not found"));
 
-        Directory newTagDirectory = directoryRepository.findById(request.getNewTagId())
+        oldTagDirectory = directoryRepository.findById(request.getOldTagId())
                 .orElseThrow(()-> new NotFoundException("Tag not found"));
 
         // transaction 메소드가 종료되며 자동 remove & save
