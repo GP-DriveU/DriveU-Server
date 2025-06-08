@@ -113,17 +113,17 @@ public class ResourceService {
 
     public Object getResourceById(Long resourceId) {
         Optional<File> file = fileRepository.findById(resourceId);
-        if (file.isPresent()) {
+        if (file.isPresent() && !file.get().isDeleted()) {
             return file.get();
         }
 
         Optional<Link> link = linkRepository.findById(resourceId);
-        if (link.isPresent()) {
+        if (link.isPresent() && !link.get().isDeleted()) {
             return link.get();
         }
 
         Optional<Note> note = noteRepository.findById(resourceId);
-        if (note.isPresent()) {
+        if (note.isPresent() && !note.get().isDeleted()) {
             return note.get();
         }
 
