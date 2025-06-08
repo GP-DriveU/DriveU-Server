@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface ResourceDirectoryRepository extends JpaRepository<ResourceDirectory, Long> {
-    List<ResourceDirectory> findAllByDirectory_IdAndDirectory_IsDeletedFalse(Long directoryId);
+    List<ResourceDirectory> findAllByDirectory_IdAndDirectory_IsDeletedFalseAndResource_IsDeletedFalse(Long directoryId);
 
     List<ResourceDirectory> findAllByResourceAndResource_IsDeletedFalse(Resource resource);
 

@@ -113,17 +113,17 @@ public class ResourceService {
 
     public Object getResourceById(Long resourceId) {
         Optional<File> file = fileRepository.findById(resourceId);
-        if (file.isPresent() && !file.get().isDeleted()) {
+        if (file.isPresent()) {
             return file.get();
         }
 
         Optional<Link> link = linkRepository.findById(resourceId);
-        if (link.isPresent() && !link.get().isDeleted()) {
+        if (link.isPresent()) {
             return link.get();
         }
 
         Optional<Note> note = noteRepository.findById(resourceId);
-        if (note.isPresent() && !note.get().isDeleted()) {
+        if (note.isPresent()) {
             return note.get();
         }
 
@@ -132,7 +132,7 @@ public class ResourceService {
 
     @Transactional
     public List<ResourceResponse> getResourcesByDirectory(Long directoryId, String sort, Boolean favoriteOnly){
-        List<ResourceDirectory> resourceDirectories = resourceDirectoryRepository.findAllByDirectory_IdAndDirectory_IsDeletedFalse(directoryId);
+        List<ResourceDirectory> resourceDirectories = resourceDirectoryRepository.findAllByDirectory_IdAndDirectory_IsDeletedFalseAndResource_IsDeletedFalse(directoryId);
 
         // 중복 제거를 위해 Resource를 기준으로 그룹핑
         Map<Resource, List<ResourceDirectory>> grouped = resourceDirectories.stream()

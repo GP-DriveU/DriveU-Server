@@ -156,7 +156,7 @@ public class QuestionService {
             Long dirId = dir.getId();
 
             // 디렉토리가 삭제되지 않았으므로, Directory_IsDeletedFalse 조건은 이미 만족한다.
-            List<ResourceDirectory> rds = resourceDirectoryRepository.findAllByDirectory_IdAndDirectory_IsDeletedFalse(dirId);
+            List<ResourceDirectory> rds = resourceDirectoryRepository.findAllByDirectory_IdAndDirectory_IsDeletedFalseAndResource_IsDeletedFalse(dirId);
 
             for (ResourceDirectory rd : rds) {
                 Resource res = rd.getResource();
