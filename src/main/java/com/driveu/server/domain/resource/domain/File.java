@@ -14,7 +14,7 @@ public class File extends Resource {
     @Column(name = "s3_path")
     private String s3Path;
 
-    @Column(name = "extension")
+    @Column(name = "extension",nullable = false, length = 100)
     @Enumerated(EnumType.STRING)
     private FileExtension extension;
 
