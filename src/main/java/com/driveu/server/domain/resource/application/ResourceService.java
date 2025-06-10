@@ -283,7 +283,7 @@ public class ResourceService {
         Object resourceObject = getResourceById(resource.getId());
 
         if (resourceObject instanceof File file) {
-            user.setUsedStorage(user.getUsedStorage() - file.getSize());
+            user.setUsedStorage(user.getUsedStorage() + file.getSize());
             userRepository.save(user);
         }
 
