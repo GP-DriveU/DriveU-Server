@@ -20,6 +20,7 @@ import com.driveu.server.domain.resource.domain.File;
 import com.driveu.server.domain.resource.domain.Note;
 import com.driveu.server.domain.resource.domain.Resource;
 import com.driveu.server.domain.resource.domain.ResourceDirectory;
+import com.driveu.server.infra.ai.AiService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -50,7 +50,7 @@ public class QuestionService {
     private final ResourceRepository resourceRepository;
     private final ResourceDirectoryRepository resourceDirectoryRepository;
     private final NoteRepository noteRepository;
-    private final RestTemplate restTemplate;
+    private final AiService aiService;
     private final AmazonS3Client amazonS3Client;
     private final FileRepository fileRepository;
 
@@ -82,30 +82,7 @@ public class QuestionService {
 
         // resource type에 따라 파일을 추출해서 multipart/form-data 데이터 형식으로 만듦
         MultiValueMap<String, Object> requestBody = createRequestBody(requestList);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-
-        HttpEntity<MultiValueMap<String, Object>> requestEntity =
-                new HttpEntity<>(requestBody, headers);
-
-        // 3) AI 서버 URL (여러 파일을 받는 엔드포인트)
-        String aiUrl = "http://3.37.182.184:8000/api/ai/generate";
-
-        // ResponseEntity<String> 으로 받아서 raw JSON 전체를 꺼냄
-        ResponseEntity<String> response = restTemplate.exchange(
-                aiUrl,
-                HttpMethod.POST,
-                requestEntity,
-                String.class
-        );
-        if (response.getBody() == null) {
-            throw new RuntimeException("AI 서버 오류: " + response.getStatusCode());
-        }
-
-        String aiResponse = response.getBody();
-        
-        System.out.println(aiResponse);
+        String aiResponse = aiService.generateQuestion(requestBody);
 
         Question question = Question.of(title, version, aiResponse);
         Question savedQuestion = questionRepository.save(question);
