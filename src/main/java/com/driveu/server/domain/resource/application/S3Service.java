@@ -1,5 +1,8 @@
 package com.driveu.server.domain.resource.application;
 
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.driveu.server.domain.auth.infra.JwtProvider;
 import com.driveu.server.domain.resource.domain.File;
 import com.driveu.server.domain.resource.domain.Note;
@@ -10,6 +13,7 @@ import com.driveu.server.domain.user.domain.User;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
@@ -18,6 +22,7 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
+import java.io.IOException;
 import java.net.URL;
 import java.time.Duration;
 
@@ -29,6 +34,7 @@ public class S3Service {
     private final ResourceService resourceService;
     private final JwtProvider jwtProvider;
     private final UserRepository userRepository;
+    private final AmazonS3Client amazonS3Client;
 
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucketName;
@@ -99,5 +105,24 @@ public class S3Service {
                 .build();
 
         return s3Presigner.presignGetObject(presignRequest).url();
+    }
+
+    public ByteArrayResource getFileAsResource(String s3Path, String filename) {
+        try {
+            S3Object s3Object = amazonS3Client.getObject(bucketName, s3Path);
+            S3ObjectInputStream is = s3Object.getObjectContent();
+
+            byte[] bytes = is.readAllBytes();
+            is.close();
+
+            return new ByteArrayResource(bytes) {
+                @Override
+                public String getFilename() {
+                    return filename;
+                }
+            };
+        } catch (IOException e) {
+            throw new RuntimeException("S3에서 파일 읽기 실패: " + s3Path, e);
+        }
     }
 }

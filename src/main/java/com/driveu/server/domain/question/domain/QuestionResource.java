@@ -7,6 +7,7 @@ import lombok.*;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
 @AllArgsConstructor
 @Table(name = "question_resource",
         uniqueConstraints = @UniqueConstraint(columnNames = {"question_id", "resource_id"}))
@@ -25,12 +26,6 @@ public class QuestionResource {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "resource_id", nullable = false)
     private Resource resource;
-
-    @Builder
-    private QuestionResource(Question question, Resource resource) {
-        this.resource = resource;
-        this.question = question;
-    }
 
     public static QuestionResource of(Question question, Resource resource) {
         return QuestionResource.builder()

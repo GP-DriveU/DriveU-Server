@@ -12,6 +12,7 @@ import java.util.List;
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Builder
 @Getter
 @Table(name = "question")
 public class Question {
@@ -35,14 +36,8 @@ public class Question {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<QuestionResource> questionResources = new ArrayList<>();
-
-    @Builder
-    private Question(String title, int version, String questionsData) {
-        this.title = title;
-        this.version = version;
-        this.questionsData = questionsData;
-    }
 
     public static Question of(String title, int version, String questionsData) {
         return Question.builder()
