@@ -6,7 +6,10 @@ import com.driveu.server.domain.directory.dto.request.DirectoryMoveParentRequest
 import com.driveu.server.domain.directory.dto.request.DirectoryOrderUpdateRequest;
 import com.driveu.server.domain.directory.dto.request.DirectoryRenameRequest;
 import com.driveu.server.domain.directory.dto.response.*;
+import com.driveu.server.domain.user.domain.User;
+import com.driveu.server.global.config.security.auth.LoginUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -42,10 +45,10 @@ public class DirectoryApi {
     })
     public ResponseEntity<?> getDirectories(
             @PathVariable Long userSemesterId,
-            @RequestHeader("Authorization") String token
+            @Parameter(hidden = true) @LoginUser User user
     ) {
         try {
-            List<DirectoryTreeResponse> tree = directoryService.getDirectoryTree(token, userSemesterId);
+            List<DirectoryTreeResponse> tree = directoryService.getDirectoryTree(user, userSemesterId);
             return ResponseEntity.ok(tree);
         } catch (EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -74,10 +77,10 @@ public class DirectoryApi {
     public ResponseEntity<?> createDirectory(
             @PathVariable Long userSemesterId,
             @RequestBody DirectoryCreateRequest request,
-            @RequestHeader("Authorization") String token
+            @Parameter(hidden = true) @LoginUser User user
     ) {
         try {
-            DirectoryCreateResponse response = directoryService.createDirectory(token, userSemesterId, request);
+            DirectoryCreateResponse response = directoryService.createDirectory(user, userSemesterId, request);
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

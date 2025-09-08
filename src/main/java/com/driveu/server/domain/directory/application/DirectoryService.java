@@ -1,7 +1,6 @@
 package com.driveu.server.domain.directory.application;
 
 import com.amazonaws.services.kms.model.NotFoundException;
-import com.driveu.server.domain.auth.infra.JwtProvider;
 import com.driveu.server.domain.directory.dao.DirectoryHierarchyRepository;
 import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.domain.Directory;
@@ -13,7 +12,6 @@ import com.driveu.server.domain.resource.domain.Resource;
 import com.driveu.server.domain.resource.domain.ResourceDirectory;
 import com.driveu.server.domain.semester.dao.UserSemesterRepository;
 import com.driveu.server.domain.semester.domain.UserSemester;
-import com.driveu.server.domain.user.dao.UserRepository;
 import com.driveu.server.domain.user.domain.User;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -30,8 +28,6 @@ public class DirectoryService {
 
     private final DirectoryRepository directoryRepository;
     private final DirectoryHierarchyRepository directoryHierarchyRepository;
-    private final JwtProvider jwtProvider;
-    private final UserRepository userRepository;
     private final UserSemesterRepository userSemesterRepository;
     private final ResourceDirectoryRepository resourceDirectoryRepository;
 
@@ -78,9 +74,9 @@ public class DirectoryService {
     }
 
     @Transactional
-    public List<DirectoryTreeResponse> getDirectoryTree(String token, Long userSemesterId) {
+    public List<DirectoryTreeResponse> getDirectoryTree(User user, Long userSemesterId) {
         System.out.println("start getDirectoryTree");
-        validateUserSemester(token, userSemesterId);
+        validateUserSemester(user, userSemesterId);
 
         List<Object[]> result = directoryHierarchyRepository.findAllHierarchiesWithDescendantsByUserSemesterId(userSemesterId);
 
@@ -126,8 +122,8 @@ public class DirectoryService {
     }
 
     @Transactional
-    public DirectoryCreateResponse createDirectory(String token, Long userSemesterId, DirectoryCreateRequest request) {
-        UserSemester userSemester = validateUserSemester(token, userSemesterId);
+    public DirectoryCreateResponse createDirectory(User user, Long userSemesterId, DirectoryCreateRequest request) {
+        UserSemester userSemester = validateUserSemester(user, userSemesterId);
 
         if (request.getParentDirectoryId() == 0) {
             return createTopLevelDirectory(userSemester, request);
@@ -191,12 +187,7 @@ public class DirectoryService {
         return DirectoryCreateResponse.from(newDirectory);
     }
 
-    private @NotNull UserSemester validateUserSemester(String token, Long userSemesterId) {
-        String email = jwtProvider.getUserEmailFromToken(token);
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
-
+    private @NotNull UserSemester validateUserSemester(User user, Long userSemesterId) {
         UserSemester userSemester = userSemesterRepository.findById(userSemesterId)
                 .orElseThrow(() -> new EntityNotFoundException("UserSemester not found"));
 
