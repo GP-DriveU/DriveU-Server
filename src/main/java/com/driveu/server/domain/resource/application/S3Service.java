@@ -6,6 +6,7 @@ import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.driveu.server.domain.auth.infra.JwtProvider;
 import com.driveu.server.domain.resource.domain.File;
 import com.driveu.server.domain.resource.domain.Note;
+import com.driveu.server.domain.resource.domain.Resource;
 import com.driveu.server.domain.resource.domain.type.FileExtension;
 import com.driveu.server.domain.resource.dto.response.FileUploadResponse;
 import com.driveu.server.domain.user.dao.UserRepository;
@@ -74,7 +75,7 @@ public class S3Service {
 
     @Transactional
     public URL generateDownloadUrl(Long resourceId) {
-        Object resource = resourceService.getResourceById(resourceId);
+        Resource resource = resourceService.getResourceById(resourceId);
         String key = null;
 
         if (resource instanceof File file) {

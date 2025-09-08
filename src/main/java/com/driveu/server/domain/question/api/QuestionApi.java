@@ -1,6 +1,7 @@
 package com.driveu.server.domain.question.api;
 
-import com.driveu.server.domain.question.application.QuestionService;
+import com.driveu.server.domain.question.application.QuestionCreatorService;
+import com.driveu.server.domain.question.application.QuestionQueryService;
 import com.driveu.server.domain.question.dto.request.QuestionCreateRequest;
 import com.driveu.server.domain.question.dto.response.QuestionListResponse;
 import com.driveu.server.domain.question.dto.response.QuestionResponse;
@@ -23,7 +24,8 @@ import java.util.Map;
 @RequestMapping("/api")
 public class QuestionApi {
 
-    private final QuestionService questionService;
+    private final QuestionCreatorService questionCreatorService;
+    private final QuestionQueryService questionQueryService;
 
     @PostMapping("/directories/{directoryId}/questions")
     @Operation(summary = "ai 문제 생성", description = "해당 리소스들에 대한 ai 문제를 생성합니다. (questions의 type: multiple_choice /  short_answer, short_answer의 경우 options = null)")
@@ -42,7 +44,7 @@ public class QuestionApi {
             @PathVariable Long directoryId,
             @RequestBody List<QuestionCreateRequest> requestList){
         try {
-            QuestionResponse response = questionService.createQuestion(directoryId, requestList);
+            QuestionResponse response = questionCreatorService.createQuestion(directoryId, requestList);
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -75,7 +77,7 @@ public class QuestionApi {
             @RequestHeader("Authorization") String token,
             @PathVariable Long questionId){
         try {
-            QuestionResponse response = questionService.getQuestionById(questionId);
+            QuestionResponse response = questionQueryService.getQuestionById(questionId);
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -108,7 +110,7 @@ public class QuestionApi {
             @RequestHeader("Authorization") String token,
             @PathVariable Long userSemesterId){
         try {
-            List<QuestionListResponse> response = questionService.getQuestionsByUserSemester(userSemesterId);
+            List<QuestionListResponse> response = questionQueryService.getQuestionsByUserSemester(userSemesterId);
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

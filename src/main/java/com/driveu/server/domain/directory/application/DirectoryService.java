@@ -1,5 +1,6 @@
 package com.driveu.server.domain.directory.application;
 
+import com.amazonaws.services.kms.model.NotFoundException;
 import com.driveu.server.domain.auth.infra.JwtProvider;
 import com.driveu.server.domain.directory.dao.DirectoryHierarchyRepository;
 import com.driveu.server.domain.directory.dao.DirectoryRepository;
@@ -347,5 +348,10 @@ public class DirectoryService {
                 .parentDirectoryId(parentId)
                 .reorderedDirectories(resultList)
                 .build();
+    }
+
+    public Directory getDirectoryById(Long directoryId) {
+        return directoryRepository.findById(directoryId)
+                .orElseThrow(() -> new NotFoundException("Directory not found"));
     }
 }

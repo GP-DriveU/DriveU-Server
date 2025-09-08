@@ -111,7 +111,7 @@ public class ResourceService {
         return link.getUrl();
     }
 
-    public Object getResourceById(Long resourceId) {
+    public Resource getResourceById(Long resourceId) {
         Optional<File> file = fileRepository.findById(resourceId);
         if (file.isPresent()) {
             return file.get();
@@ -153,7 +153,7 @@ public class ResourceService {
     }
 
     private ResourceResponse getResourceResponse(Resource resource, TagResponse tagResponse) {
-        Object resourceObject = getResourceById(resource.getId());
+        Resource resourceObject = getResourceById(resource.getId());
 
         return switch (resourceObject) {
             case File file -> ResourceResponse.fromFile(file, tagResponse);
@@ -280,7 +280,7 @@ public class ResourceService {
         resource.softDelete();
 
         // 사용자 usedStorage 누적 업데이트
-        Object resourceObject = getResourceById(resource.getId());
+        Resource resourceObject = getResourceById(resource.getId());
 
         if (resourceObject instanceof File file) {
             user.setUsedStorage(user.getUsedStorage() + file.getSize());
