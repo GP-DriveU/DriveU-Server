@@ -106,7 +106,7 @@ public class DirectoryApi {
     public ResponseEntity<?> renameDirectory(
             @PathVariable Long id,
             @RequestBody DirectoryRenameRequest request,
-            @RequestHeader("Authorization") String token
+            @Parameter(hidden = true) @LoginUser User user
     ) {
         try {
             DirectoryRenameResponse response = directoryService.renameDirectory(id, request);
@@ -134,7 +134,7 @@ public class DirectoryApi {
     })
     public ResponseEntity<?> deleteDirectory(
             @PathVariable Long id,
-            @RequestHeader("Authorization") String token
+            @Parameter(hidden = true) @LoginUser User user
     ) {
         try {
             directoryService.softDeleteDirectory(id);
@@ -164,7 +164,7 @@ public class DirectoryApi {
     public ResponseEntity<?> moveDirectoryParent(
             @PathVariable Long id,
             @RequestBody DirectoryMoveParentRequest request,
-            @RequestHeader("Authorization") String token
+            @Parameter(hidden = true) @LoginUser User user
     ) {
         try {
             DirectoryMoveParentResponse response = directoryService.moveDirectoryParent(id, request);
@@ -189,7 +189,7 @@ public class DirectoryApi {
     })
     public ResponseEntity<?> updateDirectoryOrder(
             @RequestBody DirectoryOrderUpdateRequest request,
-            @RequestHeader("Authorization") String token
+            @Parameter(hidden = true) @LoginUser User user
     ) {
         try {
             DirectoryOrderUpdateResponse response = directoryService.updateDirectoryOrder(request);
