@@ -1,7 +1,7 @@
 package com.driveu.server.domain.summary.applicaion;
 
 import com.amazonaws.services.kms.model.NotFoundException;
-import com.driveu.server.domain.resource.dao.NoteRepository;
+import com.driveu.server.domain.resource.application.NoteService;
 import com.driveu.server.domain.resource.domain.Note;
 import com.driveu.server.domain.summary.dao.SummaryRepository;
 import com.driveu.server.domain.summary.domain.Summary;
@@ -16,14 +16,13 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class SummaryService {
 
-    private final NoteRepository noteRepository;
+    private final NoteService noteService;
     private final SummaryRepository summaryRepository;
     private final AiService aiService;
 
     @Transactional
     public SummaryResponse createSummary(Long noteId) {
-        Note note = noteRepository.findById(noteId)
-                .orElseThrow(() -> new NotFoundException("Note not found"));
+        Note note = noteService.getNoteById(noteId);
 
         Summary findSummary = summaryRepository.findByNote(note);
         if (findSummary != null) {
@@ -41,10 +40,13 @@ public class SummaryService {
 
     @Transactional
     public SummaryResponse getSummaryByNoteId(Long noteId) {
-        Note note = noteRepository.findById(noteId)
-                .orElseThrow(() -> new NotFoundException("Note not found"));
+        Note note = noteService.getNoteById(noteId);
 
         Summary summary = summaryRepository.findByNote(note);
+
+        if (summary == null) {
+            throw new NotFoundException("Summary not found");
+        }
 
         return SummaryResponse.from(summary);
 

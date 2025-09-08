@@ -76,7 +76,7 @@ public class NoteApi {
             @RequestHeader("Authorization") String token,
             @PathVariable Long noteId){
         try {
-            NoteResponse response = noteService.getNoteById(noteId);
+            NoteResponse response = noteService.getNoteWithTagById(noteId);
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

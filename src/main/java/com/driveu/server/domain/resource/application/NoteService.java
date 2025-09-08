@@ -4,9 +4,7 @@ import com.amazonaws.services.kms.model.NotFoundException;
 import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.resource.dao.NoteRepository;
-import com.driveu.server.domain.resource.dao.ResourceDirectoryRepository;
 import com.driveu.server.domain.resource.domain.Note;
-import com.driveu.server.domain.resource.domain.Resource;
 import com.driveu.server.domain.resource.dto.request.NoteCreateRequest;
 import com.driveu.server.domain.resource.dto.request.NoteUpdateContentRequest;
 import com.driveu.server.domain.resource.dto.request.NoteUpdateTagRequest;
@@ -17,8 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 public class NoteService {
@@ -26,7 +22,6 @@ public class NoteService {
     private final DirectoryRepository directoryRepository;
     private final NoteRepository noteRepository;
     private final ResourceService resourceService;
-    private final ResourceDirectoryRepository resourceDirectoryRepository;
 
     @Transactional
     public NoteCreateResponse createNote(Long directoryId, NoteCreateRequest request) {
@@ -71,7 +66,7 @@ public class NoteService {
     }
 
     @Transactional
-    public NoteResponse getNoteById(Long noteId) {
+    public NoteResponse getNoteWithTagById(Long noteId) {
 
         Note note = noteRepository.findById(noteId)
                 .orElseThrow(() -> new NotFoundException("Note not found"));
@@ -147,5 +142,10 @@ public class NoteService {
         TagResponse tagResponse = resourceService.updateTag(note, oldTagDirectory, newTagDirectory);
 
         return NoteUpdateTagResponse.from(note, tagResponse);
+    }
+
+    public Note getNoteById(Long noteId) {
+        return noteRepository.findById(noteId)
+                .orElseThrow(() -> new NotFoundException("Note not found"));
     }
 }

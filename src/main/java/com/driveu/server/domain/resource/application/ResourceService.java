@@ -111,7 +111,7 @@ public class ResourceService {
         return link.getUrl();
     }
 
-    public Object getResourceById(Long resourceId) {
+    public Resource getResourceById(Long resourceId) {
         Optional<File> file = fileRepository.findById(resourceId);
         if (file.isPresent()) {
             return file.get();
@@ -153,7 +153,7 @@ public class ResourceService {
     }
 
     private ResourceResponse getResourceResponse(Resource resource, TagResponse tagResponse) {
-        Object resourceObject = getResourceById(resource.getId());
+        Resource resourceObject = getResourceById(resource.getId());
 
         return switch (resourceObject) {
             case File file -> ResourceResponse.fromFile(file, tagResponse);
@@ -280,7 +280,7 @@ public class ResourceService {
         resource.softDelete();
 
         // 사용자 usedStorage 누적 업데이트
-        Object resourceObject = getResourceById(resource.getId());
+        Resource resourceObject = getResourceById(resource.getId());
 
         if (resourceObject instanceof File file) {
             user.setUsedStorage(user.getUsedStorage() + file.getSize());
@@ -295,5 +295,26 @@ public class ResourceService {
         resource.removeDirectory(deleteTagDirectory);
         resource.addDirectory(newTagDirectory);
         return TagResponse.of(newTagDirectory);
+    }
+
+    // 모든 디렉토리를 순회하면서, 각 디렉토리에 속한 ResourceDirectory 목록을 가져와 리소스 ID를 모음(중복 없이)
+    public Set<Long> getResourceIdsSetByDirectoryIds(List<Directory> directories) {
+        Set<Long> resourceIds = new HashSet<>();
+
+        for (Directory dir : directories) {
+            Long dirId = dir.getId();
+
+            // 디렉토리가 삭제되지 않았으므로, Directory_IsDeletedFalse 조건은 이미 만족한다.
+            List<ResourceDirectory> rds = resourceDirectoryRepository.findAllByDirectory_IdAndDirectory_IsDeletedFalseAndResource_IsDeletedFalse(dirId);
+
+            for (ResourceDirectory rd : rds) {
+                Resource res = rd.getResource();
+                // 리소스 삭제되지 않은 것만 모음
+                if (!res.isDeleted()) {
+                    resourceIds.add(res.getId());
+                }
+            }
+        }
+        return resourceIds;
     }
 }
