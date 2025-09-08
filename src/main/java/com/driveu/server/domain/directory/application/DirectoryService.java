@@ -354,4 +354,8 @@ public class DirectoryService {
         return directoryRepository.findById(directoryId)
                 .orElseThrow(() -> new NotFoundException("Directory not found"));
     }
+
+    public List<Directory> getDirectoriesByUserSemesterIdAndIsDeletedFalse(Long userSemesterId) {
+        return directoryRepository.findByUserSemesterIdAndIsDeletedFalse(userSemesterId);
+    }
 }
