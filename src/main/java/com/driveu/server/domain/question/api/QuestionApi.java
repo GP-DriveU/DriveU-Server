@@ -5,7 +5,10 @@ import com.driveu.server.domain.question.application.QuestionQueryService;
 import com.driveu.server.domain.question.dto.request.QuestionCreateRequest;
 import com.driveu.server.domain.question.dto.response.QuestionListResponse;
 import com.driveu.server.domain.question.dto.response.QuestionResponse;
+import com.driveu.server.domain.user.domain.User;
+import com.driveu.server.global.config.security.auth.LoginUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -40,9 +43,10 @@ public class QuestionApi {
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     public ResponseEntity<?> createQuestion(
-            @RequestHeader("Authorization") String token,
             @PathVariable Long directoryId,
-            @RequestBody List<QuestionCreateRequest> requestList){
+            @RequestBody List<QuestionCreateRequest> requestList,
+            @Parameter(hidden = true) @LoginUser User user
+    ){
         try {
             QuestionResponse response = questionCreatorService.createQuestion(directoryId, requestList);
             return ResponseEntity.ok(response);
@@ -74,8 +78,9 @@ public class QuestionApi {
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     public ResponseEntity<?> getQuestionById(
-            @RequestHeader("Authorization") String token,
-            @PathVariable Long questionId){
+            @PathVariable Long questionId,
+            @Parameter(hidden = true) @LoginUser User user
+    ){
         try {
             QuestionResponse response = questionQueryService.getQuestionById(questionId);
             return ResponseEntity.ok(response);
@@ -107,8 +112,9 @@ public class QuestionApi {
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     public ResponseEntity<?> getQuestionsByUserSemester(
-            @RequestHeader("Authorization") String token,
-            @PathVariable Long userSemesterId){
+            @PathVariable Long userSemesterId,
+            @Parameter(hidden = true) @LoginUser User user
+    ){
         try {
             List<QuestionListResponse> response = questionQueryService.getQuestionsByUserSemester(userSemesterId);
             return ResponseEntity.ok(response);
