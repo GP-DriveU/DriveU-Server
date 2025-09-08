@@ -3,8 +3,11 @@ package com.driveu.server.domain.semester.api;
 import com.driveu.server.domain.semester.application.SemesterService;
 import com.driveu.server.domain.semester.dto.request.UserSemesterRequest;
 import com.driveu.server.domain.semester.dto.response.UserSemesterResponse;
+import com.driveu.server.domain.user.domain.User;
 import com.driveu.server.domain.user.dto.response.MainPageResponse;
+import com.driveu.server.global.config.security.auth.LoginUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -37,11 +40,11 @@ public class UserSemesterApi {
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     public ResponseEntity<?> createUserSemester(
-            @RequestHeader("Authorization") String token,
+            @Parameter(hidden = true) @LoginUser User user,
             @RequestBody UserSemesterRequest request
     ){
         try {
-            UserSemesterResponse userSemesterResponse = semesterService.createUserSemester(token, request);
+            UserSemesterResponse userSemesterResponse = semesterService.createUserSemester(user, request);
             return ResponseEntity.ok(userSemesterResponse);
         } catch (EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -67,10 +70,10 @@ public class UserSemesterApi {
     public ResponseEntity<?> updateUserSemester(
             @PathVariable Long id,
             @RequestBody UserSemesterRequest request,
-            @RequestHeader("Authorization") String token
+            @Parameter(hidden = true) @LoginUser User user
     ){
         try {
-            UserSemesterResponse userSemesterResponse = semesterService.updateUserSemester(token, id, request);
+            UserSemesterResponse userSemesterResponse = semesterService.updateUserSemester(user, id, request);
             return ResponseEntity.ok(userSemesterResponse);
         } catch (EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -98,10 +101,10 @@ public class UserSemesterApi {
     })
     public ResponseEntity<?> deleteUserSemester(
             @PathVariable Long id,
-            @RequestHeader("Authorization") String token
+            @Parameter(hidden = true) @LoginUser User user
     ){
         try {
-            semesterService.deleteUserSemester(token, id);
+            semesterService.deleteUserSemester(user, id);
             return ResponseEntity.status(HttpStatus.OK)
                     .body(Map.of("message", "해당 학기 및 관련 리소스가 성공적으로 삭제되었습니다."));
         } catch (EntityNotFoundException e){
@@ -127,10 +130,10 @@ public class UserSemesterApi {
     })
     public ResponseEntity<?> getMainPage(
             @PathVariable Long semesterId,
-            @RequestHeader("Authorization") String token
+            @Parameter(hidden = true) @LoginUser User user
     ){
         try {
-            MainPageResponse mainPageResponse = semesterService.getMainPage(token, semesterId);
+            MainPageResponse mainPageResponse = semesterService.getMainPage(user, semesterId);
             return ResponseEntity.status(HttpStatus.OK)
                     .body(mainPageResponse);
         } catch (EntityNotFoundException e){

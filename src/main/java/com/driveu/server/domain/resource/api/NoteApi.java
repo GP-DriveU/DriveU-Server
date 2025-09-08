@@ -9,7 +9,10 @@ import com.driveu.server.domain.resource.dto.response.NoteCreateResponse;
 import com.driveu.server.domain.resource.dto.response.NoteResponse;
 import com.driveu.server.domain.resource.dto.response.NoteUpdateTagResponse;
 import com.driveu.server.domain.resource.dto.response.NoteUpdateTitleResponse;
+import com.driveu.server.domain.user.domain.User;
+import com.driveu.server.global.config.security.auth.LoginUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -42,9 +45,10 @@ public class NoteApi {
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     public ResponseEntity<?> createNote(
-            @RequestHeader("Authorization") String token,
             @PathVariable Long directoryId,
-            @RequestBody NoteCreateRequest request){
+            @RequestBody NoteCreateRequest request,
+            @Parameter(hidden = true) @LoginUser User user
+    ){
         try {
             NoteCreateResponse response = noteService.createNote(directoryId, request);
             return ResponseEntity.ok(response);
@@ -73,8 +77,9 @@ public class NoteApi {
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     public ResponseEntity<?> getNoteById(
-            @RequestHeader("Authorization") String token,
-            @PathVariable Long noteId){
+            @PathVariable Long noteId,
+            @Parameter(hidden = true) @LoginUser User user
+    ){
         try {
             NoteResponse response = noteService.getNoteWithTagById(noteId);
             return ResponseEntity.ok(response);
@@ -103,9 +108,9 @@ public class NoteApi {
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     public ResponseEntity<?> updateNoteTitle(
-            @RequestHeader("Authorization") String token,
             @PathVariable Long noteId,
-            @RequestBody NoteUpdateTitleRequest request
+            @RequestBody NoteUpdateTitleRequest request,
+            @Parameter(hidden = true) @LoginUser User user
     ){
         try {
             NoteUpdateTitleResponse response = noteService.updateNoteTitle(noteId, request);
@@ -135,9 +140,9 @@ public class NoteApi {
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     public ResponseEntity<?> updateNoteContent(
-            @RequestHeader("Authorization") String token,
             @PathVariable Long noteId,
-            @RequestBody NoteUpdateContentRequest request
+            @RequestBody NoteUpdateContentRequest request,
+            @Parameter(hidden = true) @LoginUser User user
     ){
         try {
             NoteCreateResponse response = noteService.updateNoteContent(noteId, request);
@@ -167,9 +172,9 @@ public class NoteApi {
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     public ResponseEntity<?> updateNoteTag(
-            @RequestHeader("Authorization") String token,
             @PathVariable Long noteId,
-            @RequestBody NoteUpdateTagRequest request
+            @RequestBody NoteUpdateTagRequest request,
+            @Parameter(hidden = true) @LoginUser User user
     ){
         try {
             NoteUpdateTagResponse response = noteService.updateNoteTag(noteId, request);

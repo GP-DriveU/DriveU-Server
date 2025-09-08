@@ -1,7 +1,8 @@
-package com.driveu.server.global.config;
+package com.driveu.server.global.config.security;
 
 import com.driveu.server.domain.auth.enhancer.JwtAuthenticationFilter;
 import com.driveu.server.domain.auth.infra.JwtProvider;
+import com.driveu.server.global.util.TokenExtractor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +27,7 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
     private final JwtProvider jwtProvider;
+    private final TokenExtractor tokenExtractor;
 
     // Spring Security 필터 무시
     @Bean
@@ -60,7 +62,7 @@ public class SecurityConfig {
                                 .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/swagger-resources/**", "/webjars/**").permitAll() // 스웨거 허용
                                 .anyRequest().authenticated()
                 )
-                .addFilterBefore(new JwtAuthenticationFilter(jwtProvider),
+                .addFilterBefore(new JwtAuthenticationFilter(jwtProvider, tokenExtractor),
                         UsernamePasswordAuthenticationFilter.class
                 )
                 .build();

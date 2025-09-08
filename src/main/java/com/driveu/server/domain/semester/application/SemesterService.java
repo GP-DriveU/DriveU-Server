@@ -1,12 +1,8 @@
 package com.driveu.server.domain.semester.application;
 
-import com.driveu.server.domain.auth.infra.JwtProvider;
 import com.driveu.server.domain.directory.application.DirectoryService;
-import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.dto.response.DirectoryTreeResponse;
 import com.driveu.server.domain.resource.application.ResourceService;
-import com.driveu.server.domain.resource.dao.FileRepository;
-import com.driveu.server.domain.resource.domain.File;
 import com.driveu.server.domain.semester.dao.SemesterRepository;
 import com.driveu.server.domain.semester.dao.UserSemesterRepository;
 import com.driveu.server.domain.semester.domain.Semester;
@@ -14,7 +10,6 @@ import com.driveu.server.domain.semester.domain.Term;
 import com.driveu.server.domain.semester.domain.UserSemester;
 import com.driveu.server.domain.semester.dto.request.UserSemesterRequest;
 import com.driveu.server.domain.semester.dto.response.UserSemesterResponse;
-import com.driveu.server.domain.user.dao.UserRepository;
 import com.driveu.server.domain.user.domain.User;
 import com.driveu.server.domain.user.dto.response.MainPageResponse;
 import jakarta.persistence.EntityNotFoundException;
@@ -33,8 +28,6 @@ public class SemesterService {
 
     private final SemesterRepository semesterRepository;
     private final UserSemesterRepository userSemesterRepository;
-    private final JwtProvider jwtProvider;
-    private final UserRepository userRepository;
     private final DirectoryService directoryService;
     private final ResourceService resourceService;
 
@@ -59,12 +52,7 @@ public class SemesterService {
     }
 
     @Transactional
-    public UserSemesterResponse createUserSemester(String token, UserSemesterRequest request){
-        String email = jwtProvider.getUserEmailFromToken(token);
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(()-> new EntityNotFoundException("User not found"));
-
+    public UserSemesterResponse createUserSemester(User user, UserSemesterRequest request){
         Term term = Term.valueOf(request.getTerm().toUpperCase());
 
         Semester semester = semesterRepository.findByYearAndTerm(request.getYear(), term)
@@ -98,12 +86,7 @@ public class SemesterService {
     }
 
     @Transactional
-    public UserSemesterResponse updateUserSemester(String token, Long userSemesterId ,UserSemesterRequest request){
-        String email = jwtProvider.getUserEmailFromToken(token);
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(()-> new EntityNotFoundException("User not found"));
-
+    public UserSemesterResponse updateUserSemester(User user, Long userSemesterId ,UserSemesterRequest request){
         Term term = Term.valueOf(request.getTerm().toUpperCase());
 
         // 변경 대상 학기 조회 또는 생성
@@ -188,12 +171,7 @@ public class SemesterService {
     }
 
     @Transactional
-    public void deleteUserSemester(String token, Long userSemesterId){
-        String email = jwtProvider.getUserEmailFromToken(token);
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(()-> new EntityNotFoundException("User not found"));
-
+    public void deleteUserSemester(User user, Long userSemesterId){
         UserSemester userSemester = userSemesterRepository.findById(userSemesterId)
                 .orElseThrow(()-> new EntityNotFoundException("UserSemester not found"));
 
@@ -236,9 +214,9 @@ public class SemesterService {
     }
 
     @Transactional
-    public MainPageResponse getMainPage(String token, Long semesterId) {
+    public MainPageResponse getMainPage(User user, Long semesterId) {
 
-        List<DirectoryTreeResponse> directoryTreeResponses = directoryService.getDirectoryTree(token, semesterId);
+        List<DirectoryTreeResponse> directoryTreeResponses = directoryService.getDirectoryTree(user, semesterId);
 
         return MainPageResponse.builder()
                 .directories(directoryTreeResponses)

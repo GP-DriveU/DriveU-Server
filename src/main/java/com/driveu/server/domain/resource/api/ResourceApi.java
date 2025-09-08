@@ -6,7 +6,10 @@ import com.driveu.server.domain.resource.dto.request.LinkSaveRequest;
 import com.driveu.server.domain.resource.dto.response.ResourceDeleteResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceFavoriteResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceResponse;
+import com.driveu.server.domain.user.domain.User;
+import com.driveu.server.global.config.security.auth.LoginUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -46,10 +49,10 @@ public class ResourceApi {
     public ResponseEntity<?> uploadFileMetadata(
             @PathVariable Long directoryId,
             @RequestBody FileSaveMetaDataRequest request,
-            @RequestHeader("Authorization") String token
+            @Parameter(hidden = true) @LoginUser User user
     ) {
         try {
-            Long fileId = resourceService.saveFile(token, directoryId, request);
+            Long fileId = resourceService.saveFile(user, directoryId, request);
             return ResponseEntity.ok(Map.of("fileId", fileId));
         } catch (EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -78,7 +81,7 @@ public class ResourceApi {
     public ResponseEntity<?> uploadLink(
             @PathVariable Long directoryId,
             @RequestBody LinkSaveRequest request,
-            @RequestHeader("Authorization") String token
+            @Parameter(hidden = true) @LoginUser User user
     ) {
         try {
             Long linkId = resourceService.saveLink(directoryId, request);
@@ -109,7 +112,7 @@ public class ResourceApi {
     })
     public ResponseEntity<?> getLinkUrl(
             @PathVariable Long linkId,
-            @RequestHeader("Authorization") String token
+            @Parameter(hidden = true) @LoginUser User user
     ) {
         try {
             String url = resourceService.getLinkUrl(linkId);
@@ -140,7 +143,7 @@ public class ResourceApi {
             @PathVariable Long directoryId,
             @RequestParam(required = false, defaultValue = "updatedAt") String sort,
             @RequestParam(required = false, defaultValue = "false") Boolean favoriteOnly,
-            @RequestHeader("Authorization") String token
+            @Parameter(hidden = true) @LoginUser User user
     ){
         try {
             List<ResourceResponse> response = resourceService.getResourcesByDirectory(directoryId, sort, favoriteOnly);
@@ -168,8 +171,8 @@ public class ResourceApi {
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     public ResponseEntity<?> toggleFavorite(
-            @RequestHeader("Authorization") String token,
-            @PathVariable("resourceId") Long resourceId
+            @PathVariable("resourceId") Long resourceId,
+            @Parameter(hidden = true) @LoginUser User user
     ){
         try {
             ResourceFavoriteResponse response = resourceService.toggleFavorite(resourceId);
@@ -197,11 +200,11 @@ public class ResourceApi {
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     public ResponseEntity<?> deleteResource(
-            @RequestHeader("Authorization") String token,
-            @PathVariable("resourceId") Long resourceId
+            @PathVariable("resourceId") Long resourceId,
+            @Parameter(hidden = true) @LoginUser User user
     ){
         try {
-            ResourceDeleteResponse response = resourceService.deleteResource(token, resourceId);
+            ResourceDeleteResponse response = resourceService.deleteResource(user, resourceId);
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

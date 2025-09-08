@@ -1,10 +1,12 @@
 package com.driveu.server.domain.user.api;
 
 import com.amazonaws.services.kms.model.NotFoundException;
-import com.driveu.server.domain.resource.dto.response.FileUploadResponse;
 import com.driveu.server.domain.user.application.MyPageService;
+import com.driveu.server.domain.user.domain.User;
 import com.driveu.server.domain.user.dto.response.MypageResponse;
+import com.driveu.server.global.config.security.auth.LoginUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -35,11 +37,9 @@ public class UserApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    public ResponseEntity<?> getMyPage(
-            @RequestHeader("Authorization") String token
-    ) {
+    public ResponseEntity<?> getMyPage(@Parameter(hidden = true) @LoginUser User user) {
         try {
-            MypageResponse mypageResponse = myPageService.getMyPage(token);
+            MypageResponse mypageResponse = myPageService.getMyPage(user);
             return ResponseEntity.ok(mypageResponse);
         } catch (NotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

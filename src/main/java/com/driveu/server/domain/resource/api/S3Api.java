@@ -2,7 +2,10 @@ package com.driveu.server.domain.resource.api;
 
 import com.driveu.server.domain.resource.application.S3Service;
 import com.driveu.server.domain.resource.dto.response.FileUploadResponse;
+import com.driveu.server.domain.user.domain.User;
+import com.driveu.server.global.config.security.auth.LoginUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -37,10 +40,10 @@ public class S3Api {
     public ResponseEntity<?> getUploadUrl(
             @RequestParam String filename,
             @RequestParam int fileSize,
-            @RequestHeader("Authorization") String token
+            @Parameter(hidden = true) @LoginUser User user
     ) {
         try {
-            FileUploadResponse fileUploadResponse = s3Service.generateUploadUrl(token, filename, fileSize);
+            FileUploadResponse fileUploadResponse = s3Service.generateUploadUrl(user, filename, fileSize);
             return ResponseEntity.ok(fileUploadResponse);
         } catch (IllegalStateException e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -63,20 +66,19 @@ public class S3Api {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    public ResponseEntity<?> getDownloadUrl(@PathVariable Long resourceId) {
+    public ResponseEntity<?> getDownloadUrl(
+            @PathVariable Long resourceId,
+            @Parameter(hidden = true) @LoginUser User user
+    ) {
         try {
             URL presignedUrl = s3Service.generateDownloadUrl(resourceId);
             return ResponseEntity.ok(Map.of("url", presignedUrl.toString()));
         } catch (EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", e.getMessage()));
-        } catch (IllegalStateException e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", e.getMessage()));
         } catch (Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", e.getMessage()));
         }
     }
-
 }
