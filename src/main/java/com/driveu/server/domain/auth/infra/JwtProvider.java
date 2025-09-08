@@ -81,9 +81,4 @@ public class JwtProvider {
         }
     }
 
-    // 토큰으로 사용자 email 가져오기
-    public String getUserEmailFromToken(String accessToken) {
-        Claims claims = parseClaims(accessToken);
-        return claims.getSubject();
-    }
 }
