@@ -1,7 +1,6 @@
 package com.driveu.server.domain.resource.application;
 
 import com.amazonaws.services.kms.model.NotFoundException;
-import com.driveu.server.domain.auth.infra.JwtProvider;
 import com.driveu.server.domain.directory.dao.DirectoryHierarchyRepository;
 import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.domain.Directory;
@@ -41,16 +40,10 @@ public class ResourceService {
     private final ResourceDirectoryRepository resourceDirectoryRepository;
     private final ResourceRepository resourceRepository;
     private final DirectoryHierarchyRepository directoryHierarchyRepository;
-    private final JwtProvider jwtProvider;
     private final UserRepository userRepository;
 
     @Transactional
-    public Long saveFile(String token, Long directoryId, FileSaveMetaDataRequest request) {
-        // 토큰에서 이메일 뽑아내고 유저 조회
-        String email = jwtProvider.getUserEmailFromToken(token);
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
-
+    public Long saveFile(User user, Long directoryId, FileSaveMetaDataRequest request) {
         Directory directory = directoryRepository.findById(directoryId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 디렉토리입니다."));
 
@@ -267,12 +260,7 @@ public class ResourceService {
     }
 
     @Transactional
-    public ResourceDeleteResponse deleteResource(String token, Long resourceId) {
-        // 토큰에서 이메일 뽑아내고 유저 조회
-        String email = jwtProvider.getUserEmailFromToken(token);
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
-
+    public ResourceDeleteResponse deleteResource(User user, Long resourceId) {
         Resource resource = resourceRepository.findById(resourceId)
                 .orElseThrow(() -> new EntityNotFoundException("Resource not found."));
 

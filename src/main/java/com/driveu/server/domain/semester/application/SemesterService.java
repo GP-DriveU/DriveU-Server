@@ -1,6 +1,5 @@
 package com.driveu.server.domain.semester.application;
 
-import com.driveu.server.domain.auth.infra.JwtProvider;
 import com.driveu.server.domain.directory.application.DirectoryService;
 import com.driveu.server.domain.directory.dto.response.DirectoryTreeResponse;
 import com.driveu.server.domain.resource.application.ResourceService;
@@ -11,7 +10,6 @@ import com.driveu.server.domain.semester.domain.Term;
 import com.driveu.server.domain.semester.domain.UserSemester;
 import com.driveu.server.domain.semester.dto.request.UserSemesterRequest;
 import com.driveu.server.domain.semester.dto.response.UserSemesterResponse;
-import com.driveu.server.domain.user.dao.UserRepository;
 import com.driveu.server.domain.user.domain.User;
 import com.driveu.server.domain.user.dto.response.MainPageResponse;
 import jakarta.persistence.EntityNotFoundException;
