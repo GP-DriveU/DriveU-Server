@@ -2,7 +2,6 @@ package com.driveu.server.domain.summary.applicaion;
 
 import com.amazonaws.services.kms.model.NotFoundException;
 import com.driveu.server.domain.resource.application.NoteService;
-import com.driveu.server.domain.resource.dao.NoteRepository;
 import com.driveu.server.domain.resource.domain.Note;
 import com.driveu.server.domain.summary.dao.SummaryRepository;
 import com.driveu.server.domain.summary.domain.Summary;
