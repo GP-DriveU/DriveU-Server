@@ -6,6 +6,7 @@ import com.driveu.server.domain.question.dto.request.QuestionCreateRequest;
 import com.driveu.server.domain.question.dto.response.QuestionListResponse;
 import com.driveu.server.domain.question.dto.response.QuestionResponse;
 import com.driveu.server.domain.user.domain.User;
+import com.driveu.server.global.config.security.auth.IsOwner;
 import com.driveu.server.global.config.security.auth.LoginUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -42,10 +43,10 @@ public class QuestionApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
+    @IsOwner(resourceType = "directory", idParamName = "directoryId")
     public ResponseEntity<?> createQuestion(
             @PathVariable Long directoryId,
-            @RequestBody List<QuestionCreateRequest> requestList,
-            @Parameter(hidden = true) @LoginUser User user
+            @RequestBody List<QuestionCreateRequest> requestList
     ){
         try {
             QuestionResponse response = questionCreatorService.createQuestion(directoryId, requestList);

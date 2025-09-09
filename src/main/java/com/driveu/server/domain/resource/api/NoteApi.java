@@ -10,6 +10,7 @@ import com.driveu.server.domain.resource.dto.response.NoteResponse;
 import com.driveu.server.domain.resource.dto.response.NoteUpdateTagResponse;
 import com.driveu.server.domain.resource.dto.response.NoteUpdateTitleResponse;
 import com.driveu.server.domain.user.domain.User;
+import com.driveu.server.global.config.security.auth.IsOwner;
 import com.driveu.server.global.config.security.auth.LoginUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -44,10 +45,10 @@ public class NoteApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
+    @IsOwner(resourceType = "directory", idParamName = "directoryId")
     public ResponseEntity<?> createNote(
             @PathVariable Long directoryId,
-            @RequestBody NoteCreateRequest request,
-            @Parameter(hidden = true) @LoginUser User user
+            @RequestBody NoteCreateRequest request
     ){
         try {
             NoteCreateResponse response = noteService.createNote(directoryId, request);

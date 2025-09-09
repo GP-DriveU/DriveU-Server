@@ -7,6 +7,7 @@ import com.driveu.server.domain.resource.dto.response.ResourceDeleteResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceFavoriteResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceResponse;
 import com.driveu.server.domain.user.domain.User;
+import com.driveu.server.global.config.security.auth.IsOwner;
 import com.driveu.server.global.config.security.auth.LoginUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -46,6 +47,7 @@ public class ResourceApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
+    @IsOwner(resourceType = "directory", idParamName = "directoryId")
     public ResponseEntity<?> uploadFileMetadata(
             @PathVariable Long directoryId,
             @RequestBody FileSaveMetaDataRequest request,
@@ -78,10 +80,10 @@ public class ResourceApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
+    @IsOwner(resourceType = "directory", idParamName = "directoryId")
     public ResponseEntity<?> uploadLink(
             @PathVariable Long directoryId,
-            @RequestBody LinkSaveRequest request,
-            @Parameter(hidden = true) @LoginUser User user
+            @RequestBody LinkSaveRequest request
     ) {
         try {
             Long linkId = resourceService.saveLink(directoryId, request);
@@ -139,11 +141,11 @@ public class ResourceApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
+    @IsOwner(resourceType = "directory", idParamName = "directoryId")
     public ResponseEntity<?> getResourcesByDirectoryID(
             @PathVariable Long directoryId,
             @RequestParam(required = false, defaultValue = "updatedAt") String sort,
-            @RequestParam(required = false, defaultValue = "false") Boolean favoriteOnly,
-            @Parameter(hidden = true) @LoginUser User user
+            @RequestParam(required = false, defaultValue = "false") Boolean favoriteOnly
     ){
         try {
             List<ResourceResponse> response = resourceService.getResourcesByDirectory(directoryId, sort, favoriteOnly);
