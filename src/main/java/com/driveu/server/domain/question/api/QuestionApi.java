@@ -5,11 +5,8 @@ import com.driveu.server.domain.question.application.QuestionQueryService;
 import com.driveu.server.domain.question.dto.request.QuestionCreateRequest;
 import com.driveu.server.domain.question.dto.response.QuestionListResponse;
 import com.driveu.server.domain.question.dto.response.QuestionResponse;
-import com.driveu.server.domain.user.domain.User;
 import com.driveu.server.global.config.security.auth.IsOwner;
-import com.driveu.server.global.config.security.auth.LoginUser;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -78,9 +75,9 @@ public class QuestionApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
+    @IsOwner(resourceType = "question", idParamName = "questionId")
     public ResponseEntity<?> getQuestionById(
-            @PathVariable Long questionId,
-            @Parameter(hidden = true) @LoginUser User user
+            @PathVariable Long questionId
     ){
         try {
             QuestionResponse response = questionQueryService.getQuestionById(questionId);
