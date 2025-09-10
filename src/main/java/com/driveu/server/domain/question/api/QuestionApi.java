@@ -112,9 +112,9 @@ public class QuestionApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
+    @IsOwner(resourceType = "userSemester", idParamName = "userSemesterId")
     public ResponseEntity<?> getQuestionsByUserSemester(
-            @PathVariable Long userSemesterId,
-            @Parameter(hidden = true) @LoginUser User user
+            @PathVariable Long userSemesterId
     ){
         try {
             List<QuestionListResponse> response = questionQueryService.getQuestionsByUserSemester(userSemesterId);

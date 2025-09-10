@@ -2,6 +2,7 @@ package com.driveu.server.global.config.security.auth;
 
 import com.driveu.server.domain.user.domain.User;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Objects;
 
+@Slf4j
 @Aspect
 @Component
 @RequiredArgsConstructor
@@ -44,6 +46,7 @@ public class OwnerAspect {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("지원하지 않는 리소스 타입"));
 
+        log.info("verifier: {}", isOwner.resourceType());
         if (!verifier.verify(resourceId, currentUser.getId())) {
             throw new AccessDeniedException("해당 리소스에 대한 권한이 없습니다.");
         }

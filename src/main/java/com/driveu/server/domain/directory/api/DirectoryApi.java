@@ -44,6 +44,7 @@ public class DirectoryApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
+    @IsOwner(resourceType = "userSemester", idParamName = "userSemesterId")
     public ResponseEntity<?> getDirectories(
             @PathVariable Long userSemesterId,
             @Parameter(hidden = true) @LoginUser User user
@@ -75,6 +76,7 @@ public class DirectoryApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
+    @IsOwner(resourceType = "userSemester", idParamName = "userSemesterId")
     public ResponseEntity<?> createDirectory(
             @PathVariable Long userSemesterId,
             @RequestBody DirectoryCreateRequest request,
