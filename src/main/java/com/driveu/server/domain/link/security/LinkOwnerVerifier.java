@@ -17,6 +17,6 @@ public class LinkOwnerVerifier implements OwnerVerifier {
 
     @Override
     public boolean verify(Long resourceId, Long userId) {
-        return linkRepository.existsByNoteIdAndUserId(resourceId, userId);
+        return linkRepository.existsByLinkIdAndUserId(resourceId, userId);
     }
 }

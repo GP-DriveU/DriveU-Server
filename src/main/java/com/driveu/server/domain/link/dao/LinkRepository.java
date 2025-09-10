@@ -7,10 +7,12 @@ import org.springframework.data.repository.query.Param;
 
 public interface LinkRepository extends JpaRepository<Link, Long> {
 
-    @Query("SELECT COUNT(l) > 0 FROM Link l " +
-            "JOIN l.resourceDirectories rd "+
-            "JOIN rd.directory d " +
-            "JOIN d.userSemester us " +
-            "WHERE l.id = :linkId AND us.user.id = :userId")
-    boolean existsByNoteIdAndUserId(@Param("linkId") Long linkId, @Param("userId") Long userId);
+    @Query("""
+        SELECT COUNT(l) > 0 FROM Link l
+        JOIN l.resourceDirectories rd
+        JOIN rd.directory d
+        JOIN d.userSemester us
+        WHERE l.id = :linkId AND us.user.id = :userId
+    """)
+    boolean existsByLinkIdAndUserId(@Param("linkId") Long linkId, @Param("userId") Long userId);
 }

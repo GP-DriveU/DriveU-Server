@@ -32,4 +32,13 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
     List<Resource> findTop3FavoriteByUserSemesterIdAndIsDeletedFalseOrderByUpdatedAtDesc(
             @Param("userSemesterId") Long userSemesterId, Pageable pageable
     );
+
+    @Query("""
+        SELECT COUNT(r) > 0 FROM Resource r
+        JOIN r.resourceDirectories rd
+        JOIN rd.directory d
+        JOIN d.userSemester us
+        WHERE r.id = :resourceId AND us.user.id = :userId
+    """)
+    boolean existsByResourceIdAndUserId(@Param("resourceId") Long resourceId, @Param("userId") Long userId);
 }

@@ -108,9 +108,9 @@ public class ResourceApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
+    @IsOwner(resourceType = "resource", idParamName = "resourceId")
     public ResponseEntity<?> toggleFavorite(
-            @PathVariable("resourceId") Long resourceId,
-            @Parameter(hidden = true) @LoginUser User user
+            @PathVariable("resourceId") Long resourceId
     ){
         try {
             ResourceFavoriteResponse response = resourceService.toggleFavorite(resourceId);
@@ -137,6 +137,7 @@ public class ResourceApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
+    @IsOwner(resourceType = "resource", idParamName = "resourceId")
     public ResponseEntity<?> deleteResource(
             @PathVariable("resourceId") Long resourceId,
             @Parameter(hidden = true) @LoginUser User user
