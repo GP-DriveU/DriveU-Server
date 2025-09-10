@@ -1,4 +1,4 @@
-package com.driveu.server.domain.resource.dao;
+package com.driveu.server.domain.link.dao;
 
 import com.driveu.server.domain.resource.domain.Link;
 import org.springframework.data.jpa.repository.JpaRepository;

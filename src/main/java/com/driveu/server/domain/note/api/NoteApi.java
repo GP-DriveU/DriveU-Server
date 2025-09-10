@@ -1,14 +1,14 @@
-package com.driveu.server.domain.resource.api;
+package com.driveu.server.domain.note.api;
 
-import com.driveu.server.domain.resource.application.NoteService;
-import com.driveu.server.domain.resource.dto.request.NoteCreateRequest;
-import com.driveu.server.domain.resource.dto.request.NoteUpdateContentRequest;
-import com.driveu.server.domain.resource.dto.request.NoteUpdateTagRequest;
-import com.driveu.server.domain.resource.dto.request.NoteUpdateTitleRequest;
-import com.driveu.server.domain.resource.dto.response.NoteCreateResponse;
-import com.driveu.server.domain.resource.dto.response.NoteResponse;
-import com.driveu.server.domain.resource.dto.response.NoteUpdateTagResponse;
-import com.driveu.server.domain.resource.dto.response.NoteUpdateTitleResponse;
+import com.driveu.server.domain.note.application.NoteService;
+import com.driveu.server.domain.note.dto.request.NoteCreateRequest;
+import com.driveu.server.domain.note.dto.request.NoteUpdateContentRequest;
+import com.driveu.server.domain.note.dto.request.NoteUpdateTagRequest;
+import com.driveu.server.domain.note.dto.request.NoteUpdateTitleRequest;
+import com.driveu.server.domain.note.dto.response.NoteCreateResponse;
+import com.driveu.server.domain.note.dto.response.NoteResponse;
+import com.driveu.server.domain.note.dto.response.NoteUpdateTagResponse;
+import com.driveu.server.domain.note.dto.response.NoteUpdateTitleResponse;
 import com.driveu.server.domain.user.domain.User;
 import com.driveu.server.global.config.security.auth.IsOwner;
 import com.driveu.server.global.config.security.auth.LoginUser;

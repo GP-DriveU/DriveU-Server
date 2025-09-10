@@ -1,15 +1,20 @@
-package com.driveu.server.domain.resource.application;
+package com.driveu.server.domain.note.application;
 
 import com.amazonaws.services.kms.model.NotFoundException;
 import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.domain.Directory;
-import com.driveu.server.domain.resource.dao.NoteRepository;
+import com.driveu.server.domain.resource.application.ResourceService;
+import com.driveu.server.domain.note.dao.NoteRepository;
 import com.driveu.server.domain.resource.domain.Note;
-import com.driveu.server.domain.resource.dto.request.NoteCreateRequest;
-import com.driveu.server.domain.resource.dto.request.NoteUpdateContentRequest;
-import com.driveu.server.domain.resource.dto.request.NoteUpdateTagRequest;
-import com.driveu.server.domain.resource.dto.request.NoteUpdateTitleRequest;
+import com.driveu.server.domain.note.dto.request.NoteCreateRequest;
+import com.driveu.server.domain.note.dto.request.NoteUpdateContentRequest;
+import com.driveu.server.domain.note.dto.request.NoteUpdateTagRequest;
+import com.driveu.server.domain.note.dto.request.NoteUpdateTitleRequest;
 import com.driveu.server.domain.resource.dto.response.*;
+import com.driveu.server.domain.note.dto.response.NoteCreateResponse;
+import com.driveu.server.domain.note.dto.response.NoteResponse;
+import com.driveu.server.domain.note.dto.response.NoteUpdateTagResponse;
+import com.driveu.server.domain.note.dto.response.NoteUpdateTitleResponse;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;

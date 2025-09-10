@@ -1,7 +1,7 @@
 package com.driveu.server.domain.question.application.converter;
 
 import com.driveu.server.domain.question.dto.request.QuestionCreateRequest;
-import com.driveu.server.domain.resource.dao.NoteRepository;
+import com.driveu.server.domain.note.dao.NoteRepository;
 import com.driveu.server.domain.resource.domain.Note;
 import com.driveu.server.domain.resource.domain.type.ResourceType;
 import jakarta.persistence.EntityNotFoundException;
