@@ -1,5 +1,6 @@
 package com.driveu.server.domain.note.security;
 
+import com.driveu.server.domain.note.dao.NoteRepository;
 import com.driveu.server.global.config.security.auth.OwnerVerifier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -7,6 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class NoteOwnerVerifier implements OwnerVerifier {
+    private final NoteRepository noteRepository;
 
     @Override
     public boolean supports(String resourceType) {
@@ -15,6 +17,6 @@ public class NoteOwnerVerifier implements OwnerVerifier {
 
     @Override
     public boolean verify(Long resourceId, Long userId) {
-        return true;
+        return noteRepository.existsByNoteIdAndUserId(resourceId, userId);
     }
 }
