@@ -68,4 +68,6 @@ public interface DirectoryRepository extends JpaRepository<Directory, Long> {
     List<Directory> findByUserSemester(UserSemester userSemester);
 
     List<Directory> findByUserSemesterIdAndIsDeletedFalse(Long userSemesterId);
+
+    Boolean existsByIdAndUserSemester_User_Id(Long id, Long user_Id);
 }

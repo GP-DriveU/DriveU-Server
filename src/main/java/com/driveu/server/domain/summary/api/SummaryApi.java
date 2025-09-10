@@ -2,10 +2,8 @@ package com.driveu.server.domain.summary.api;
 
 import com.driveu.server.domain.summary.applicaion.SummaryService;
 import com.driveu.server.domain.summary.dto.response.SummaryResponse;
-import com.driveu.server.domain.user.domain.User;
-import com.driveu.server.global.config.security.auth.LoginUser;
+import com.driveu.server.global.config.security.auth.IsOwner;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -37,9 +35,9 @@ public class SummaryApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
+    @IsOwner(resourceType = "note", idParamName = "noteId")
     public ResponseEntity<?> createSummary(
-            @PathVariable Long noteId,
-            @Parameter(hidden = true) @LoginUser User user
+            @PathVariable Long noteId
     ){
         try {
             SummaryResponse response = summaryService.createSummary(noteId);
@@ -69,9 +67,9 @@ public class SummaryApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
+    @IsOwner(resourceType = "note", idParamName = "noteId")
     public ResponseEntity<?> getSummaryByNoteId(
-            @PathVariable Long noteId,
-            @Parameter(hidden = true) @LoginUser User user
+            @PathVariable Long noteId
     ){
         try {
             SummaryResponse response = summaryService.getSummaryByNoteId(noteId);

@@ -7,6 +7,7 @@ import com.driveu.server.domain.directory.dto.request.DirectoryOrderUpdateReques
 import com.driveu.server.domain.directory.dto.request.DirectoryRenameRequest;
 import com.driveu.server.domain.directory.dto.response.*;
 import com.driveu.server.domain.user.domain.User;
+import com.driveu.server.global.config.security.auth.IsOwner;
 import com.driveu.server.global.config.security.auth.LoginUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -43,6 +44,7 @@ public class DirectoryApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
+    @IsOwner(resourceType = "userSemester", idParamName = "userSemesterId")
     public ResponseEntity<?> getDirectories(
             @PathVariable Long userSemesterId,
             @Parameter(hidden = true) @LoginUser User user
@@ -74,6 +76,7 @@ public class DirectoryApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
+    @IsOwner(resourceType = "userSemester", idParamName = "userSemesterId")
     public ResponseEntity<?> createDirectory(
             @PathVariable Long userSemesterId,
             @RequestBody DirectoryCreateRequest request,
@@ -103,10 +106,10 @@ public class DirectoryApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
+    @IsOwner(resourceType = "directory", idParamName = "id")
     public ResponseEntity<?> renameDirectory(
             @PathVariable Long id,
-            @RequestBody DirectoryRenameRequest request,
-            @Parameter(hidden = true) @LoginUser User user
+            @RequestBody DirectoryRenameRequest request
     ) {
         try {
             DirectoryRenameResponse response = directoryService.renameDirectory(id, request);
@@ -132,9 +135,9 @@ public class DirectoryApi {
                     )),
             @ApiResponse(responseCode = "403", description = "삭제 권한이 없음")
     })
+    @IsOwner(resourceType = "directory", idParamName = "id")
     public ResponseEntity<?> deleteDirectory(
-            @PathVariable Long id,
-            @Parameter(hidden = true) @LoginUser User user
+            @PathVariable Long id
     ) {
         try {
             directoryService.softDeleteDirectory(id);
@@ -161,10 +164,10 @@ public class DirectoryApi {
                     )),
             @ApiResponse(responseCode = "403", description = "권한 없음")
     })
+    @IsOwner(resourceType = "directory", idParamName = "id")
     public ResponseEntity<?> moveDirectoryParent(
             @PathVariable Long id,
-            @RequestBody DirectoryMoveParentRequest request,
-            @Parameter(hidden = true) @LoginUser User user
+            @RequestBody DirectoryMoveParentRequest request
     ) {
         try {
             DirectoryMoveParentResponse response = directoryService.moveDirectoryParent(id, request);

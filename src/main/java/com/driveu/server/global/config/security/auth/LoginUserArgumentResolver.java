@@ -1,11 +1,6 @@
 package com.driveu.server.global.config.security.auth;
 
-import com.driveu.server.domain.auth.infra.JwtProvider;
-import com.driveu.server.domain.user.dao.UserRepository;
 import com.driveu.server.domain.user.domain.User;
-import com.driveu.server.global.util.TokenExtractor;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Component;
@@ -18,10 +13,7 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 @RequiredArgsConstructor
 public class LoginUserArgumentResolver implements HandlerMethodArgumentResolver {
 
-    private final JwtProvider jwtProvider;
-    private final TokenExtractor tokenExtractor;
-    private final UserRepository userRepository;
-
+    private final LoginUserContextHolder loginUserContextHolder;
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
@@ -32,15 +24,6 @@ public class LoginUserArgumentResolver implements HandlerMethodArgumentResolver 
     // JWT 토큰으로부터 User 객체를 반환
     @Override
     public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
-
-        String token = tokenExtractor.extractToken((HttpServletRequest) webRequest.getNativeRequest());
-        if (token == null) {
-            throw new IllegalArgumentException("Invalid token");
-        }
-
-        String userEmail = jwtProvider.getUserEmailFromToken(token);
-
-        return userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        return loginUserContextHolder.getCurrentUser();
     }
 }

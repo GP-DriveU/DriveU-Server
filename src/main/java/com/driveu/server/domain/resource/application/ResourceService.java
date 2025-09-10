@@ -8,13 +8,17 @@ import com.driveu.server.domain.directory.domain.DirectoryHierarchy;
 import com.driveu.server.domain.resource.dao.*;
 import com.driveu.server.domain.resource.domain.*;
 import com.driveu.server.domain.resource.domain.type.FileExtension;
-import com.driveu.server.domain.resource.domain.type.IconType;
 import com.driveu.server.domain.resource.dto.request.FileSaveMetaDataRequest;
-import com.driveu.server.domain.resource.dto.request.LinkSaveRequest;
 import com.driveu.server.domain.resource.dto.response.ResourceDeleteResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceFavoriteResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceResponse;
 import com.driveu.server.domain.resource.dto.response.TagResponse;
+import com.driveu.server.domain.file.dao.FileRepository;
+import com.driveu.server.domain.resource.domain.File;
+import com.driveu.server.domain.link.dao.LinkRepository;
+import com.driveu.server.domain.resource.domain.Link;
+import com.driveu.server.domain.note.dao.NoteRepository;
+import com.driveu.server.domain.resource.domain.Note;
 import com.driveu.server.domain.user.dao.UserRepository;
 import com.driveu.server.domain.user.domain.User;
 import jakarta.persistence.EntityNotFoundException;
@@ -70,38 +74,6 @@ public class ResourceService {
         File saved = fileRepository.save(file); // cascade 설정으로 resource_directory도 함께 저장
 
         return saved.getId();
-    }
-
-    @Transactional
-    public Long saveLink(Long directoryId, LinkSaveRequest request) {
-        Directory directory = directoryRepository.findById(directoryId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 디렉토리입니다."));
-
-        Directory tagDirectory = null;
-        if (request.getTagId() != null) {
-            tagDirectory = directoryRepository.findById(request.getTagId())
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다."));
-        }
-
-        IconType iconType = IconType.fromUrl(request.getUrl());
-        Link link = Link.of(request.getTitle(), request.getUrl(), iconType);
-
-        // 디렉토리 연결
-        link.addDirectory(directory);
-        if (tagDirectory != null) {
-            link.addDirectory(tagDirectory);
-        }
-
-        Link saved = linkRepository.save(link);
-        return saved.getId();
-    }
-
-    @Transactional
-    public String getLinkUrl(Long linkId) {
-        Link link = linkRepository.findById(linkId)
-                .orElseThrow(() -> new NotFoundException("Link not found."));
-
-        return link.getUrl();
     }
 
     public Resource getResourceById(Long resourceId) {

@@ -1,4 +1,4 @@
-package com.driveu.server.domain.resource.dto.request;
+package com.driveu.server.domain.note.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

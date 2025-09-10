@@ -1,4 +1,4 @@
-package com.driveu.server.domain.resource.dto.response;
+package com.driveu.server.domain.note.dto.response;
 
 import com.driveu.server.domain.resource.domain.Note;
 import lombok.AllArgsConstructor;
@@ -8,18 +8,16 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 @Builder
-public class NoteResponse {
+public class NoteCreateResponse {
     private Long noteId;
     private String title;
-    private String content;
-    private TagResponse tag;
+    private String previewLink;
 
-    public static NoteResponse from(Note note, TagResponse tag) {
-        return NoteResponse.builder()
+    public static NoteCreateResponse from(Note note) {
+        return NoteCreateResponse.builder()
                 .noteId(note.getId())
                 .title(note.getTitle())
-                .content(note.getContent())
-                .tag(tag)
+                .previewLink(note.getPreviewLine())
                 .build();
     }
 }

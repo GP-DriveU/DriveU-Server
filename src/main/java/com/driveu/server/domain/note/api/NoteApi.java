@@ -1,18 +1,16 @@
-package com.driveu.server.domain.resource.api;
+package com.driveu.server.domain.note.api;
 
-import com.driveu.server.domain.resource.application.NoteService;
-import com.driveu.server.domain.resource.dto.request.NoteCreateRequest;
-import com.driveu.server.domain.resource.dto.request.NoteUpdateContentRequest;
-import com.driveu.server.domain.resource.dto.request.NoteUpdateTagRequest;
-import com.driveu.server.domain.resource.dto.request.NoteUpdateTitleRequest;
-import com.driveu.server.domain.resource.dto.response.NoteCreateResponse;
-import com.driveu.server.domain.resource.dto.response.NoteResponse;
-import com.driveu.server.domain.resource.dto.response.NoteUpdateTagResponse;
-import com.driveu.server.domain.resource.dto.response.NoteUpdateTitleResponse;
-import com.driveu.server.domain.user.domain.User;
-import com.driveu.server.global.config.security.auth.LoginUser;
+import com.driveu.server.domain.note.application.NoteService;
+import com.driveu.server.domain.note.dto.request.NoteCreateRequest;
+import com.driveu.server.domain.note.dto.request.NoteUpdateContentRequest;
+import com.driveu.server.domain.note.dto.request.NoteUpdateTagRequest;
+import com.driveu.server.domain.note.dto.request.NoteUpdateTitleRequest;
+import com.driveu.server.domain.note.dto.response.NoteCreateResponse;
+import com.driveu.server.domain.note.dto.response.NoteResponse;
+import com.driveu.server.domain.note.dto.response.NoteUpdateTagResponse;
+import com.driveu.server.domain.note.dto.response.NoteUpdateTitleResponse;
+import com.driveu.server.global.config.security.auth.IsOwner;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -44,10 +42,10 @@ public class NoteApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
+    @IsOwner(resourceType = "directory", idParamName = "directoryId")
     public ResponseEntity<?> createNote(
             @PathVariable Long directoryId,
-            @RequestBody NoteCreateRequest request,
-            @Parameter(hidden = true) @LoginUser User user
+            @RequestBody NoteCreateRequest request
     ){
         try {
             NoteCreateResponse response = noteService.createNote(directoryId, request);
@@ -76,9 +74,9 @@ public class NoteApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
+    @IsOwner(resourceType = "note", idParamName = "noteId")
     public ResponseEntity<?> getNoteById(
-            @PathVariable Long noteId,
-            @Parameter(hidden = true) @LoginUser User user
+            @PathVariable Long noteId
     ){
         try {
             NoteResponse response = noteService.getNoteWithTagById(noteId);
@@ -107,10 +105,10 @@ public class NoteApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
+    @IsOwner(resourceType = "note", idParamName = "noteId")
     public ResponseEntity<?> updateNoteTitle(
             @PathVariable Long noteId,
-            @RequestBody NoteUpdateTitleRequest request,
-            @Parameter(hidden = true) @LoginUser User user
+            @RequestBody NoteUpdateTitleRequest request
     ){
         try {
             NoteUpdateTitleResponse response = noteService.updateNoteTitle(noteId, request);
@@ -139,10 +137,10 @@ public class NoteApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
+    @IsOwner(resourceType = "note", idParamName = "noteId")
     public ResponseEntity<?> updateNoteContent(
             @PathVariable Long noteId,
-            @RequestBody NoteUpdateContentRequest request,
-            @Parameter(hidden = true) @LoginUser User user
+            @RequestBody NoteUpdateContentRequest request
     ){
         try {
             NoteCreateResponse response = noteService.updateNoteContent(noteId, request);
@@ -171,10 +169,10 @@ public class NoteApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
+    @IsOwner(resourceType = "note", idParamName = "noteId")
     public ResponseEntity<?> updateNoteTag(
             @PathVariable Long noteId,
-            @RequestBody NoteUpdateTagRequest request,
-            @Parameter(hidden = true) @LoginUser User user
+            @RequestBody NoteUpdateTagRequest request
     ){
         try {
             NoteUpdateTagResponse response = noteService.updateNoteTag(noteId, request);

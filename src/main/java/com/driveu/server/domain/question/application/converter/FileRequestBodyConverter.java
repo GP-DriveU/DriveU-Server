@@ -2,7 +2,7 @@ package com.driveu.server.domain.question.application.converter;
 
 import com.driveu.server.domain.question.dto.request.QuestionCreateRequest;
 import com.driveu.server.domain.resource.application.S3Service;
-import com.driveu.server.domain.resource.dao.FileRepository;
+import com.driveu.server.domain.file.dao.FileRepository;
 import com.driveu.server.domain.resource.domain.File;
 import com.driveu.server.domain.resource.domain.type.ResourceType;
 import jakarta.persistence.EntityNotFoundException;

@@ -3,6 +3,7 @@ package com.driveu.server.domain.resource.api;
 import com.driveu.server.domain.resource.application.S3Service;
 import com.driveu.server.domain.resource.dto.response.FileUploadResponse;
 import com.driveu.server.domain.user.domain.User;
+import com.driveu.server.global.config.security.auth.IsOwner;
 import com.driveu.server.global.config.security.auth.LoginUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -66,9 +67,9 @@ public class S3Api {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
+    @IsOwner(resourceType = "resource", idParamName = "resourceId")
     public ResponseEntity<?> getDownloadUrl(
-            @PathVariable Long resourceId,
-            @Parameter(hidden = true) @LoginUser User user
+            @PathVariable Long resourceId
     ) {
         try {
             URL presignedUrl = s3Service.generateDownloadUrl(resourceId);

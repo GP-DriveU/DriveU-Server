@@ -1,14 +1,13 @@
 package com.driveu.server.domain.summary.applicaion;
 
 import com.amazonaws.services.kms.model.NotFoundException;
-import com.driveu.server.domain.resource.application.NoteService;
+import com.driveu.server.domain.note.application.NoteService;
 import com.driveu.server.domain.resource.domain.Note;
 import com.driveu.server.domain.summary.dao.SummaryRepository;
 import com.driveu.server.domain.summary.domain.Summary;
 import com.driveu.server.domain.summary.dto.response.SummaryResponse;
 import com.driveu.server.infra.ai.AiService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
