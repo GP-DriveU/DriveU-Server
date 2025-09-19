@@ -1,4 +1,4 @@
-package com.driveu.server.domain.resource.api;
+package com.driveu.server.domain.file.api;
 
 import com.driveu.server.domain.file.application.S3MultipartService;
 import com.driveu.server.domain.file.dto.request.MultipartCompleteRequest;
@@ -57,30 +57,40 @@ public class S3Api {
     }
 
     @PostMapping("/file/upload/multipart/start")
-    public MultipartUploadInitResponse startMultipartUpload(
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Multipart Upload 시작 성공",
+                    content = @Content(schema = @Schema(implementation = MultipartUploadInitResponse.class))),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
+    public ResponseEntity<?> startMultipartUpload(
             @RequestParam String filename,
             @RequestParam int size,
             @RequestParam int totalParts,
             @Parameter(hidden = true) @LoginUser  User user
     ) {
-        return s3MultipartService.initiateMultipartUpload(user, filename, size, totalParts);
+        try {
+            MultipartUploadInitResponse multipartUploadInitResponse = s3MultipartService.initiateMultipartUpload(user, filename, size, totalParts);
+            return ResponseEntity.ok(multipartUploadInitResponse);
+        } catch (IllegalStateException e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", e.getMessage()));
+        }
     }
 
     @PostMapping("/file/upload/multipart/complete")
-    public String completeMultipartUpload(@RequestBody MultipartCompleteRequest request) {
-
-        // 클라이언트에서 받은 partNumber + ETag 리스트를 CompletedPart로 변환
-        List<CompletedPart> completedParts = request.getParts().stream()
-                .map(p -> CompletedPart.builder()
-                        .partNumber(p.getPartNumber())
-                        .eTag(p.getETag())
-                        .build())
-                .collect(Collectors.toList());
-
-        // S3에 Multipart 완료 요청
-        s3MultipartService.completeMultipartUpload(request.getKey(), request.getUploadId(), completedParts);
-
-        return "Multipart upload completed successfully!";
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Multipart Upload 완료",
+                    content = @Content(schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
+    public ResponseEntity<?> completeMultipartUpload(@RequestBody MultipartCompleteRequest request) {
+        try{
+            s3MultipartService.completeMultipartUpload(request);
+            return ResponseEntity.ok("Multipart upload completed successfully!");
+        } catch (IllegalStateException e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", e.getMessage()));
+        }
     }
 
 }

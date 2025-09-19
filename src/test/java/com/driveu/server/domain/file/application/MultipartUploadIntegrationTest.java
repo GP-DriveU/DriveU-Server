@@ -1,5 +1,7 @@
 package com.driveu.server.domain.file.application;
 
+import com.driveu.server.domain.file.dto.request.MultipartCompleteRequest;
+import com.driveu.server.domain.file.dto.request.PartETag;
 import com.driveu.server.domain.resource.application.S3Service;
 import com.driveu.server.domain.resource.dto.response.FileUploadResponse;
 import com.driveu.server.domain.user.TestUserFactory;
@@ -11,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import software.amazon.awssdk.core.ResponseBytes;
-import software.amazon.awssdk.services.s3.model.CompletedPart;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 import java.net.HttpURLConnection;
@@ -22,7 +23,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -84,15 +84,21 @@ public class MultipartUploadIntegrationTest {
         }
 
         // ETag 모아서 완료 요청
-        List<CompletedPart> completedParts = new ArrayList<>();
+        List<PartETag> parts = new ArrayList<>();
         for (int i = 0; i < eTags.size(); i++) {
-            completedParts.add(CompletedPart.builder()
+            parts.add(PartETag.builder()
                     .partNumber(i + 1)
-                    .eTag(eTags.get(i))
+                    .ETag(eTags.get(i))
                     .build());
         }
+        MultipartCompleteRequest multipartCompleteRequest =
+                MultipartCompleteRequest.builder()
+                        .uploadId(initResponse.getUploadId())
+                        .key(initResponse.getKey())
+                        .parts(parts)
+                        .build();
 
-        s3ServiceV2.completeMultipartUpload(initResponse.getKey(), initResponse.getUploadId(), completedParts);
+        s3ServiceV2.completeMultipartUpload(multipartCompleteRequest);
 
         // S3에 최종 업로드된 객체 확인
         var s3Client = s3ServiceV2.getS3Client();
@@ -164,15 +170,21 @@ public class MultipartUploadIntegrationTest {
 
             System.out.println("파트 업로드 성공: " + i);
         }
+        List<PartETag> parts = new ArrayList<>();
+        for (int i = 0; i < eTags.size(); i++) {
+            parts.add(PartETag.builder()
+                    .partNumber(i + 1)
+                    .ETag(eTags.get(i))
+                    .build());
+        }
+        MultipartCompleteRequest multipartCompleteRequest =
+                MultipartCompleteRequest.builder()
+                        .key(multipartResponse.getKey())
+                        .uploadId(multipartResponse.getUploadId())
+                        .parts(parts)
+                        .build();
 
-        List<CompletedPart> completedParts = IntStream.range(0, eTags.size())
-                .mapToObj(i -> CompletedPart.builder()
-                        .partNumber(i + 1)
-                        .eTag(eTags.get(i))
-                        .build())
-                .toList();
-
-        s3ServiceV2.completeMultipartUpload(multipartResponse.getKey(), multipartResponse.getUploadId(), completedParts);
+        s3ServiceV2.completeMultipartUpload(multipartCompleteRequest);
 
         long endMultipart = System.nanoTime();
 
@@ -247,18 +259,24 @@ public class MultipartUploadIntegrationTest {
 
         executor.shutdown();
 
-        // 3️⃣ ETag 모아서 완료 요청
-        List<CompletedPart> completedParts = new ArrayList<>();
+        // ETag 모아서 완료 요청
+        List<PartETag> parts = new ArrayList<>();
         for (int i = 0; i < eTags.size(); i++) {
-            completedParts.add(CompletedPart.builder()
+            parts.add(PartETag.builder()
                     .partNumber(i + 1)
-                    .eTag(eTags.get(i))
+                    .ETag(eTags.get(i))
                     .build());
         }
+        MultipartCompleteRequest multipartCompleteRequest =
+                MultipartCompleteRequest.builder()
+                        .key(initResponse.getKey())
+                        .uploadId(initResponse.getUploadId())
+                        .parts(parts)
+                        .build();
 
-        s3ServiceV2.completeMultipartUpload(initResponse.getKey(), initResponse.getUploadId(), completedParts);
+        s3ServiceV2.completeMultipartUpload(multipartCompleteRequest);
 
-        // 4️⃣ S3에 최종 업로드된 객체 확인
+        // S3에 최종 업로드된 객체 확인
         var s3Client = s3ServiceV2.getS3Client();
         ResponseBytes<GetObjectResponse> response = s3Client.getObjectAsBytes(b ->
                 b.bucket(bucketName).key(initResponse.getKey())

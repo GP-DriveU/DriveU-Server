@@ -1,11 +1,10 @@
 package com.driveu.server.domain.file.application;
 
+import com.driveu.server.domain.file.dto.request.MultipartCompleteRequest;
 import com.driveu.server.domain.file.dto.response.MultipartPartInfo;
 import com.driveu.server.domain.file.dto.response.MultipartUploadInitResponse;
 import com.driveu.server.domain.resource.domain.type.FileExtension;
 import com.driveu.server.domain.user.domain.User;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +18,7 @@ import java.net.URL;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -72,15 +72,23 @@ public class S3MultipartService {
     }
 
     // Multipart Upload 완료
-    public void completeMultipartUpload(String key, String uploadId, List<CompletedPart> completedParts) {
+    public void completeMultipartUpload(MultipartCompleteRequest request) {
+        // 클라이언트에서 받은 partNumber + ETag 리스트를 CompletedPart로 변환
+        List<CompletedPart> completedParts = request.getParts().stream()
+                .map(p -> CompletedPart.builder()
+                        .partNumber(p.getPartNumber())
+                        .eTag(p.getETag())
+                        .build())
+                .collect(Collectors.toList());
+
         CompletedMultipartUpload completedMultipartUpload = CompletedMultipartUpload.builder()
                 .parts(completedParts)
                 .build();
 
         CompleteMultipartUploadRequest completeRequest = CompleteMultipartUploadRequest.builder()
                 .bucket(bucketName)
-                .key(key)
-                .uploadId(uploadId)
+                .key(request.getKey())
+                .uploadId(request.getUploadId())
                 .multipartUpload(completedMultipartUpload)
                 .build();
 
