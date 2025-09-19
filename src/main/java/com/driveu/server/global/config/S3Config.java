@@ -24,6 +24,7 @@ public class S3Config {
     @Value("${spring.cloud.aws.region.static}")
     private String region;
 
+    // SDK v1
     @Bean
     public AmazonS3Client amazonS3Client() {
         BasicAWSCredentials awsCredentials = new BasicAWSCredentials(accessKey, secretKey);
@@ -35,6 +36,16 @@ public class S3Config {
     }
 
     @Bean
+    public software.amazon.awssdk.services.s3.S3Client s3Client() {
+        AwsBasicCredentials awsCreds = AwsBasicCredentials.create(accessKey, secretKey);
+        return software.amazon.awssdk.services.s3.S3Client.builder()
+                .region(Region.of(region))
+                .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
+                .build();
+    }
+
+    // SDK v2
+    @Bean
     public S3Presigner s3Presigner() {
         // AWS SDK v2용 자격 증명 객체 생성
         AwsBasicCredentials awsCreds = AwsBasicCredentials.create(accessKey, secretKey);
@@ -44,6 +55,4 @@ public class S3Config {
                 .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
                 .build();
     }
-
-
 }
