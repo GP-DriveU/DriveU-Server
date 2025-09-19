@@ -6,7 +6,6 @@ import com.driveu.server.domain.file.dto.response.MultipartUploadInitResponse;
 import com.driveu.server.domain.resource.application.S3Service;
 import com.driveu.server.domain.resource.dto.response.FileUploadResponse;
 import com.driveu.server.domain.user.domain.User;
-import com.driveu.server.global.config.security.auth.IsOwner;
 import com.driveu.server.global.config.security.auth.LoginUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -14,14 +13,12 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import software.amazon.awssdk.services.s3.model.CompletedPart;
 
-import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -59,43 +56,12 @@ public class S3Api {
         }
     }
 
-    @GetMapping("/resources/{resourceId}/download")
-    @Operation(summary = "파일 다운로드를 위한 preSigned url 발급")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "preSigned url 발급 성공",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(example = "{\"url\": \"https://s3.bucket-url/abc123?signature=...\"}")
-                    )),
-            @ApiResponse(responseCode = "404", description = "해당 Resource 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(example = "{\"message\": \"Resource not found\"}")
-                    )),
-            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
-    })
-    @IsOwner(resourceType = "resource", idParamName = "resourceId")
-    public ResponseEntity<?> getDownloadUrl(
-            @PathVariable Long resourceId
-    ) {
-        try {
-            URL presignedUrl = s3Service.generateDownloadUrl(resourceId);
-            return ResponseEntity.ok(Map.of("url", presignedUrl.toString()));
-        } catch (EntityNotFoundException e){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", e.getMessage()));
-        } catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", e.getMessage()));
-        }
-    }
-
     @PostMapping("/file/upload/multipart/start")
     public MultipartUploadInitResponse startMultipartUpload(
             @RequestParam String filename,
             @RequestParam int size,
             @RequestParam int totalParts,
-            @LoginUser User user
+            @Parameter(hidden = true) @LoginUser  User user
     ) {
         return s3MultipartService.initiateMultipartUpload(user, filename, size, totalParts);
     }
