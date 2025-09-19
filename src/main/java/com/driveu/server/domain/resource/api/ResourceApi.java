@@ -1,7 +1,7 @@
 package com.driveu.server.domain.resource.api;
 
 import com.driveu.server.domain.resource.application.ResourceService;
-import com.driveu.server.domain.resource.application.S3Service;
+import com.driveu.server.domain.file.application.S3FileStorageService;
 import com.driveu.server.domain.resource.dto.request.FileSaveMetaDataRequest;
 import com.driveu.server.domain.resource.dto.response.ResourceDeleteResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceFavoriteResponse;
@@ -32,7 +32,7 @@ import java.util.Map;
 public class ResourceApi {
 
     private final ResourceService resourceService;
-    private final S3Service s3Service;
+    private final S3FileStorageService s3FileStorageService;
 
     @PostMapping("/directories/{directoryId}/files")
     @Operation(summary = "파일 업로드 후 메타 데이터 등록", description = "extension 은 TXT, PDF, MD, DOCS, PNG, JPEG, JPG 만 가능합니다.\n size 는 byte 단위 입니다.")
@@ -87,7 +87,7 @@ public class ResourceApi {
             @PathVariable Long resourceId
     ) {
         try {
-            URL presignedUrl = s3Service.generateDownloadUrl(resourceId);
+            URL presignedUrl = s3FileStorageService.generateDownloadUrl(resourceId);
             return ResponseEntity.ok(Map.of("url", presignedUrl.toString()));
         } catch (EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

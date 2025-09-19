@@ -1,8 +1,9 @@
-package com.driveu.server.domain.resource.application;
+package com.driveu.server.domain.file.application;
 
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
+import com.driveu.server.domain.resource.application.ResourceService;
 import com.driveu.server.domain.resource.domain.File;
 import com.driveu.server.domain.resource.domain.Note;
 import com.driveu.server.domain.resource.domain.Resource;
@@ -28,7 +29,7 @@ import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
-public class S3Service {
+public class S3FileStorageService {
 
     private final S3Presigner s3Presigner;
     private final ResourceService resourceService;

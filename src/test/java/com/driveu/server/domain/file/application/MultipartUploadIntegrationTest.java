@@ -2,7 +2,6 @@ package com.driveu.server.domain.file.application;
 
 import com.driveu.server.domain.file.dto.request.MultipartCompleteRequest;
 import com.driveu.server.domain.file.dto.request.PartETag;
-import com.driveu.server.domain.resource.application.S3Service;
 import com.driveu.server.domain.resource.dto.response.FileUploadResponse;
 import com.driveu.server.domain.user.TestUserFactory;
 import com.driveu.server.domain.user.domain.User;
@@ -31,10 +30,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class MultipartUploadIntegrationTest {
 
     @Autowired
-    private S3Service s3Service;
+    private S3FileStorageService s3FileStorageService;
 
     @Autowired
-    private S3MultipartService s3ServiceV2;
+    private S3MultipartFileStorageService s3ServiceV2;
 
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucketName;
@@ -127,7 +126,7 @@ public class MultipartUploadIntegrationTest {
         // ----------------------------
         long startSingle = System.nanoTime();
 
-        FileUploadResponse singleResponse = s3Service.generateUploadUrl(testUser, "single-test-100.txt", fileSize);
+        FileUploadResponse singleResponse = s3FileStorageService.generateUploadUrl(testUser, "single-test-100.txt", fileSize);
 
         HttpURLConnection singleConn = (HttpURLConnection) singleResponse.getUrl().openConnection();
         singleConn.setDoOutput(true);

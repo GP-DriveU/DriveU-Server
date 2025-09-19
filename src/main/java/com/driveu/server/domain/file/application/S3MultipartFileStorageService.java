@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class S3MultipartService {
+public class S3MultipartFileStorageService {
 
     private final S3Presigner s3Presigner;
     @Getter
