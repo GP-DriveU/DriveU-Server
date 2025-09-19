@@ -65,7 +65,7 @@ public class OauthTokenService {
                 .toList();
 
         // 디렉토리 트리 조회
-        List<DirectoryTreeResponse> directories = directoryService.getDirectoryTree(user, userSemester.getId());
+        List<DirectoryTreeResponse> directories = directoryService.getDirectoryTree(userSemester.getId());
 
         return LoginResponse.builder()
                 .user(LoginResponse.UserInfo.builder()

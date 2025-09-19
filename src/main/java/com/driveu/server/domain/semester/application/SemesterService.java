@@ -12,7 +12,6 @@ import com.driveu.server.domain.semester.dto.request.UserSemesterRequest;
 import com.driveu.server.domain.semester.dto.response.UserSemesterResponse;
 import com.driveu.server.domain.user.domain.User;
 import com.driveu.server.domain.user.dto.response.MainPageResponse;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +29,7 @@ public class SemesterService {
     private final UserSemesterRepository userSemesterRepository;
     private final DirectoryService directoryService;
     private final ResourceService resourceService;
+    private final UserSemesterQueryService userSemesterQueryService;
 
     // user 최초 로그인 시 자동으로 생성되는 UserSemester
     @Transactional
@@ -93,8 +93,7 @@ public class SemesterService {
         Semester newSemester = semesterRepository.findByYearAndTerm(request.getYear(), term)
                 .orElseGet(() -> semesterRepository.save(Semester.of(request.getYear(), term)));
 
-        UserSemester userSemester = userSemesterRepository.findById(userSemesterId)
-                .orElseThrow(()-> new EntityNotFoundException("UserSemester not found"));
+        UserSemester userSemester = userSemesterQueryService.getUserSemester(userSemesterId);
 
         // 같은 학기로 업데이트 요청을 하였을때
         if (newSemester.getId().equals(userSemester.getSemester().getId())) {
@@ -172,12 +171,7 @@ public class SemesterService {
 
     @Transactional
     public void deleteUserSemester(User user, Long userSemesterId){
-        UserSemester userSemester = userSemesterRepository.findById(userSemesterId)
-                .orElseThrow(()-> new EntityNotFoundException("UserSemester not found"));
-
-        if (!userSemester.getUser().equals(user)) {
-            throw new IllegalStateException("해당 유저의 학기가 아닙니다.");
-        }
+        UserSemester userSemester = userSemesterQueryService.getUserSemester(userSemesterId);
 
         boolean CurrentDelete = userSemester.isCurrent();
 
@@ -213,10 +207,10 @@ public class SemesterService {
         return userSemesterRepository.findByUserAndIsCurrentTrue(user);
     }
 
-    @Transactional
-    public MainPageResponse getMainPage(User user, Long semesterId) {
+    @Transactional(readOnly = true)
+    public MainPageResponse getMainPage(Long semesterId) {
 
-        List<DirectoryTreeResponse> directoryTreeResponses = directoryService.getDirectoryTree(user, semesterId);
+        List<DirectoryTreeResponse> directoryTreeResponses = directoryService.getDirectoryTree(semesterId);
 
         return MainPageResponse.builder()
                 .directories(directoryTreeResponses)
