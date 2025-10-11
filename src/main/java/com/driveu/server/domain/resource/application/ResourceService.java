@@ -204,7 +204,7 @@ public class ResourceService {
                     Directory parentDir = directoryRepository.findById(ancestorId)
                             .orElse(null);
                     if (parentDir != null && "과목".equals(parentDir.getName())
-                            && !parentDir.isDeleted()) { //과목 디렉토리 삭제여부 판단
+                            && !parentDir.getIsDeleted()) { //과목 디렉토리 삭제여부 판단
                         tagDirectory = dir;
                         break;
                     }
