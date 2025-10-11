@@ -12,7 +12,7 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
 
 import java.time.Duration;
 
-@Service
+@Service("single")
 @RequiredArgsConstructor
 public class S3SingleUploadStrategy implements FileUploadStrategy {
 

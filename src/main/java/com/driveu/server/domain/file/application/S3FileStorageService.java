@@ -7,19 +7,14 @@ import com.driveu.server.domain.resource.application.ResourceService;
 import com.driveu.server.domain.resource.domain.File;
 import com.driveu.server.domain.resource.domain.Note;
 import com.driveu.server.domain.resource.domain.Resource;
-import com.driveu.server.domain.resource.domain.type.FileExtension;
-import com.driveu.server.domain.resource.dto.response.FileUploadResponse;
-import com.driveu.server.domain.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
-import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 import java.io.IOException;
 import java.net.URL;
@@ -37,34 +32,6 @@ public class S3FileStorageService {
 
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucketName;
-
-    public FileUploadResponse generateUploadUrl(User user, String filename, int size) {
-        // 업로드하려는 파일 크기 검증
-        if (user.getUsedStorage() + size > user.getMaxStorage()) {
-            throw new IllegalStateException("저장 용량을 초과했습니다. (used: "
-                    + user.getUsedStorage() + " bytes, max: " + user.getMaxStorage() + " bytes)");
-        }
-
-        String key = "uploads/" + user.getEmail()  + "/" + filename; // user 마다 다른 디렉토리
-        Duration duration = Duration.ofMinutes(10);
-
-        FileExtension fileExtension = FileExtension.fromFilename(filename);
-
-        PutObjectRequest objectRequest = PutObjectRequest.builder()
-                .bucket(bucketName)
-                .key(key)
-                .contentType(fileExtension.getContentType()) // MIME 타입 조정 가능
-                .build();
-
-        PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
-                .signatureDuration(duration)
-                .putObjectRequest(objectRequest)
-                .build();
-        return FileUploadResponse.builder()
-                .url(s3Presigner.presignPutObject(presignRequest).url())
-                .s3Path(key)
-                .build();
-    }
 
     @Transactional
     public URL generateDownloadUrl(Long resourceId) {

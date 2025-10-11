@@ -1,9 +1,8 @@
 package com.driveu.server.domain.file.api;
 
-import com.driveu.server.domain.file.application.S3MultipartFileStorageService;
+import com.driveu.server.domain.file.application.FileUploadService;
 import com.driveu.server.domain.file.dto.request.MultipartCompleteRequest;
 import com.driveu.server.domain.file.dto.response.MultipartUploadInitResponse;
-import com.driveu.server.domain.file.application.S3FileStorageService;
 import com.driveu.server.domain.resource.dto.response.FileUploadResponse;
 import com.driveu.server.domain.user.domain.User;
 import com.driveu.server.global.config.security.auth.LoginUser;
@@ -25,8 +24,7 @@ import java.util.Map;
 @RequestMapping("/api")
 public class FileApi {
 
-    private final S3FileStorageService s3FileStorageService;
-    private final S3MultipartFileStorageService s3MultipartFileStorageService;
+    private final FileUploadService fileUploadService;
 
     @GetMapping("/file/upload")
     @Operation(summary = "파일 업로드를 위한 preSigned url 발급", description = "filename 쿼리 파라미터에 확장자까지 포함해주세요.\n" +
@@ -45,7 +43,8 @@ public class FileApi {
             @Parameter(hidden = true) @LoginUser User user
     ) {
         try {
-            FileUploadResponse fileUploadResponse = s3FileStorageService.generateUploadUrl(user, filename, fileSize);
+            FileUploadResponse fileUploadResponse = (FileUploadResponse)
+                    fileUploadService.startUpload("single", user, filename, fileSize,1 );
             return ResponseEntity.ok(fileUploadResponse);
         } catch (IllegalStateException e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -66,7 +65,8 @@ public class FileApi {
             @Parameter(hidden = true) @LoginUser  User user
     ) {
         try {
-            MultipartUploadInitResponse multipartUploadInitResponse = s3MultipartFileStorageService.initiateMultipartUpload(user, filename, size, totalParts);
+            MultipartUploadInitResponse multipartUploadInitResponse = (MultipartUploadInitResponse)
+                    fileUploadService.startUpload("multipart", user, filename, size, totalParts);
             return ResponseEntity.ok(multipartUploadInitResponse);
         } catch (IllegalStateException e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -82,7 +82,7 @@ public class FileApi {
     })
     public ResponseEntity<?> completeMultipartUpload(@RequestBody MultipartCompleteRequest request) {
         try{
-            s3MultipartFileStorageService.completeMultipartUpload(request);
+            fileUploadService.completeUpload("multipart", request);
             return ResponseEntity.ok("Multipart upload completed successfully!");
         } catch (IllegalStateException e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
