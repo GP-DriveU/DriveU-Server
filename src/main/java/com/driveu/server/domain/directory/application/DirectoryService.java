@@ -1,6 +1,5 @@
 package com.driveu.server.domain.directory.application;
 
-import com.amazonaws.services.kms.model.NotFoundException;
 import com.driveu.server.domain.directory.dao.DirectoryHierarchyRepository;
 import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.domain.Directory;
@@ -10,12 +9,10 @@ import com.driveu.server.domain.directory.dto.response.*;
 import com.driveu.server.domain.resource.dao.ResourceDirectoryRepository;
 import com.driveu.server.domain.resource.domain.Resource;
 import com.driveu.server.domain.resource.domain.ResourceDirectory;
-import com.driveu.server.domain.semester.dao.UserSemesterRepository;
+import com.driveu.server.domain.semester.application.UserSemesterQueryService;
 import com.driveu.server.domain.semester.domain.UserSemester;
-import com.driveu.server.domain.user.domain.User;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,8 +25,8 @@ public class DirectoryService {
 
     private final DirectoryRepository directoryRepository;
     private final DirectoryHierarchyRepository directoryHierarchyRepository;
-    private final UserSemesterRepository userSemesterRepository;
     private final ResourceDirectoryRepository resourceDirectoryRepository;
+    private final UserSemesterQueryService userSemesterQueryService;
 
     // UserSemester 생성시 Default directory 생성
     @Transactional
@@ -74,10 +71,7 @@ public class DirectoryService {
     }
 
     @Transactional
-    public List<DirectoryTreeResponse> getDirectoryTree(User user, Long userSemesterId) {
-        System.out.println("start getDirectoryTree");
-        validateUserSemester(user, userSemesterId);
-
+    public List<DirectoryTreeResponse> getDirectoryTree(Long userSemesterId) {
         List<Object[]> result = directoryHierarchyRepository.findAllHierarchiesWithDescendantsByUserSemesterId(userSemesterId);
 
         // 모든 DirectoryResponse 객체를 저장
@@ -113,17 +107,16 @@ public class DirectoryService {
 
         // 최상위 노드 추출 (parent가 없는 디렉토리들)
         Set<Long> childIds = parentToChildren.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
-        List<DirectoryTreeResponse> roots = directoryMap.values().stream()
+
+        return directoryMap.values().stream()
                 .filter(d -> !childIds.contains(d.getId())) // 부모인 애들만 추출
                 .sorted(Comparator.comparingInt(DirectoryTreeResponse::getOrder))
                 .toList();
-
-        return roots;
     }
 
     @Transactional
-    public DirectoryCreateResponse createDirectory(User user, Long userSemesterId, DirectoryCreateRequest request) {
-        UserSemester userSemester = validateUserSemester(user, userSemesterId);
+    public DirectoryCreateResponse createDirectory(Long userSemesterId, DirectoryCreateRequest request) {
+        UserSemester userSemester = userSemesterQueryService.getUserSemester(userSemesterId);
 
         if (request.getParentDirectoryId() == 0) {
             return createTopLevelDirectory(userSemester, request);
@@ -153,8 +146,7 @@ public class DirectoryService {
 
     private DirectoryCreateResponse createDescendentDirectory(UserSemester userSemester, DirectoryCreateRequest request) {
         // 부모 디렉토리 존재 확인
-        Directory parent = directoryRepository.findById(request.getParentDirectoryId())
-                .orElseThrow(() -> new EntityNotFoundException("Parent directory not found"));
+        Directory parent = getDirectoryById(request.getParentDirectoryId());
 
         // order 계산 (동일한 부모 아래 최대 order + 1)
         int nextOrder = directoryRepository.findMaxOrderUnderParent(request.getParentDirectoryId())
@@ -187,20 +179,9 @@ public class DirectoryService {
         return DirectoryCreateResponse.from(newDirectory);
     }
 
-    private @NotNull UserSemester validateUserSemester(User user, Long userSemesterId) {
-        UserSemester userSemester = userSemesterRepository.findById(userSemesterId)
-                .orElseThrow(() -> new EntityNotFoundException("UserSemester not found"));
-
-        if (!userSemester.getUser().equals(user)) {
-            throw new IllegalStateException("해당 유저의 학기가 아닙니다.");
-        }
-        return userSemester;
-    }
-
     @Transactional
     public DirectoryRenameResponse renameDirectory(Long directoryId, DirectoryRenameRequest request) {
-        Directory directory = directoryRepository.findById(directoryId)
-                .orElseThrow(() -> new EntityNotFoundException("Directory not found"));
+        Directory directory = getDirectoryById(directoryId);
 
         directory.updateName(request.getName());
         Directory savedDirectory = directoryRepository.save(directory);
@@ -210,8 +191,7 @@ public class DirectoryService {
     @Transactional
     public void softDeleteDirectory(Long directoryId) {
         System.out.println("start delete");
-        Directory directory = directoryRepository.findById(directoryId)
-                .orElseThrow(() -> new EntityNotFoundException("Directory not found"));
+        Directory directory = getDirectoryById(directoryId);
 
         // 재귀적으로 삭제
         List<Long> descendantIds = directoryHierarchyRepository.findAllDescendantIdsByAncestorId(directoryId);
@@ -262,8 +242,7 @@ public class DirectoryService {
 
     @Transactional
     public DirectoryMoveParentResponse moveDirectoryParent(Long directoryId, DirectoryMoveParentRequest request) {
-        Directory directory = directoryRepository.findById(directoryId)
-                .orElseThrow(() -> new EntityNotFoundException("디렉토리를 찾을 수 없습니다."));
+        Directory directory = getDirectoryById(directoryId);
 
         Long newParentId = request.getNewParentId();
 
@@ -280,8 +259,7 @@ public class DirectoryService {
 
         // 최상위 디렉토리로 옮기는 것이 아닐 경우 -> 부모+조상
         if (newParentId != 0) {
-            Directory newParent = directoryRepository.findById(newParentId)
-                    .orElseThrow(() -> new EntityNotFoundException("새 부모 디렉토리를 찾을 수 없습니다."));
+            Directory newParent = getDirectoryById(newParentId);
 
             List<DirectoryHierarchy> ancestors = directoryHierarchyRepository.findAllByDescendantId(newParent.getId())
                     .stream().filter(h -> h.getId().equals(newParent.getId())).toList();
@@ -327,8 +305,7 @@ public class DirectoryService {
         //Todo: update directory id 들이 parentId 의 자식인지(depth=1) 검증
 
         for (DirectoryOrderPair update: request.getUpdates()){
-            Directory directory = directoryRepository.findById(update.getDirectoryId())
-                    .orElseThrow(() -> new EntityNotFoundException("Directory not found: " + update.getDirectoryId()));
+            Directory directory = getDirectoryById(update.getDirectoryId());
 
             directory.setOrder(update.getOrder());
             Directory savedDirectory = directoryRepository.save(directory);
@@ -343,7 +320,7 @@ public class DirectoryService {
 
     public Directory getDirectoryById(Long directoryId) {
         return directoryRepository.findById(directoryId)
-                .orElseThrow(() -> new NotFoundException("Directory not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Directory not found"));
     }
 
     public List<Directory> getDirectoriesByUserSemesterIdAndIsDeletedFalse(Long userSemesterId) {

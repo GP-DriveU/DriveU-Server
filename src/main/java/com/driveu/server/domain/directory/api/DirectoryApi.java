@@ -6,11 +6,8 @@ import com.driveu.server.domain.directory.dto.request.DirectoryMoveParentRequest
 import com.driveu.server.domain.directory.dto.request.DirectoryOrderUpdateRequest;
 import com.driveu.server.domain.directory.dto.request.DirectoryRenameRequest;
 import com.driveu.server.domain.directory.dto.response.*;
-import com.driveu.server.domain.user.domain.User;
 import com.driveu.server.global.config.security.auth.IsOwner;
-import com.driveu.server.global.config.security.auth.LoginUser;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -46,11 +43,10 @@ public class DirectoryApi {
     })
     @IsOwner(resourceType = "userSemester", idParamName = "userSemesterId")
     public ResponseEntity<?> getDirectories(
-            @PathVariable Long userSemesterId,
-            @Parameter(hidden = true) @LoginUser User user
+            @PathVariable Long userSemesterId
     ) {
         try {
-            List<DirectoryTreeResponse> tree = directoryService.getDirectoryTree(user, userSemesterId);
+            List<DirectoryTreeResponse> tree = directoryService.getDirectoryTree(userSemesterId);
             return ResponseEntity.ok(tree);
         } catch (EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -79,11 +75,10 @@ public class DirectoryApi {
     @IsOwner(resourceType = "userSemester", idParamName = "userSemesterId")
     public ResponseEntity<?> createDirectory(
             @PathVariable Long userSemesterId,
-            @RequestBody DirectoryCreateRequest request,
-            @Parameter(hidden = true) @LoginUser User user
+            @RequestBody DirectoryCreateRequest request
     ) {
         try {
-            DirectoryCreateResponse response = directoryService.createDirectory(user, userSemesterId, request);
+            DirectoryCreateResponse response = directoryService.createDirectory(userSemesterId, request);
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -191,8 +186,7 @@ public class DirectoryApi {
                     ))
     })
     public ResponseEntity<?> updateDirectoryOrder(
-            @RequestBody DirectoryOrderUpdateRequest request,
-            @Parameter(hidden = true) @LoginUser User user
+            @RequestBody DirectoryOrderUpdateRequest request
     ) {
         try {
             DirectoryOrderUpdateResponse response = directoryService.updateDirectoryOrder(request);

@@ -1,7 +1,7 @@
 package com.driveu.server.domain.question.application.converter;
 
 import com.driveu.server.domain.question.dto.request.QuestionCreateRequest;
-import com.driveu.server.domain.resource.application.S3Service;
+import com.driveu.server.domain.file.application.S3FileStorageService;
 import com.driveu.server.domain.file.dao.FileRepository;
 import com.driveu.server.domain.resource.domain.File;
 import com.driveu.server.domain.resource.domain.type.ResourceType;
@@ -18,7 +18,7 @@ import java.nio.file.Paths;
 public class FileRequestBodyConverter implements RequestBodyConverter{
 
     private final FileRepository fileRepository;
-    private final S3Service s3Service;
+    private final S3FileStorageService s3FileStorageService;
 
     @Override
     public boolean supports(QuestionCreateRequest request) {
@@ -32,7 +32,7 @@ public class FileRequestBodyConverter implements RequestBodyConverter{
 
         String s3Path = file.getS3Path();
         String filename = Paths.get(s3Path).getFileName().toString();
-        ByteArrayResource fileResource = s3Service.getFileAsResource(s3Path, filename);
+        ByteArrayResource fileResource = s3FileStorageService.getFileAsResource(s3Path, filename);
 
         body.add("files", fileResource);
     }

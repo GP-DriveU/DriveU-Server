@@ -133,11 +133,10 @@ public class UserSemesterApi {
     })
     @IsOwner(resourceType = "userSemester", idParamName = "semesterId")
     public ResponseEntity<?> getMainPage(
-            @PathVariable Long semesterId,
-            @Parameter(hidden = true) @LoginUser User user
+            @PathVariable Long semesterId
     ){
         try {
-            MainPageResponse mainPageResponse = semesterService.getMainPage(user, semesterId);
+            MainPageResponse mainPageResponse = semesterService.getMainPage(semesterId);
             return ResponseEntity.status(HttpStatus.OK)
                     .body(mainPageResponse);
         } catch (EntityNotFoundException e){

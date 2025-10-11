@@ -1,7 +1,6 @@
 package com.driveu.server.domain.auth.api;
 
 import com.driveu.server.domain.auth.application.OauthTokenService;
-import com.driveu.server.domain.auth.domain.jwt.JwtToken;
 import com.driveu.server.domain.auth.dto.LoginResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -15,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
