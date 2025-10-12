@@ -1,6 +1,7 @@
 package com.driveu.server.domain.question.domain;
 
 import com.driveu.server.domain.resource.domain.Resource;
+import com.driveu.server.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,11 +12,7 @@ import lombok.*;
 @AllArgsConstructor
 @Table(name = "question_resource",
         uniqueConstraints = @UniqueConstraint(columnNames = {"question_id", "resource_id"}))
-public class QuestionResource {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class QuestionResource extends BaseEntity {
 
     // Question 쪽 FK
     @ManyToOne(fetch = FetchType.LAZY)

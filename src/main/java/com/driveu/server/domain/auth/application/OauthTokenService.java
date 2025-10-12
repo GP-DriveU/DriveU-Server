@@ -13,6 +13,7 @@ import com.driveu.server.domain.semester.domain.UserSemester;
 import com.driveu.server.domain.semester.dto.response.UserSemesterResponse;
 import com.driveu.server.domain.user.dao.UserRepository;
 import com.driveu.server.domain.user.domain.User;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -42,6 +43,7 @@ public class OauthTokenService {
     private final UserSemesterRepository userSemesterRepository;
 
     // google 인증 code 를 받아 사용자 정보 저장 또는 업데이트하여 JWT Token 반환
+    @Transactional
     public LoginResponse handleGoogleLogin(String code, String redirectUri) {
         String accessToken = getAccessToken(code, redirectUri);
         GoogleResponse userInfo = getUserInfo(accessToken);

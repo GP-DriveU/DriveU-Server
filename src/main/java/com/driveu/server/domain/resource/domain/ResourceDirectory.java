@@ -1,6 +1,7 @@
 package com.driveu.server.domain.resource.domain;
 
 import com.driveu.server.domain.directory.domain.Directory;
+import com.driveu.server.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -8,13 +9,10 @@ import lombok.*;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Builder
 @Table(name = "resource_directory",
         uniqueConstraints = @UniqueConstraint(columnNames = {"resource_id", "directory_id"}))
-public class ResourceDirectory {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class ResourceDirectory extends BaseEntity {
 
     // 리소스와 연결 (File, Note, Link 등 공통 부모)
     @ManyToOne(fetch = FetchType.LAZY)
@@ -25,12 +23,6 @@ public class ResourceDirectory {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "directory_id", nullable = false)
     private Directory directory;
-
-    @Builder
-    private ResourceDirectory(Resource resource, Directory directory) {
-        this.resource = resource;
-        this.directory = directory;
-    }
 
     public static ResourceDirectory of(Resource resource, Directory directory) {
         return ResourceDirectory.builder()
