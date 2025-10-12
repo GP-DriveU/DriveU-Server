@@ -3,6 +3,7 @@ package com.driveu.server.global.runner;
 import com.driveu.server.global.entity.BaseEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Profile({"migration"})
 public class DataMigrationRunner implements CommandLineRunner {
 
     // 엔티티와 그에 해당하는 Repository를 맵으로 관리
