@@ -1,11 +1,10 @@
 package com.driveu.server.domain.question.domain;
 
 import com.driveu.server.domain.resource.domain.Resource;
+import com.driveu.server.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,12 +14,7 @@ import java.util.List;
 @Builder
 @Getter
 @Table(name = "question")
-public class Question {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(nullable = false)
-    private Long id;
+public class Question extends BaseEntity {
 
     @Column(nullable = false)
     private String title;
@@ -30,10 +24,6 @@ public class Question {
 
     @Column(columnDefinition = "JSON")
     private String questionsData;
-
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
