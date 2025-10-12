@@ -175,13 +175,13 @@ public class SemesterService {
 
         boolean CurrentDelete = userSemester.isCurrent();
 
-        System.out.println("Before delete: " + userSemester.isDeleted());
+        System.out.println("Before delete: " + userSemester.getIsDeleted());
         userSemester.softDelete();
-        System.out.println("After delete: " + userSemester.isDeleted());
+        System.out.println("After delete: " + userSemester.getDeletedAt());
 
         userSemesterRepository.save(userSemester); // 명시적으로 변경사항 반영
 
-        System.out.println(userSemesterRepository.findById(userSemesterId).get().isDeleted());
+        System.out.println(userSemesterRepository.findById(userSemesterId).get().getIsDeleted());
 
         // 하위 디렉토리 전부 soft delete
         directoryService.softDeleteDirectoryListNotHierarchyByUserSemester(userSemester);

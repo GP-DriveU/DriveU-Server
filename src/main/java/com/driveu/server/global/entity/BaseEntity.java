@@ -19,14 +19,14 @@ public abstract class BaseEntity {
     private Long id;
 
     @CreatedDate
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at") // Todo: DB Migration 이후 updatable = false 설정
     private LocalDateTime createdAt;
 
     @LastModifiedDate
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updated_at") // Todo: DB Migration 이후 nullable = false 설정
     private LocalDateTime updatedAt;
 
-    @Column(name = "is_deleted", nullable = false)
+    @Column(name = "is_deleted") // Todo: DB Migration 이후 nullable = false 설정
     private Boolean isDeleted = false;
 
     @Column(name = "deleted_at")
