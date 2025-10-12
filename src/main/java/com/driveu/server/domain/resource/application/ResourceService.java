@@ -270,7 +270,7 @@ public class ResourceService {
             for (ResourceDirectory rd : rds) {
                 Resource res = rd.getResource();
                 // 리소스 삭제되지 않은 것만 모음
-                if (!res.isDeleted()) {
+                if (!res.getIsDeleted()) {
                     resourceIds.add(res.getId());
                 }
             }

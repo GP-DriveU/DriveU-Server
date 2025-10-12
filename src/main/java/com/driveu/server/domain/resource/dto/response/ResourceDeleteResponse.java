@@ -18,7 +18,7 @@ public class ResourceDeleteResponse {
     public static ResourceDeleteResponse from(Resource resource){
         return ResourceDeleteResponse.builder()
                 .id(resource.getId())
-                .isDeleted(resource.isDeleted())
+                .isDeleted(resource.getIsDeleted())
                 .deletedAt(resource.getDeletedAt())
                 .build();
     }
