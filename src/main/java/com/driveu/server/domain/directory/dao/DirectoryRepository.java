@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -70,4 +71,10 @@ public interface DirectoryRepository extends JpaRepository<Directory, Long> {
     List<Directory> findByUserSemesterIdAndIsDeletedFalse(Long userSemesterId);
 
     Boolean existsByIdAndUserSemester_User_Id(Long id, Long user_Id);
+
+    List<Directory> findAllByUserSemesterInAndIsDeletedTrueAndIsDefaultFalse(List<UserSemester> userSemesters);
+
+    List<Directory> findAllByUserSemesterInAndIsDeletedFalse(List<UserSemester> userSemesters);
+
+    List<Directory> findAllByUserSemesterIn(Collection<UserSemester> userSemesters);
 }

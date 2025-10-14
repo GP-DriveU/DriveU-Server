@@ -1,6 +1,7 @@
 package com.driveu.server.domain.resource.domain;
 
 import com.driveu.server.domain.resource.domain.type.IconType;
+import com.driveu.server.domain.resource.domain.type.ResourceType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -31,5 +32,10 @@ public class Link extends Resource {
                 .url(url)
                 .iconType(iconType)
                 .build();
+    }
+
+    @Override
+    public ResourceType getType() {
+        return ResourceType.LINK;
     }
 }

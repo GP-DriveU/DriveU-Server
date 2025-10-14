@@ -34,4 +34,6 @@ public interface UserSemesterRepository extends JpaRepository<UserSemester, Long
     Optional<UserSemester> findByUserAndSemesterAndIsDeletedFalse(User user, Semester semester);
 
     boolean existsByIdAndUser_Id(Long id, Long userId);
+
+    List<UserSemester> findAllByUser(User user);
 }

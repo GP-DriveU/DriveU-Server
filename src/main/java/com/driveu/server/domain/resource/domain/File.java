@@ -1,6 +1,7 @@
 package com.driveu.server.domain.resource.domain;
 
 import com.driveu.server.domain.resource.domain.type.FileExtension;
+import com.driveu.server.domain.resource.domain.type.ResourceType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -36,5 +37,10 @@ public class File extends Resource {
                 .extension(extension)
                 .size(size)
                 .build();
+    }
+
+    @Override
+    public ResourceType getType() {
+        return ResourceType.FILE;
     }
 }

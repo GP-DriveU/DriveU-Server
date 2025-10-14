@@ -1,6 +1,8 @@
 package com.driveu.server.domain.resource.dao;
 
+import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.resource.domain.Resource;
+import com.driveu.server.domain.semester.domain.UserSemester;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -41,4 +43,13 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
         WHERE r.id = :resourceId AND us.user.id = :userId
     """)
     boolean existsByResourceIdAndUserId(@Param("resourceId") Long resourceId, @Param("userId") Long userId);
+
+    @Query("""
+        SELECT DISTINCT r FROM Resource r
+        JOIN r.resourceDirectories rd
+        JOIN rd.directory d
+        WHERE d.userSemester IN :userSemesters
+        AND r.isDeleted = true
+    """)
+    List<Resource> findAllDeletedByUserSemesters(@Param("userSemesters") List<UserSemester> userSemesters);
 }

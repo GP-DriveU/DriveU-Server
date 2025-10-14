@@ -1,5 +1,6 @@
 package com.driveu.server.domain.resource.domain;
 
+import com.driveu.server.domain.resource.domain.type.ResourceType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -36,5 +37,10 @@ public class Note extends Resource {
     public void updateContent(String content, String previewLine){
         this.content = content;
         this.previewLine = previewLine;
+    }
+
+    @Override
+    public ResourceType getType() {
+        return ResourceType.NOTE;
     }
 }
