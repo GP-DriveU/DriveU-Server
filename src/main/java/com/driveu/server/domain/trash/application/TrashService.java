@@ -1,5 +1,6 @@
 package com.driveu.server.domain.trash.application;
 
+import com.driveu.server.domain.directory.dao.DirectoryHierarchyRepository;
 import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.resource.dao.ResourceDirectoryRepository;
@@ -33,6 +34,7 @@ public class TrashService {
     private final ResourceRepository resourceRepository;
     private final DirectoryRepository directoryRepository;
     private final ResourceDirectoryRepository resourceDirectoryRepository;
+    private final DirectoryHierarchyRepository directoryHierarchyRepository;
 
     @Transactional(readOnly = true)
     public TrashResponse getTrash(User user, String typesStr, Sort sort) {
@@ -209,4 +211,34 @@ public class TrashService {
         // 3. 마지막으로 파일(Resource) 자체를 삭제합니다.
         resourceRepository.delete(resource);
     }
+
+    @Transactional
+    public void deleteDirectoryPermanently(Long directoryId) {
+        Directory directory = directoryRepository.findById(directoryId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 디렉토리를 찾을 수 없습니다."));
+
+        System.out.println("directory 조회 완" + directory.getName());
+        // 2. 해당 디렉토리 내부에 있는 모든 파일(Resource) 목록을 조회합니다.
+        List<Resource> resourcesToDelete = resourceDirectoryRepository.findResourcesByDirectory(directory);
+
+        System.out.println("resourcesToDelete 조회 완");
+        // 3. 파일이 존재하면, 파일과 관련된 연관관계를 먼저 삭제합니다.
+        if (!resourcesToDelete.isEmpty()) {
+            // 3-1. 파일-디렉토리 연결고리(ResourceDirectory) 삭제
+            resourceDirectoryRepository.deleteAllByResourceIn(resourcesToDelete);
+            System.out.println("1");
+            // 3-2. 파일(Resource) 자체를 삭제
+            resourceRepository.deleteAllInBatch(resourcesToDelete);
+            System.out.println("2");
+        }
+
+        // 4. 디렉토리의 계층 정보(DirectoryHierarchy)를 삭제합니다.
+        directoryHierarchyRepository.deleteAllByDirectoryId(directoryId);
+        System.out.println("3");
+
+        // 5. 마지막으로 디렉토리(Directory) 자체를 삭제합니다.
+        directoryRepository.delete(directory);
+        System.out.println("4");
+    }
+
 }

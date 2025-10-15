@@ -2,6 +2,7 @@ package com.driveu.server.domain.directory.dao;
 
 import com.driveu.server.domain.directory.domain.DirectoryHierarchy;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -40,4 +41,11 @@ public interface DirectoryHierarchyRepository extends JpaRepository<DirectoryHie
     """)
     List<Long> findAllAncestorIdsByDescendantId(@Param("descendantId") Long descendantId);
 
+    @Modifying
+    @Query("""
+        DELETE FROM DirectoryHierarchy dh
+        WHERE dh.ancestorId = :directoryId
+        OR dh.descendantId = :directoryId
+    """)
+    void deleteAllByDirectoryId(@Param("directoryId") Long directoryId);
 }
