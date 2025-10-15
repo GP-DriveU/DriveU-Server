@@ -68,4 +68,9 @@ public abstract class Resource extends BaseEntity {
         this.setIsDeleted(true);
         this.setDeletedAt(deletionTime);
     }
+
+    public void restore() {
+        this.setIsDeleted(false);
+        this.setDeletedAt(null);
+    }
 }
