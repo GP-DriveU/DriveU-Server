@@ -74,7 +74,5 @@ public interface DirectoryRepository extends JpaRepository<Directory, Long> {
 
     List<Directory> findAllByUserSemesterInAndIsDeletedTrueAndIsDefaultFalse(List<UserSemester> userSemesters);
 
-    List<Directory> findAllByUserSemesterInAndIsDeletedFalse(List<UserSemester> userSemesters);
-
-    List<Directory> findAllByUserSemesterIn(Collection<UserSemester> userSemesters);
+    Optional<Directory> findByIdAndIsDeletedTrue(Long id);
 }

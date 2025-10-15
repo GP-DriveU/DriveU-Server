@@ -1,13 +1,14 @@
 package com.driveu.server.domain.resource.dao;
 
-import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.resource.domain.Resource;
 import com.driveu.server.domain.semester.domain.UserSemester;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ResourceRepository extends JpaRepository<Resource, Long> {
@@ -52,4 +53,13 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
         AND r.isDeleted = true
     """)
     List<Resource> findAllDeletedByUserSemesters(@Param("userSemesters") List<UserSemester> userSemesters);
+
+    @Query("""
+        SELECT DISTINCT r FROM Resource r
+        JOIN r.resourceDirectories rd
+        WHERE rd.directory.id = :directoryId
+        AND r.isDeleted = true
+        AND r.deletedAt = :deletionTime
+    """)
+    List<Resource> findChildrenInTrash(@Param("directoryId") Long directoryId, @Param("deletionTime") LocalDateTime deletionTime, Sort sort);
 }

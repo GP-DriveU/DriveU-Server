@@ -10,18 +10,22 @@ import com.driveu.server.domain.resource.domain.type.ResourceType;
 import com.driveu.server.domain.semester.dao.UserSemesterRepository;
 import com.driveu.server.domain.semester.domain.UserSemester;
 import com.driveu.server.domain.trash.domain.Type;
+import com.driveu.server.domain.trash.dto.response.TrashDirectoryChildrenResponse;
 import com.driveu.server.domain.trash.dto.response.TrashItemResponse;
 import com.driveu.server.domain.trash.dto.response.TrashResponse;
 import com.driveu.server.domain.user.domain.User;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -33,8 +37,8 @@ public class TrashService {
     private final ResourceDirectoryRepository resourceDirectoryRepository;
 
     @Transactional(readOnly = true)
-    public TrashResponse getTrash(User user, Type type, Pageable pageable) {
-
+    public TrashResponse getTrash(User user, String typesStr, Pageable pageable) {
+        Set<Type> types = parseTypes(typesStr);
         // 유저의 모든 학기 조회
         List<UserSemester> userSemesters = userSemesterRepository.findAllByUser(user);
 
@@ -51,7 +55,7 @@ public class TrashService {
         // 2. 유저의 모든 '삭제된 리소스' 조회
         List<Resource> allDeletedResources = resourceRepository.findAllDeletedByUserSemesters(userSemesters);
 
-        // 3. (핵심 변경) 리소스와 부모 디렉토리 관계 정보를 미리 가져와 Map으로 만듦
+        // 3. 리소스와 부모 디렉토리 관계 정보를 미리 가져와 Map으로 만듦
         Map<Long, Long> resourceToParentDirIdMap;
         if (!allDeletedResources.isEmpty()) {
             List<ResourceDirectory> activeLinks = resourceDirectoryRepository.findByResourceInAndIsDeletedFalse(allDeletedResources);
@@ -73,7 +77,7 @@ public class TrashService {
         List<TrashItemResponse> results = new ArrayList<>();
 
         // 5-1. 디렉토리 추가
-        if (type == Type.ALL || type == Type.DIRECTORY) {
+        if (types.contains(Type.ALL) || types.contains(Type.DIRECTORY)) {
             results.addAll(deletedDirectories.stream()
                     .map(d -> TrashItemResponse.builder()
                             .id(d.getId())
@@ -85,7 +89,7 @@ public class TrashService {
         }
 
         // 5-2. '개별적으로 삭제된' 리소스만 필터링하여 추가
-        if (type != Type.DIRECTORY) {
+        if (types.contains(Type.ALL) || types.size() > 1 || !types.contains(Type.DIRECTORY)) {
             List<Resource> individuallyDeletedResources = allDeletedResources.stream()
                     .filter(resource -> {
                         // (핵심 변경) Map에서 부모 디렉토리 ID 조회
@@ -100,7 +104,7 @@ public class TrashService {
                     .toList();
 
             results.addAll(individuallyDeletedResources.stream()
-                    .filter(r -> type == Type.ALL || r.getType() == ResourceType.of(type.name()))
+                    .filter(r -> types.contains(Type.ALL) || types.contains(Type.valueOf(r.getType().name())))
                     .map(r -> TrashItemResponse.builder()
                             .id(r.getId())
                             .name(r.getTitle())
@@ -119,6 +123,16 @@ public class TrashService {
                 .build();
     }
 
+    // 쉼표로 구분된 타입 문자열을 Set<Type>으로 변환하는 헬퍼 메소드
+    private Set<Type> parseTypes(String typesStr) {
+        if (typesStr == null || typesStr.isBlank() || typesStr.equalsIgnoreCase("ALL")) {
+            return Set.of(Type.ALL);
+        }
+        return Stream.of(typesStr.split(","))
+                .map(s -> Type.valueOf(s.trim().toUpperCase()))
+                .collect(Collectors.toSet());
+    }
+
     private Comparator<TrashItemResponse> buildComparator(Sort sort) {
         if (sort.isUnsorted()) {
             return  Comparator.comparing(TrashItemResponse::getDeletedAt).reversed();
@@ -135,5 +149,53 @@ public class TrashService {
         };
 
         return ascending ? comparator : comparator.reversed();
+    }
+
+    @Transactional(readOnly = true)
+    public TrashDirectoryChildrenResponse getChildrenInTrashDirectory(Long directoryId, String typesStr, Sort sort) {
+        Set<Type> types = parseTypes(typesStr);
+
+        // 'name' 프로퍼티를 'title'로 수동 변환하는 로직
+        List<Sort.Order> newOrders = sort.stream()
+                .map(order -> {
+                    if (order.getProperty().equals("name")) {
+                        return new Sort.Order(order.getDirection(), "title");
+                    }
+                    return order;
+                })
+                .collect(Collectors.toList());
+
+        Sort newSort = Sort.by(newOrders);
+
+
+        Directory parentDirectory = directoryRepository.findByIdAndIsDeletedTrue(directoryId)
+                .orElseThrow(() -> new EntityNotFoundException("Deleted directory not found or not deleted"));
+
+        // 2. 부모 디렉토리의 삭제 시간을 기준으로, 함께 삭제된 자식 리소스들을 조회
+        LocalDateTime deletionTime = parentDirectory.getDeletedAt();
+        List<Resource> childrenResources = resourceRepository.findChildrenInTrash(directoryId, deletionTime, newSort);
+
+        // 3. 응답 DTO 조립
+        TrashItemResponse directoryResponse = TrashItemResponse.builder()
+                .id(parentDirectory.getId())
+                .name(parentDirectory.getName())
+                .type(Type.DIRECTORY)
+                .deletedAt(parentDirectory.getDeletedAt())
+                .build();
+
+        List<TrashItemResponse> childrenResponse = childrenResources.stream()
+                .filter(r -> types.contains(Type.ALL) || types.contains(Type.valueOf(r.getType().name())))
+                .map(r -> TrashItemResponse.builder()
+                        .id(r.getId())
+                        .name(r.getTitle())
+                        .type(Type.valueOf(r.getType().name()))
+                        .deletedAt(r.getDeletedAt())
+                        .build())
+                .toList();
+
+        return TrashDirectoryChildrenResponse.builder()
+                .directory(directoryResponse)
+                .children(childrenResponse)
+                .build();
     }
 }
