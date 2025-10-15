@@ -1,5 +1,6 @@
 package com.driveu.server.domain.trash.application;
 
+import com.driveu.server.domain.directory.dao.DirectoryHierarchyRepository;
 import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.resource.dao.ResourceDirectoryRepository;
@@ -33,6 +34,7 @@ public class TrashService {
     private final ResourceRepository resourceRepository;
     private final DirectoryRepository directoryRepository;
     private final ResourceDirectoryRepository resourceDirectoryRepository;
+    private final DirectoryHierarchyRepository directoryHierarchyRepository;
 
     @Transactional(readOnly = true)
     public TrashResponse getTrash(User user, String typesStr, Sort sort) {
@@ -195,5 +197,78 @@ public class TrashService {
                 .directory(directoryResponse)
                 .children(childrenResponse)
                 .build();
+    }
+
+    @Transactional
+    public void deleteResourcePermanently(Long resourceId) {
+        // 1. ID로 파일을 찾습니다. 없으면 예외를 발생시킵니다.
+        Resource resource = resourceRepository.findById(resourceId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 파일을 찾을 수 없습니다. ID: " + resourceId));
+
+        // 2. ResourceDirectory 테이블에서 연관된 레코드를 먼저 삭제합니다.
+        resourceDirectoryRepository.deleteByResource(resource);
+
+        // 3. 마지막으로 파일(Resource) 자체를 삭제합니다.
+        resourceRepository.delete(resource);
+    }
+
+    @Transactional
+    public void deleteDirectoryPermanently(Long directoryId) {
+        Directory directory = directoryRepository.findById(directoryId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 디렉토리를 찾을 수 없습니다."));
+
+        // 2. 해당 디렉토리 내부에 있는 모든 파일(Resource) 목록을 조회합니다.
+        List<Resource> resourcesToDelete = resourceDirectoryRepository.findResourcesByDirectory(directory);
+
+        // 3. 파일이 존재하면, 파일과 관련된 연관관계를 먼저 삭제합니다.
+        if (!resourcesToDelete.isEmpty()) {
+            // 3-1. 파일-디렉토리 연결고리(ResourceDirectory) 삭제
+            resourceDirectoryRepository.deleteAllByResourceIn(resourcesToDelete);
+            // 3-2. 파일(Resource) 자체를 삭제
+            resourceRepository.deleteAllInBatch(resourcesToDelete);
+        }
+
+        // 4. 디렉토리의 계층 정보(DirectoryHierarchy)를 삭제합니다.
+        directoryHierarchyRepository.deleteAllByDirectoryId(directoryId);
+
+        // 5. 마지막으로 디렉토리(Directory) 자체를 삭제합니다.
+        directoryRepository.delete(directory);
+    }
+
+    @Transactional
+    public void emptyTrash(User user) {
+        // 유저의 모든 학기 조회
+        List<UserSemester> userSemesters = userSemesterRepository.findAllByUser(user);
+
+        if (userSemesters.isEmpty()) return;
+
+        // 1. 휴지통에 있는 현재 사용자의 모든 리소스와 디렉토리를 조회합니다.
+        List<Directory> directoriesInTrash =
+                directoryRepository.findAllByUserSemesterInAndIsDeletedTrueAndIsDefaultFalse(userSemesters);
+
+        List<Resource> resourcesInTrash = resourceRepository.findAllDeletedByUserSemesters(userSemesters);
+
+        // 삭제할 내용이 없으면 바로 종료
+        if (resourcesInTrash.isEmpty() && directoriesInTrash.isEmpty()) return;
+
+        // --- 2. 연관 관계 데이터(연결고리)를 먼저 삭제합니다. ---
+        if (!resourcesInTrash.isEmpty()) {
+            resourceDirectoryRepository.deleteAllByResourceIn(resourcesInTrash);
+        }
+        if (!directoriesInTrash.isEmpty()) {
+            List<Long> dirIds = directoriesInTrash.stream().map(Directory::getId).toList();
+            directoryHierarchyRepository.deleteAllByDirectoryIds(dirIds);
+            resourceDirectoryRepository.deleteAllByDirectoryIn(directoriesInTrash);
+        }
+
+        // --- 3. 실제 엔티티 데이터를 삭제합니다. ---
+        if (!resourcesInTrash.isEmpty()) {
+            // ★★★ 핵심: deleteAll()을 사용하여 자식 테이블(File, Link, Note)까지 안전하게 삭제 ★★★
+            resourceRepository.deleteAll(resourcesInTrash);
+        }
+        if (!directoriesInTrash.isEmpty()) {
+            // Directory는 상속 관계가 복잡하지 않으므로 deleteAllInBatch 사용 가능
+            directoryRepository.deleteAllInBatch(directoriesInTrash);
+        }
     }
 }
