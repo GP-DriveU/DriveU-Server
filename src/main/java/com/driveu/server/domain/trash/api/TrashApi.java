@@ -48,11 +48,11 @@ public class TrashApi {
     })
     public ResponseEntity<?> getTrash(
             @RequestParam(defaultValue = "ALL", required = false) String type,
-            @ParameterObject @PageableDefault(sort = "deletedAt", direction = DESC) Pageable pageable,
+            @ParameterObject @SortDefault(sort = "deletedAt", direction = Sort.Direction.DESC) Sort sort,
             @Parameter(hidden = true) @LoginUser User user
     ){
         try {
-            TrashResponse response = trashService.getTrash(user, type, pageable);
+            TrashResponse response = trashService.getTrash(user, type, sort);
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

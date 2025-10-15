@@ -6,7 +6,6 @@ import com.driveu.server.domain.resource.dao.ResourceDirectoryRepository;
 import com.driveu.server.domain.resource.dao.ResourceRepository;
 import com.driveu.server.domain.resource.domain.Resource;
 import com.driveu.server.domain.resource.domain.ResourceDirectory;
-import com.driveu.server.domain.resource.domain.type.ResourceType;
 import com.driveu.server.domain.semester.dao.UserSemesterRepository;
 import com.driveu.server.domain.semester.domain.UserSemester;
 import com.driveu.server.domain.trash.domain.Type;
@@ -16,7 +15,6 @@ import com.driveu.server.domain.trash.dto.response.TrashResponse;
 import com.driveu.server.domain.user.domain.User;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,7 +35,7 @@ public class TrashService {
     private final ResourceDirectoryRepository resourceDirectoryRepository;
 
     @Transactional(readOnly = true)
-    public TrashResponse getTrash(User user, String typesStr, Pageable pageable) {
+    public TrashResponse getTrash(User user, String typesStr, Sort sort) {
         Set<Type> types = parseTypes(typesStr);
         // 유저의 모든 학기 조회
         List<UserSemester> userSemesters = userSemesterRepository.findAllByUser(user);
@@ -115,7 +113,7 @@ public class TrashService {
         }
 
 
-        Comparator<TrashItemResponse> comparator = buildComparator(pageable.getSort());
+        Comparator<TrashItemResponse> comparator = buildComparator(sort);
         results.sort(comparator);
 
         return TrashResponse.builder()
