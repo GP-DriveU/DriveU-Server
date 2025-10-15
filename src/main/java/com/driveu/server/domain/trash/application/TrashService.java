@@ -217,28 +217,58 @@ public class TrashService {
         Directory directory = directoryRepository.findById(directoryId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 디렉토리를 찾을 수 없습니다."));
 
-        System.out.println("directory 조회 완" + directory.getName());
         // 2. 해당 디렉토리 내부에 있는 모든 파일(Resource) 목록을 조회합니다.
         List<Resource> resourcesToDelete = resourceDirectoryRepository.findResourcesByDirectory(directory);
 
-        System.out.println("resourcesToDelete 조회 완");
         // 3. 파일이 존재하면, 파일과 관련된 연관관계를 먼저 삭제합니다.
         if (!resourcesToDelete.isEmpty()) {
             // 3-1. 파일-디렉토리 연결고리(ResourceDirectory) 삭제
             resourceDirectoryRepository.deleteAllByResourceIn(resourcesToDelete);
-            System.out.println("1");
             // 3-2. 파일(Resource) 자체를 삭제
             resourceRepository.deleteAllInBatch(resourcesToDelete);
-            System.out.println("2");
         }
 
         // 4. 디렉토리의 계층 정보(DirectoryHierarchy)를 삭제합니다.
         directoryHierarchyRepository.deleteAllByDirectoryId(directoryId);
-        System.out.println("3");
 
         // 5. 마지막으로 디렉토리(Directory) 자체를 삭제합니다.
         directoryRepository.delete(directory);
-        System.out.println("4");
     }
 
+    @Transactional
+    public void emptyTrash(User user) {
+        // 유저의 모든 학기 조회
+        List<UserSemester> userSemesters = userSemesterRepository.findAllByUser(user);
+
+        if (userSemesters.isEmpty()) return;
+
+        // 1. 휴지통에 있는 현재 사용자의 모든 리소스와 디렉토리를 조회합니다.
+        List<Directory> directoriesInTrash =
+                directoryRepository.findAllByUserSemesterInAndIsDeletedTrueAndIsDefaultFalse(userSemesters);
+
+        List<Resource> resourcesInTrash = resourceRepository.findAllDeletedByUserSemesters(userSemesters);
+
+        // 삭제할 내용이 없으면 바로 종료
+        if (resourcesInTrash.isEmpty() && directoriesInTrash.isEmpty()) return;
+
+        // --- 2. 연관 관계 데이터(연결고리)를 먼저 삭제합니다. ---
+        if (!resourcesInTrash.isEmpty()) {
+            resourceDirectoryRepository.deleteAllByResourceIn(resourcesInTrash);
+        }
+        if (!directoriesInTrash.isEmpty()) {
+            List<Long> dirIds = directoriesInTrash.stream().map(Directory::getId).toList();
+            directoryHierarchyRepository.deleteAllByDirectoryIds(dirIds);
+            resourceDirectoryRepository.deleteAllByDirectoryIn(directoriesInTrash);
+        }
+
+        // --- 3. 실제 엔티티 데이터를 삭제합니다. ---
+        if (!resourcesInTrash.isEmpty()) {
+            // ★★★ 핵심: deleteAll()을 사용하여 자식 테이블(File, Link, Note)까지 안전하게 삭제 ★★★
+            resourceRepository.deleteAll(resourcesInTrash);
+        }
+        if (!directoriesInTrash.isEmpty()) {
+            // Directory는 상속 관계가 복잡하지 않으므로 deleteAllInBatch 사용 가능
+            directoryRepository.deleteAllInBatch(directoriesInTrash);
+        }
+    }
 }

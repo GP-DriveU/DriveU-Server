@@ -32,4 +32,9 @@ public interface ResourceDirectoryRepository extends JpaRepository<ResourceDirec
     @Modifying(clearAutomatically = true) // ★★★ 바로 이 옵션입니다! ★★★
     @Query("DELETE FROM ResourceDirectory rd WHERE rd.resource IN :resources")
     void deleteAllByResourceIn(@Param("resources") List<Resource> resources);
+
+
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM ResourceDirectory rd WHERE rd.directory IN :directories")
+    void deleteAllByDirectoryIn(@Param("directories") List<Directory> directories);
 }

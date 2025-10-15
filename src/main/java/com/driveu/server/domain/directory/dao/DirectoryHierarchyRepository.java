@@ -48,4 +48,8 @@ public interface DirectoryHierarchyRepository extends JpaRepository<DirectoryHie
         OR dh.descendantId = :directoryId
     """)
     void deleteAllByDirectoryId(@Param("directoryId") Long directoryId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM DirectoryHierarchy dh WHERE dh.ancestorId IN :ids OR dh.descendantId IN :ids")
+    void deleteAllByDirectoryIds(@Param("ids") List<Long> ids);
 }
