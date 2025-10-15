@@ -271,4 +271,19 @@ public class TrashService {
             directoryRepository.deleteAllInBatch(directoriesInTrash);
         }
     }
+
+    @Transactional
+    public void restoreResource(Long resourceId) {
+        // 1. ID로 파일을 찾습니다. 없으면 예외를 발생시킵니다.
+        Resource resourceToRestore = resourceRepository.findById(resourceId)
+                .orElseThrow(() -> new EntityNotFoundException("복구할 파일을 찾을 수 없습니다."));
+
+        // 3. 이미 복구된 파일인지 확인합니다.
+        if (!resourceToRestore.getIsDeleted()) {
+            throw new IllegalStateException("이미 복구된 파일입니다.");
+        }
+
+        // 4. 엔티티의 상태를 '복구'로 변경합니다.
+        resourceToRestore.restore();
+    }
 }

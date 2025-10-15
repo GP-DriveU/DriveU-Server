@@ -172,4 +172,32 @@ public class TrashApi {
                     .body(Map.of("message", e.getMessage()));
         }
     }
+
+    @PostMapping("/resources/{resourceId}/restore")
+    @Operation(summary = "휴지통의 특정 파일을 원래 위치로 복구합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공적으로 파일 복구가 완료되었습니다.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(example = "{\"message\": \"휴지통의 파일이 복구되었습니다.\"}")
+                    )),
+            @ApiResponse(responseCode = "404", description = "휴지통에 요청한 파일이 존재하지 않습니다.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(example = "{\"message\": \"Deleted file not found\"}")
+                    ))
+    })
+    public ResponseEntity<Map<String, String>> restoreResource(@PathVariable Long resourceId) {
+        try {
+            trashService.restoreResource(resourceId);
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(Map.of("message", "휴지통의 파일이 복구되었습니다."));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", e.getMessage()));
+        }
+    }
 }
