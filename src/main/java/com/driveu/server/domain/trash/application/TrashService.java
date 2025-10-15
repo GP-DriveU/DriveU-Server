@@ -286,4 +286,26 @@ public class TrashService {
         // 4. 엔티티의 상태를 '복구'로 변경합니다.
         resourceToRestore.restore();
     }
+
+    @Transactional
+    public void restoreDirectory(Long directoryId) {
+        // 1. ID로 파일을 찾습니다. 없으면 예외를 발생시킵니다.
+        Directory directoryToRestore = directoryRepository.findById(directoryId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 디렉토리를 찾을 수 없습니다."));
+
+        // 3. 이미 복구된 디렉토리인지 확인합니다.
+        if (!directoryToRestore.getIsDeleted()) {
+            throw new IllegalStateException("이미 복구된 디렉토리입니다.");
+        }
+        // 4. 디렉토리의 상태를 '복구'로 변경합니다.
+        directoryToRestore.restore();
+
+        // 5. 해당 디렉토리 내부에 있는 모든 파일(Resource) 목록을 조회합니다.
+        List<Resource> resourcesToRestore = resourceDirectoryRepository.findResourcesByDirectory(directoryToRestore);
+
+        // 6. 각 파일들의 상태도 '복구'로 변경합니다.
+        for (Resource resource : resourcesToRestore) {
+            resource.restore();
+        }
+    }
 }
