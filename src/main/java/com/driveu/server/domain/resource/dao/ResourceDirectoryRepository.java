@@ -14,4 +14,6 @@ public interface ResourceDirectoryRepository extends JpaRepository<ResourceDirec
     List<ResourceDirectory> findAllByDirectory_IdAndResource_IsDeletedFalse(Long directoryId);
 
     List<ResourceDirectory> findByResourceInAndIsDeletedFalse(List<Resource> allDeletedResources);
+
+    void deleteByResource(Resource resource);
 }

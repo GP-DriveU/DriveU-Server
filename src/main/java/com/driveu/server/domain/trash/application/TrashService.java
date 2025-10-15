@@ -196,4 +196,17 @@ public class TrashService {
                 .children(childrenResponse)
                 .build();
     }
+
+    @Transactional
+    public void deleteResourcePermanently(Long resourceId) {
+        // 1. ID로 파일을 찾습니다. 없으면 예외를 발생시킵니다.
+        Resource resource = resourceRepository.findById(resourceId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 파일을 찾을 수 없습니다. ID: " + resourceId));
+
+        // 2. ResourceDirectory 테이블에서 연관된 레코드를 먼저 삭제합니다.
+        resourceDirectoryRepository.deleteByResource(resource);
+
+        // 3. 마지막으로 파일(Resource) 자체를 삭제합니다.
+        resourceRepository.delete(resource);
+    }
 }

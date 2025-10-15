@@ -29,7 +29,7 @@ public class TrashApi {
     private final TrashService trashService;
 
     @GetMapping
-    @Operation(summary = "휴지통 조회", description = "page 와 size 쿼리파라미터는 무시하셔도 됩니다. 현재 type, sort만 로직에 관여합니다. ")
+    @Operation(summary = "휴지통 조회", description = "사용자의 모든 학기 통합 휴지통 조회")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "성공적으로 휴지통이 조회되었습니다.",
                     content = @Content(schema = @Schema(implementation = TrashResponse.class))),
@@ -80,6 +80,34 @@ public class TrashApi {
         try {
             TrashDirectoryChildrenResponse response = trashService.getChildrenInTrashDirectory(directoryId, type, sort);
             return ResponseEntity.ok(response);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "서버 에러가 발생했습니다."));
+        }
+    }
+
+    @DeleteMapping("/resources/{resourceId}")
+    @Operation(summary = "휴지통에서 파일 삭제")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공적으로 파일이 삭제되었습니다.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(example = "{\"message\": \"휴지통의 파일이 삭제되었습니다.\"}")
+                    )),
+            @ApiResponse(responseCode = "404", description = "휴지통에 요청한 파일이 존재하지 않습니다.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(example = "{\"message\": \"Deleted file not found\"}")
+                    ))
+    })
+    public ResponseEntity<Map<String, String>> deleteResourcePermanently(@PathVariable Long resourceId) {
+        try {
+             trashService.deleteResourcePermanently(resourceId);
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(Map.of("message", "휴지통의 파일이 삭제되었습니다."));
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", e.getMessage()));
