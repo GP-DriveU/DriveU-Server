@@ -5,6 +5,8 @@ import com.driveu.server.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -41,5 +43,10 @@ public class Directory extends BaseEntity {
 
     public void setOrder(int order) {
         this.order = order;
+    }
+
+    public void softDeleteWithSetTime(LocalDateTime deletionTime) {
+        this.setIsDeleted(true);
+        this.setDeletedAt(deletionTime);
     }
 }

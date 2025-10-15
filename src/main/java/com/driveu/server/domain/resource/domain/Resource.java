@@ -1,10 +1,13 @@
 package com.driveu.server.domain.resource.domain;
 
 import com.driveu.server.domain.directory.domain.Directory;
+import com.driveu.server.domain.resource.domain.type.ResourceType;
+import com.driveu.server.domain.trash.domain.Type;
 import com.driveu.server.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -57,5 +60,12 @@ public abstract class Resource extends BaseEntity {
 
     public void updateTitle(String title){
         this.title = title;
+    }
+
+    public abstract ResourceType getType();
+
+    public void softDeleteWithSetTime(LocalDateTime deletionTime) {
+        this.setIsDeleted(true);
+        this.setDeletedAt(deletionTime);
     }
 }

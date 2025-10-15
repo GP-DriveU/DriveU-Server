@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -190,6 +191,9 @@ public class DirectoryService {
 
     @Transactional
     public void softDeleteDirectory(Long directoryId) {
+        // 1. 삭제 기준 시간을 트랜잭션 시작 시 한 번만 생성
+        LocalDateTime deletionTime = LocalDateTime.now();
+
         System.out.println("start delete");
         Directory directory = getDirectoryById(directoryId);
 
@@ -200,26 +204,28 @@ public class DirectoryService {
         toDeleteDir.add(directory); // 자기 자신 포함
 
         for (Directory dir : toDeleteDir) {
-            dir.softDelete(); // isDeleted = true, deletedAt = now
+            dir.softDeleteWithSetTime(deletionTime); // isDeleted = true, deletedAt = now
             directoryRepository.save(dir); // 명시적 저장
         }
         //디렉토리 내부 리소스도 soft delete
-        deleteResourceFromDirectoryList(toDeleteDir);
+        deleteResourceFromDirectoryList(toDeleteDir, deletionTime);
     }
 
     // 학기 삭제 - userSemester 를 받아서 하위 디렉토리+리소스 모두 삭제
     public void softDeleteDirectoryListNotHierarchyByUserSemester(UserSemester userSemester) {
+        LocalDateTime deletionTime = LocalDateTime.now();
+
         List<Directory> toDeleteDirectoryList = directoryRepository.findByUserSemester(userSemester);
 
         for (Directory dir : toDeleteDirectoryList) {
-            dir.softDelete(); // isDeleted = true, deletedAt = now
+            dir.softDeleteWithSetTime(deletionTime); // isDeleted = true, deletedAt = now
             directoryRepository.save(dir); // 명시적 저장
         }
         //디렉토리 내부 리소스도 soft delete
-        deleteResourceFromDirectoryList(toDeleteDirectoryList);
+        deleteResourceFromDirectoryList(toDeleteDirectoryList, deletionTime);
     }
 
-    private void deleteResourceFromDirectoryList(List<Directory> toDeleteDir) {
+    private void deleteResourceFromDirectoryList(List<Directory> toDeleteDir, LocalDateTime deletionTime) {
         Set<Resource> resourcesToSoftDelete = new HashSet<>();
         for (Directory delDir : toDeleteDir) {
             Long delDirId = delDir.getId();
@@ -236,7 +242,7 @@ public class DirectoryService {
 
         // Resource 들을 soft‐delete 처리
         for (Resource res : resourcesToSoftDelete) {
-            res.softDelete();
+            res.softDeleteWithSetTime(deletionTime);
         }
     }
 

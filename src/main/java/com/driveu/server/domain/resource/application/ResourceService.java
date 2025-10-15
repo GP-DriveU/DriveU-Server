@@ -103,9 +103,8 @@ public class ResourceService {
         Map<Resource, List<ResourceDirectory>> grouped = resourceDirectories.stream()
                 .collect(Collectors.groupingBy(ResourceDirectory::getResource));
 
-        return grouped.entrySet().stream()
-                .map(entry -> {
-                    Resource resource = entry.getKey();
+        return grouped.keySet().stream()
+                .map(resource -> {
 
                     TagResponse tagResponse = getTagResponseByDirectoryIdAndResource(directoryId, resource);
 
