@@ -8,11 +8,9 @@ import java.time.LocalDateTime;
 public class TestUserFactory {
     public static User getTestUser() {
         return new User(
-                1L,
                 "testuser@example.com",
                 "테스트유저",
                 OauthProvider.GOOGLE,
-                LocalDateTime.now(),
                 0L,
                 5368709120L
         );

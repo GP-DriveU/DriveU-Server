@@ -1,11 +1,9 @@
 package com.driveu.server.domain.trash.api;
 
 import com.driveu.server.domain.trash.application.TrashService;
-import com.driveu.server.domain.trash.domain.Type;
 import com.driveu.server.domain.trash.dto.response.TrashDirectoryChildrenResponse;
 import com.driveu.server.domain.trash.dto.response.TrashResponse;
 import com.driveu.server.domain.user.domain.User;
-import com.driveu.server.global.config.security.auth.IsOwner;
 import com.driveu.server.global.config.security.auth.LoginUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,17 +14,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.data.web.SortDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-
-import static org.springframework.data.domain.Sort.Direction.DESC;
 
 @RestController
 @RequiredArgsConstructor

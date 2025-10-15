@@ -92,7 +92,7 @@ public class MultipartUploadIntegrationTest {
     @Test
     void compareSingleVsMultipartUpload() throws Exception {
 
-        int fileSize = 100 * 1024 * 1024; // 20MB
+        int fileSize = 2000 * 1024 * 1024; //1GB
         byte[] fileData = new byte[fileSize];
         Arrays.fill(fileData, (byte) 'A');
 
@@ -101,7 +101,7 @@ public class MultipartUploadIntegrationTest {
         // ----------------------------
         long startSingle = System.nanoTime();
 
-        FileUploadResponse singleResponse = (FileUploadResponse) fileUploadService.startUpload("single", testUser, "single-test-100.txt", fileSize, 1);
+        FileUploadResponse singleResponse = (FileUploadResponse) fileUploadService.startUpload("single", testUser, "single-test-2.txt", fileSize, 1);
         HttpURLConnection singleConn = (HttpURLConnection) singleResponse.getUrl().openConnection();
         singleConn.setDoOutput(true);
         singleConn.setRequestMethod("PUT");
@@ -128,7 +128,7 @@ public class MultipartUploadIntegrationTest {
         var multipartResponse = (MultipartUploadInitResponse) fileUploadService.startUpload(
                 "multipart",
                 testUser,
-                "multipart-test-100.txt",
+                "multipart-test-2.txt",
                 fileSize,
                 partCount
         );
