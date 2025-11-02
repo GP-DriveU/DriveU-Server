@@ -62,4 +62,6 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
         AND r.deletedAt = :deletionTime
     """)
     List<Resource> findChildrenInTrash(@Param("directoryId") Long directoryId, @Param("deletionTime") LocalDateTime deletionTime, Sort sort);
+
+    List<Resource> findAllByIsDeletedTrueAndDeletedAtBefore(LocalDateTime deletedAtBefore);
 }
