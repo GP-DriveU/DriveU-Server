@@ -3,8 +3,10 @@ package com.driveu.server.domain.trash.application;
 import com.driveu.server.domain.directory.dao.DirectoryHierarchyRepository;
 import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.domain.Directory;
+import com.driveu.server.domain.file.application.S3FileStorageService;
 import com.driveu.server.domain.resource.dao.ResourceDirectoryRepository;
 import com.driveu.server.domain.resource.dao.ResourceRepository;
+import com.driveu.server.domain.resource.domain.File;
 import com.driveu.server.domain.resource.domain.Resource;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Slf4j
 @Service
@@ -22,6 +26,7 @@ public class TrashCleanupService {
     private final DirectoryRepository directoryRepository;
     private final ResourceDirectoryRepository resourceDirectoryRepository;
     private final DirectoryHierarchyRepository directoryHierarchyRepository;
+    private final S3FileStorageService s3FileStorageService;
 
     @Transactional
     public void deleteExpiredItems() {
@@ -44,6 +49,26 @@ public class TrashCleanupService {
             directoryHierarchyRepository.deleteAllByDirectoryIds(dirIds);
             resourceDirectoryRepository.deleteAllByDirectoryIn(expiredDirectories);
             directoryRepository.deleteAllInBatch(expiredDirectories);
+        }
+
+        // S3에서 실제 파일 삭제 (비동기)
+        List<File> expiredFiles = expiredResources.stream()
+                .filter(r -> r instanceof File)
+                .map(r -> (File) r)
+                .toList();
+
+        for (File file : expiredFiles) {
+            if (file.getS3Path() != null) {
+                TransactionSynchronizationManager.registerSynchronization(
+                        new TransactionSynchronization() {
+                            @Override
+                            public void afterCommit() {
+                                // 트랜잭션 커밋 후 비동기 S3 삭제
+                                s3FileStorageService.deleteFile(file.getS3Path());
+                            }
+                        }
+                );
+            }
         }
 
         log.info("[TrashCleanup] expiredResources={}, expiredDirectories={}",
