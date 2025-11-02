@@ -5,6 +5,7 @@ import com.driveu.server.domain.semester.domain.UserSemester;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -64,4 +65,8 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
     List<Resource> findChildrenInTrash(@Param("directoryId") Long directoryId, @Param("deletionTime") LocalDateTime deletionTime, Sort sort);
 
     List<Resource> findAllByIsDeletedTrueAndDeletedAtBefore(LocalDateTime deletedAtBefore);
+
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Resource r WHERE r.id IN :resourceIds")
+    void deleteAllByIdsInQuery(List<Resource> expiredResources);
 }

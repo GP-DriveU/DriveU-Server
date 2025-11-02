@@ -4,10 +4,14 @@ import com.driveu.server.domain.directory.dao.DirectoryHierarchyRepository;
 import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.file.application.S3FileStorageService;
+import com.driveu.server.domain.question.dao.QuestionRepository;
+import com.driveu.server.domain.question.dao.QuestionResourceRepository;
 import com.driveu.server.domain.resource.dao.ResourceDirectoryRepository;
 import com.driveu.server.domain.resource.dao.ResourceRepository;
 import com.driveu.server.domain.resource.domain.File;
+import com.driveu.server.domain.resource.domain.Note;
 import com.driveu.server.domain.resource.domain.Resource;
+import com.driveu.server.domain.summary.dao.SummaryRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +31,9 @@ public class TrashCleanupService {
     private final ResourceDirectoryRepository resourceDirectoryRepository;
     private final DirectoryHierarchyRepository directoryHierarchyRepository;
     private final S3FileStorageService s3FileStorageService;
+    private final SummaryRepository summaryRepository;
+    private final QuestionRepository questionRepository;
+    private final QuestionResourceRepository questionResourceRepository;
 
     @Transactional
     public void deleteExpiredItems() {
@@ -39,15 +46,18 @@ public class TrashCleanupService {
             List<Directory> expiredDirectories = directoryRepository.findAllByIsDeletedTrueAndDeletedAtBefore(
                     threshold);
 
-            // 리소스 관련 연관관계 일괄 삭제 (Batch Delete 적용)
+            // 리소스 관련 연관 관계 일괄 삭제
             if (!expiredResources.isEmpty()) {
+                deleteQuestion(expiredResources);
                 resourceDirectoryRepository.deleteAllByResourceIn(expiredResources);
-                resourceRepository.deleteAllInBatch(expiredResources);
+                resourceRepository.deleteAll(expiredResources);
             }
 
-            // 리소스 관련 연관관계 일괄 삭제 (Batch Delete 적용)
+            // 디렉토리 관련 연관 관계 일괄 삭제 (Batch Delete 적용)
             if (!expiredDirectories.isEmpty()) {
-                List<Long> dirIds = expiredDirectories.stream().map(Directory::getId).toList();
+                List<Long> dirIds = expiredDirectories.stream()
+                        .map(Directory::getId)
+                        .toList();
 
                 directoryHierarchyRepository.deleteAllByDirectoryIds(dirIds);
                 resourceDirectoryRepository.deleteAllByDirectoryIn(expiredDirectories);
@@ -78,6 +88,21 @@ public class TrashCleanupService {
                     expiredResources.size(), expiredDirectories.size());
         } catch (Exception e) {
             log.error("[Scheduler] 휴지통 삭제 중 오류 발생: {}", e.getMessage(), e);
+        }
+    }
+
+    @Transactional
+    protected void deleteQuestion(List<Resource> expiredResources) {
+        List<Long> resourceIds = expiredResources.stream()
+                .map(Resource::getId)
+                .toList();
+
+        if (!resourceIds.isEmpty()) {
+            questionResourceRepository.deleteAllByResourceIds(resourceIds);
+            questionRepository.deleteAllByLinkedResourceIds(resourceIds);
+
+            questionResourceRepository.flush();
+            questionRepository.flush();
         }
     }
 }

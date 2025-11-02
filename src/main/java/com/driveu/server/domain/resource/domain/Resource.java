@@ -1,8 +1,8 @@
 package com.driveu.server.domain.resource.domain;
 
 import com.driveu.server.domain.directory.domain.Directory;
+import com.driveu.server.domain.question.domain.QuestionResource;
 import com.driveu.server.domain.resource.domain.type.ResourceType;
-import com.driveu.server.domain.trash.domain.Type;
 import com.driveu.server.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -28,6 +28,9 @@ public abstract class Resource extends BaseEntity {
 
     @OneToMany(mappedBy = "resource", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ResourceDirectory> resourceDirectories = new ArrayList<>();
+
+    @OneToMany(mappedBy = "resource", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<QuestionResource> questionResources = new ArrayList<>();
 
     public Resource(String title) {
         this.title = title;

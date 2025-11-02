@@ -3,6 +3,7 @@ package com.driveu.server.domain.question.dao;
 import com.driveu.server.domain.question.domain.Question;
 import com.driveu.server.domain.question.domain.QuestionResource;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -30,4 +31,8 @@ public interface QuestionResourceRepository extends JpaRepository<QuestionResour
             @Param("resourceIds") Set<Long> resourceIds,
             @Param("size") long size
     );
+
+    @Modifying
+    @Query("DELETE FROM QuestionResource qr WHERE qr.resource.id IN :resourceIds")
+    void deleteAllByResourceIds(List<Long> resourceIds);
 }
