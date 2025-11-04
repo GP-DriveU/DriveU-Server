@@ -2,6 +2,7 @@ package com.driveu.server.domain.directory.dao;
 
 import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.semester.domain.UserSemester;
+import java.time.LocalDateTime;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -75,4 +76,6 @@ public interface DirectoryRepository extends JpaRepository<Directory, Long> {
     List<Directory> findAllByUserSemesterInAndIsDeletedTrueAndIsDefaultFalse(List<UserSemester> userSemesters);
 
     Optional<Directory> findByIdAndIsDeletedTrue(Long id);
+
+    List<Directory> findAllByIsDeletedTrueAndDeletedAtBefore(LocalDateTime deletedAtBefore);
 }

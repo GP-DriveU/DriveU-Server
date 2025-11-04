@@ -1,8 +1,11 @@
 package com.driveu.server.domain.resource.domain;
 
 import com.driveu.server.domain.resource.domain.type.ResourceType;
+import com.driveu.server.domain.summary.domain.Summary;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.*;
 
@@ -18,6 +21,9 @@ public class Note extends Resource {
 
     @Column(name = "preview_line")
     private String previewLine;
+
+    @OneToOne(mappedBy = "note", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private Summary summary;
 
     @Builder
     private Note(String title, String previewLine, String content) {
