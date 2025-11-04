@@ -24,7 +24,7 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
     """)
     boolean existsByQuestionIdAndUserId(@Param("questionId") Long questionId, @Param("userId")Long userId);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
         DELETE FROM Question q 
         WHERE q.id IN (

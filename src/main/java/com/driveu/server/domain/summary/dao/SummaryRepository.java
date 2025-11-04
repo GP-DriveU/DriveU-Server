@@ -11,7 +11,7 @@ import org.springframework.data.repository.query.Param;
 public interface SummaryRepository extends JpaRepository<Summary, Long> {
     Summary findByNote(Note note);
 
-    @Modifying(clearAutomatically = true)
-    @Query("DELETE FROM Resource r WHERE r.id IN :resourceIds")
-    void deleteAllByNoteIdIn(@Param("resourceIds") List<Long> resourceIds);
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM Summary s WHERE s.note.id IN :noteIds")
+    void deleteAllByNoteIds(@Param("noteIds")List<Long> noteIds);
 }

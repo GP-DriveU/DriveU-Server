@@ -49,8 +49,9 @@ public class TrashCleanupService {
             // 리소스 관련 연관 관계 일괄 삭제
             if (!expiredResources.isEmpty()) {
                 deleteQuestion(expiredResources);
+                deleteSummary(expiredResources);
                 resourceDirectoryRepository.deleteAllByResourceIn(expiredResources);
-                resourceRepository.deleteAll(expiredResources);
+                resourceRepository.deleteAllInBatch(expiredResources);
             }
 
             // 디렉토리 관련 연관 관계 일괄 삭제 (Batch Delete 적용)
@@ -91,6 +92,17 @@ public class TrashCleanupService {
         }
     }
 
+    private void deleteSummary(List<Resource> expiredResources) {
+        List<Long> noteIds = expiredResources.stream()
+                .filter(Note.class::isInstance)
+                .map(Resource::getId)
+                .toList();
+
+        if (!noteIds.isEmpty()) {
+            summaryRepository.deleteAllByNoteIds(noteIds);
+        }
+    }
+
     @Transactional
     protected void deleteQuestion(List<Resource> expiredResources) {
         List<Long> resourceIds = expiredResources.stream()
@@ -100,9 +112,6 @@ public class TrashCleanupService {
         if (!resourceIds.isEmpty()) {
             questionResourceRepository.deleteAllByResourceIds(resourceIds);
             questionRepository.deleteAllByLinkedResourceIds(resourceIds);
-
-            questionResourceRepository.flush();
-            questionRepository.flush();
         }
     }
 }

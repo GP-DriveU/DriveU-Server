@@ -32,7 +32,7 @@ public interface QuestionResourceRepository extends JpaRepository<QuestionResour
             @Param("size") long size
     );
 
-    @Modifying
+    @Modifying (clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM QuestionResource qr WHERE qr.resource.id IN :resourceIds")
     void deleteAllByResourceIds(List<Long> resourceIds);
 }

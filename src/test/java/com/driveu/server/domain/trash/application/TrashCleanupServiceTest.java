@@ -1,5 +1,7 @@
 package com.driveu.server.domain.trash.application;
 
+import static org.assertj.core.api.Assertions.assertThatCode;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -11,7 +13,8 @@ class TrashCleanupServiceTest {
 
     @Test
     void testDeleteExpiredItems() {
-        trashCleanupService.deleteExpiredItems(); // 수동 호출
+        assertThatCode(() -> trashCleanupService.deleteExpiredItems())
+                .doesNotThrowAnyException();
     }
 
 }

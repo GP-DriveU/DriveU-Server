@@ -66,7 +66,4 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
 
     List<Resource> findAllByIsDeletedTrueAndDeletedAtBefore(LocalDateTime deletedAtBefore);
 
-    @Modifying(clearAutomatically = true)
-    @Query("DELETE FROM Resource r WHERE r.id IN :resourceIds")
-    void deleteAllByIdsInQuery(List<Resource> expiredResources);
 }
