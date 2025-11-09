@@ -1,4 +1,4 @@
-package com.driveu.server.infra.ai;
+package com.driveu.server.domain.ai.service;
 
 import com.driveu.server.domain.summary.dto.response.AISummaryResponse;
 import lombok.RequiredArgsConstructor;

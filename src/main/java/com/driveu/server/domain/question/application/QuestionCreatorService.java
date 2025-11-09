@@ -9,7 +9,7 @@ import com.driveu.server.domain.question.dto.request.QuestionCreateRequest;
 import com.driveu.server.domain.question.dto.response.QuestionResponse;
 import com.driveu.server.domain.resource.application.ResourceService;
 import com.driveu.server.domain.resource.domain.Resource;
-import com.driveu.server.infra.ai.AiService;
+import com.driveu.server.domain.ai.service.AiService;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
