@@ -3,9 +3,7 @@ package com.driveu.server.infra.ai.client;
 import com.driveu.server.domain.ai.dto.request.AiSummaryRequest;
 import com.driveu.server.domain.ai.prompt.SummaryPrompt;
 import com.driveu.server.infra.ai.dto.OpenAiRequest;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,7 +22,7 @@ public class OpenAiClient {
         this.openAiWebClient = openAiWebClient;
     }
 
-    public String summarize(AiSummaryRequest request) throws JsonProcessingException {
+    public String summarize(AiSummaryRequest request) {
         String prompt = String.format("""
             다음 텍스트를 핵심 위주로 3문장 이내로 요약해줘:
 
@@ -46,13 +44,6 @@ public class OpenAiClient {
                                 .build()
                 ))
                 .build();
-
-        // payload 출력
-        ObjectMapper mapper = new ObjectMapper();
-        String jsonPayload = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(payload);
-        System.out.println("=== OpenAI Payload ===");
-        System.out.println(jsonPayload);
-
 
         JsonNode response = openAiWebClient.post()
                 .bodyValue(payload)
