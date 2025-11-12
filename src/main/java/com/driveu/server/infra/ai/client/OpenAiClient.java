@@ -41,11 +41,7 @@ public class OpenAiClient {
     }
 
     public String summarize(AiSummaryRequest request) {
-        String prompt = String.format("""
-            다음 텍스트를 핵심 위주로 3문장 이내로 요약해줘:
-
-            %s
-            """, request.getContent());
+        String userPromptContent = String.format(SummaryPrompt.TASK_TEMPLATE, request.getContent());
 
         OpenAiRequest payload = OpenAiRequest.builder()
                 .model(model)
@@ -53,12 +49,12 @@ public class OpenAiClient {
                 .maxOutputTokens(300)
                 .input(List.of(
                         OpenAiRequest.Message.builder()
-                                .role(SummaryPrompt.ROLE)
+                                .role(SummaryPrompt.DEVELOPER)
                                 .content(SummaryPrompt.INSTRUCTION)
                                 .build(),
                         OpenAiRequest.Message.builder()
-                                .role("user")
-                                .content(prompt)
+                                .role(SummaryPrompt.USER)
+                                .content(userPromptContent)
                                 .build()
                 ))
                 .build();
@@ -173,7 +169,9 @@ public class OpenAiClient {
                     .block();
 
             String status = Objects.requireNonNull(pollResponse).get("status").asText();
-            if (i % 5 == 0) log.info("Run 상태 폴링 중... (상태: {})", status);
+            if (i % 5 == 0) {
+                log.info("Run 상태 폴링 중... (상태: {})", status);
+            }
 
             switch (status) {
                 case "completed":
