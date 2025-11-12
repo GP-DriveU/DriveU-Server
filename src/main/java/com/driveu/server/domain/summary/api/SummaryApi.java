@@ -9,12 +9,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.persistence.EntityNotFoundException;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
@@ -38,7 +41,7 @@ public class SummaryApi {
     @IsOwner(resourceType = "note", idParamName = "noteId")
     public ResponseEntity<?> createSummary(
             @PathVariable Long noteId
-    ){
+    ) {
         try {
             SummaryResponse response = summaryService.createSummary(noteId);
             return ResponseEntity.ok(response);
@@ -70,7 +73,7 @@ public class SummaryApi {
     @IsOwner(resourceType = "note", idParamName = "noteId")
     public ResponseEntity<?> getSummaryByNoteId(
             @PathVariable Long noteId
-    ){
+    ) {
         try {
             SummaryResponse response = summaryService.getSummaryByNoteId(noteId);
             return ResponseEntity.ok(response);
@@ -101,14 +104,14 @@ public class SummaryApi {
     @IsOwner(resourceType = "note", idParamName = "noteId")
     public ResponseEntity<?> createSummaryV2(
             @PathVariable Long noteId
-    ){
+    ) {
         try {
             SummaryResponse response = summaryService.createSummaryV2(noteId);
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", e.getMessage()));
-        } catch (IllegalStateException e) {
+        } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", e.getMessage()));
         } catch (Exception e) {

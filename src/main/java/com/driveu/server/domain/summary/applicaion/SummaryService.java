@@ -4,12 +4,12 @@ import com.amazonaws.services.kms.model.NotFoundException;
 import com.driveu.server.domain.ai.application.AiFacade;
 import com.driveu.server.domain.ai.dto.request.AiSummaryRequest;
 import com.driveu.server.domain.ai.dto.response.AiSummaryResponse;
+import com.driveu.server.domain.ai.service.AiService;
 import com.driveu.server.domain.note.application.NoteService;
 import com.driveu.server.domain.resource.domain.Note;
 import com.driveu.server.domain.summary.dao.SummaryRepository;
 import com.driveu.server.domain.summary.domain.Summary;
 import com.driveu.server.domain.summary.dto.response.SummaryResponse;
-import com.driveu.server.domain.ai.service.AiService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -55,8 +55,8 @@ public class SummaryService {
         AiSummaryResponse summaryResponse;
         try {
             summaryResponse = aiFacade.summarize(AiSummaryRequest.builder()
-                    .noteId(noteId).
-                    content(note.getContent())
+                    .noteId(noteId)
+                    .content(note.getContent())
                     .build());
         } catch (JsonProcessingException e) {
             throw new RuntimeException("GPT 서버 통신 오류");
