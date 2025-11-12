@@ -16,9 +16,12 @@ public class PromptFilter {
             "shutdown", "disable safety", "escape context"
     );
 
-    public boolean inSafe(String text){
+    public boolean inSafe(String text) {
+        if (text == null) {
+            return false;
+        }
         String lowerCase = text.toLowerCase();
-        return !BLOCKED_KEYWORDS.contains(lowerCase);
+        return BLOCKED_KEYWORDS.stream().noneMatch(lowerCase::contains);
     }
 
 }

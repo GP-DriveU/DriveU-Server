@@ -79,7 +79,10 @@ public class AiQuestionService {
             }
 
             // JSON 텍스트 정리 (마크다운 코드 블록 제거)
-            String cleaned = rawText.replaceAll("(?s)^```json\n|\n```$", "").trim();
+            String cleaned = rawText
+                    .replaceAll("(?s)^```json\\s*", "")
+                    .replaceAll("(?s)```\\s*$", "")
+                    .trim();
 
             // JSON이 유효한지 파싱을 시도합니다. (유효성 검사)
             objectMapper.readTree(cleaned);
