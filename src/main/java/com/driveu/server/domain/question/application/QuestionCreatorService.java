@@ -2,7 +2,6 @@ package com.driveu.server.domain.question.application;
 
 import com.driveu.server.domain.ai.application.AiFacade;
 import com.driveu.server.domain.ai.dto.request.AiQuestionRequest;
-import com.driveu.server.domain.ai.service.AiService;
 import com.driveu.server.domain.directory.application.DirectoryService;
 import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.question.dao.QuestionRepository;
@@ -12,6 +11,7 @@ import com.driveu.server.domain.question.dto.request.QuestionCreateRequest;
 import com.driveu.server.domain.question.dto.response.QuestionResponse;
 import com.driveu.server.domain.resource.application.ResourceService;
 import com.driveu.server.domain.resource.domain.Resource;
+import com.driveu.server.infra.ai.application.AiService;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;

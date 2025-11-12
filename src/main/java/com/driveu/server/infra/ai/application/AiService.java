@@ -1,4 +1,4 @@
-package com.driveu.server.domain.ai.service;
+package com.driveu.server.infra.ai.application;
 
 import com.driveu.server.domain.summary.dto.response.AISummaryResponse;
 import java.util.HashMap;
