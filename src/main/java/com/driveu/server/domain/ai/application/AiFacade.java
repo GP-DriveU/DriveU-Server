@@ -1,7 +1,10 @@
 package com.driveu.server.domain.ai.application;
 
+import com.driveu.server.domain.ai.dto.request.AiQuestionRequest;
 import com.driveu.server.domain.ai.dto.request.AiSummaryRequest;
+import com.driveu.server.domain.ai.dto.response.AiQuestionResponse;
 import com.driveu.server.domain.ai.dto.response.AiSummaryResponse;
+import com.driveu.server.domain.ai.service.AiQuestionService;
 import com.driveu.server.domain.ai.service.AiSummaryService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
@@ -12,10 +15,14 @@ import org.springframework.stereotype.Component;
 public class AiFacade {
 
     private final AiSummaryService aiSummaryService;
+    private final AiQuestionService aiQuestionService;
 
     public AiSummaryResponse summarize(AiSummaryRequest request) throws JsonProcessingException {
         return aiSummaryService.summarize(request);
     }
 
+    public AiQuestionResponse generateQuestions(AiQuestionRequest request) {
+        return aiQuestionService.generateQuestions(request);
+    }
 
 }

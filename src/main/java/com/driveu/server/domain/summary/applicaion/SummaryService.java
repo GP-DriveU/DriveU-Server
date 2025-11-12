@@ -52,7 +52,7 @@ public class SummaryService {
         }
 
         // ai 서버 호출, 응답에서 summary 파싱
-        AiSummaryResponse summaryResponse = null;
+        AiSummaryResponse summaryResponse;
         try {
             summaryResponse = aiFacade.summarize(AiSummaryRequest.builder()
                     .noteId(noteId).

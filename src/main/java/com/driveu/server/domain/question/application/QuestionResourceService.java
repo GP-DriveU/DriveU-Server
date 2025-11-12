@@ -3,7 +3,6 @@ package com.driveu.server.domain.question.application;
 import com.driveu.server.domain.question.application.converter.RequestBodyConverter;
 import com.driveu.server.domain.question.dto.request.QuestionCreateRequest;
 import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -16,7 +15,7 @@ public class QuestionResourceService {
 
     private final List<RequestBodyConverter>  requestBodyConverters;
 
-    public @NotNull MultiValueMap<String, Object> createRequestBody(List<QuestionCreateRequest> requestList) {
+    public MultiValueMap<String, Object> createRequestBody(List<QuestionCreateRequest> requestList) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
 
         for (QuestionCreateRequest request : requestList) {

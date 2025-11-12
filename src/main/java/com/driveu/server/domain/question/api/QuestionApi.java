@@ -46,7 +46,42 @@ public class QuestionApi {
             @RequestBody List<QuestionCreateRequest> requestList
     ){
         try {
-            QuestionResponse response = questionCreatorService.createQuestion(directoryId, requestList);
+            QuestionResponse response = questionCreatorService.createQuestion(directoryId, requestList, true);
+            return ResponseEntity.ok(response);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "서버 에러가 발생했습니다."));
+        }
+    }
+
+    @PostMapping("/v2/directories/{directoryId}/questions")
+    @Operation(summary = "ai 문제 생성 V2", description = "해당 리소스들에 대한 ai 문제를 생성합니다. (questions의 type: multiple_choice /  short_answer, short_answer의 경우 options = null)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공적으로 ai 문제가 생성되었습니다.",
+                    content = @Content(schema = @Schema(implementation = QuestionResponse.class))),
+            @ApiResponse(responseCode = "404", description = "해당 Resource 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(example = "{\"message\": \"Resource not found\"}")
+                    )),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
+    @IsOwner(resourceType = "directory", idParamName = "directoryId")
+    public ResponseEntity<?> createQuestionV2(
+            @PathVariable Long directoryId,
+            @RequestBody List<QuestionCreateRequest> requestList
+    ){
+        try {
+            QuestionResponse response = questionCreatorService.createQuestion(directoryId, requestList, false);
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
