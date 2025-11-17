@@ -5,9 +5,10 @@ import com.driveu.server.domain.ai.prompt.QuestionPrompt;
 import com.driveu.server.domain.ai.prompt.SummaryPrompt;
 import com.driveu.server.infra.ai.dto.OpenAiRequest;
 import com.fasterxml.jackson.databind.JsonNode;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
 @Slf4j
 @Component
@@ -86,7 +88,7 @@ public class OpenAiClient {
                 });
     }
 
-    public String uploadFile(ByteArrayResource resource) {
+    public Mono<String> uploadFile(ByteArrayResource resource) {
         String filename = resource.getFilename();
         if (filename == null || filename.isBlank()) {
             filename = "upload-" + System.currentTimeMillis();
@@ -98,22 +100,22 @@ public class OpenAiClient {
 
         bodyBuilder.part("file", resource);
 
-        JsonNode response = openAiFileWebClient.post()
+        return openAiFileWebClient.post()
                 .uri("/files")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
                 .retrieve()
                 .bodyToMono(JsonNode.class)
-                .block();
-
-        if (response == null || !response.has("id")) {
-            log.error("OpenAI 파일 업로드 응답 오류: {}", response);
-            throw new RuntimeException("OpenAI 파일 업로드 실패");
-        }
-        return response.get("id").asText();
+                .map(response -> {
+                    if (response == null || !response.has("id")) {
+                        log.error("OpenAI 파일 업로드 응답 오류: {}", response);
+                        throw new RuntimeException("OpenAI 파일 업로드 실패");
+                    }
+                    return response.get("id").asText();
+                });
     }
 
-    public String createThread(List<String> fileIds) {
+    public Mono<String> createThread(List<String> fileIds) {
         List<Map<String, Object>> attachments = fileIds.stream()
                 .map(fileId -> Map.of(
                         "file_id", fileId,
@@ -128,87 +130,110 @@ public class OpenAiClient {
         Map<String, Object> requestBody = Map.of(
                 "messages", List.of(message)
         );
-        JsonNode response = openAiFileWebClient.post()
+        return openAiFileWebClient.post()
                 .uri("/threads")
                 .bodyValue(requestBody)
                 .retrieve()
                 .bodyToMono(JsonNode.class)
-                .block();
-        if (response == null || !response.has("id")) {
-            throw new RuntimeException("OpenAI 스레드 생성 실패");
-        }
-        return response.get("id").asText();
+                .map(response -> {
+                    if (response == null || !response.has("id")) {
+                        throw new RuntimeException("OpenAI 스레드 생성 실패");
+                    }
+                    return response.get("id").asText();
+                });
     }
 
-    public void createAndPollRun(String threadId) throws InterruptedException {
+    public Mono<Void> createAndPollRun(String threadId) {
         Map<String, Object> runRequestBody = Map.of("assistant_id", assistantId);
 
-        JsonNode runResponse = openAiFileWebClient.post()
+        return openAiFileWebClient.post()
                 .uri(uriBuilder -> uriBuilder.path("/threads/{threadId}/runs").build(threadId))
                 .bodyValue(runRequestBody)
                 .retrieve()
                 .bodyToMono(JsonNode.class)
-                .block();
-
-        if (runResponse == null || !runResponse.has("id")) {
-            throw new RuntimeException("OpenAI Run 생성 실패");
-        }
-
-        String runId = runResponse.get("id").asText();
-        log.info("Run 생성됨. thread={}, run={}", threadId, runId);
-
-        for (int i = 0; i < MAX_POLL_ATTEMPTS; i++) {
-            JsonNode pollResponse = openAiFileWebClient.get()
-                    .uri(uriBuilder -> uriBuilder.path("/threads/{threadId}/runs/{runId}")
-                            .build(threadId, runId))
-                    .retrieve()
-                    .bodyToMono(JsonNode.class)
-                    .block();
-
-            String status = Objects.requireNonNull(pollResponse).get("status").asText();
-            if (i % 5 == 0) {
-                log.info("Run 상태 폴링 중... (상태: {})", status);
-            }
-
-            switch (status) {
-                case "completed":
-                    log.info("Run 완료.");
-                    return;
-                case "failed":
-                case "cancelled":
-                case "expired":
-                    throw new RuntimeException("Run 실패. 상태: " + status);
-                case "queued":
-                case "in_progress":
-                    Thread.sleep(POLL_INTERVAL_MS);
-                    break;
-                default:
-                    throw new RuntimeException("알 수 없는 Run 상태: " + status);
-            }
-        }
-        throw new RuntimeException("Run 시간 초과 (60초)");
+                .flatMap(runResponse -> {
+                    if (runResponse == null || !runResponse.has("id")) {
+                        return Mono.error(new RuntimeException("OpenAI Run 생성 실패"));
+                    }
+                    String runId = runResponse.get("id").asText();
+                    log.info("Run 생성됨. thread={}, run={}", threadId, runId);
+                    return pollRunStatus(threadId, runId);
+                });
     }
 
-    public String getLatestAssistantMessage(String threadId) {
-        JsonNode messagesResponse = openAiFileWebClient.get()
+    private Mono<Void> pollRunStatus(String threadId, String runId) {
+        AtomicInteger attempts = new AtomicInteger(0);
+
+        return Mono.defer(() -> openAiFileWebClient.get()
+                        .uri(uriBuilder -> uriBuilder.path("/threads/{threadId}/runs/{runId}")
+                                .build(threadId, runId))
+                        .retrieve()
+                        .bodyToMono(JsonNode.class))
+                .flatMap(pollResponse -> {
+                    if (pollResponse == null || !pollResponse.has("status")) {
+                        return Mono.error(new RuntimeException("Run 상태 조회 실패"));
+                    }
+
+                    String status = pollResponse.get("status").asText();
+                    int attemptCount = attempts.incrementAndGet();
+
+                    if (attemptCount % 5 == 0) {
+                        log.info("Run 상태 폴링 중... (상태: {})", status);
+                    }
+
+                    switch (status) {
+                        case "completed":
+                            log.info("Run 완료.");
+                            return Mono.empty();
+                        case "failed":
+                        case "cancelled":
+                        case "expired":
+                            return Mono.error(new RuntimeException("Run 실패. 상태: " + status));
+                        case "queued":
+                        case "in_progress":
+                            if (attemptCount >= MAX_POLL_ATTEMPTS) {
+                                return Mono.error(new RuntimeException("Run 시간 초과"));
+                            }
+                            return Mono.error(new RetrySignal()); // Custom exception to signal retry
+                        default:
+                            return Mono.error(new RuntimeException("알 수 없는 Run 상태: " + status));
+                    }
+                })
+                .retryWhen(Retry.fixedDelay(MAX_POLL_ATTEMPTS, Duration.ofMillis(POLL_INTERVAL_MS))
+                        .filter(throwable -> throwable instanceof RetrySignal)
+                ).then();
+
+    }
+
+    private static class RetrySignal extends RuntimeException {
+    }
+
+    public Mono<String> getLatestAssistantMessage(String threadId) {
+        return openAiFileWebClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/threads/{threadId}/messages")
                         .queryParam("limit", 10)
                         .build(threadId))
                 .retrieve()
                 .bodyToMono(JsonNode.class)
-                .block();
+                .flatMap(messagesResponse -> {
+                    if (messagesResponse == null || !messagesResponse.has("data")) {
+                        throw new RuntimeException("메시지 목록을 가져오는 데 실패했습니다.");
+                    }
 
-        if (messagesResponse == null || !messagesResponse.has("data")) {
-            throw new RuntimeException("메시지 목록을 가져오는 데 실패했습니다.");
-        }
+                    for (JsonNode messageNode : messagesResponse.get("data")) {
+                        if ("assistant".equals(messageNode.get("role").asText())) {
 
-        for (JsonNode messageNode : messagesResponse.get("data")) {
-            if ("assistant".equals(messageNode.get("role").asText())) {
-                return messageNode.get("content").get(0).get("text").get("value").asText();
-            }
-        }
-
-        throw new RuntimeException("어시스턴트의 응답을 찾을 수 없습니다.");
+                            JsonNode contentNode = messageNode.get("content");
+                            if (contentNode != null && contentNode.isArray() && !contentNode.isEmpty()) {
+                                JsonNode textNode = contentNode.get(0).get("text");
+                                if (textNode != null && textNode.has("value")) {
+                                    return Mono.just(textNode.get("value").asText());
+                                }
+                            }
+                        }
+                    }
+                    return Mono.error(new RuntimeException("어시스턴트의 응답을 찾을 수 없습니다."));
+                });
     }
 
     public void deleteFile(String fileId) {

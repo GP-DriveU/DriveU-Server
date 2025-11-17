@@ -10,7 +10,6 @@ import com.driveu.server.domain.summary.dao.SummaryRepository;
 import com.driveu.server.domain.summary.domain.Summary;
 import com.driveu.server.domain.summary.dto.response.SummaryResponse;
 import com.driveu.server.infra.ai.application.AiService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,7 +42,7 @@ public class SummaryService {
     }
 
     @Transactional
-    public SummaryResponse createSummaryV2(Long noteId) throws JsonProcessingException {
+    public SummaryResponse createSummaryV2(Long noteId) {
         Note note = noteService.getNoteById(noteId);
 
         Summary findSummary = summaryRepository.findByNote(note);

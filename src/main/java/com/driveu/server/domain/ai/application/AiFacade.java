@@ -6,7 +6,6 @@ import com.driveu.server.domain.ai.dto.response.AiQuestionResponse;
 import com.driveu.server.domain.ai.dto.response.AiSummaryResponse;
 import com.driveu.server.domain.ai.service.AiQuestionService;
 import com.driveu.server.domain.ai.service.AiSummaryService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -18,11 +17,11 @@ public class AiFacade {
     private final AiSummaryService aiSummaryService;
     private final AiQuestionService aiQuestionService;
 
-    public Mono<AiSummaryResponse> summarize(AiSummaryRequest request) throws JsonProcessingException {
+    public Mono<AiSummaryResponse> summarize(AiSummaryRequest request) {
         return aiSummaryService.summarize(request);
     }
 
-    public AiQuestionResponse generateQuestions(AiQuestionRequest request) {
+    public Mono<AiQuestionResponse> generateQuestions(AiQuestionRequest request) {
         return aiQuestionService.generateQuestions(request);
     }
 

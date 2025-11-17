@@ -2,6 +2,7 @@ package com.driveu.server.domain.question.application;
 
 import com.driveu.server.domain.ai.application.AiFacade;
 import com.driveu.server.domain.ai.dto.request.AiQuestionRequest;
+import com.driveu.server.domain.ai.dto.response.AiQuestionResponse;
 import com.driveu.server.domain.directory.application.DirectoryService;
 import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.question.dao.QuestionRepository;
@@ -65,10 +66,11 @@ public class QuestionCreatorService {
             aiResponse = aiService.generateQuestion(requestBody);
         } else {
             aiResponse = aiFacade.generateQuestions(
-                    AiQuestionRequest.builder()
-                            .files(requestBody)
-                            .build()
-            ).getQuestionJson();
+                            AiQuestionRequest.builder()
+                                    .files(requestBody)
+                                    .build()
+                    ).map(AiQuestionResponse::getQuestionJson)
+                    .block();
         }
 
         Question question = Question.of(title, version, aiResponse);
