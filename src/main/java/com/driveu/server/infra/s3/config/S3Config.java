@@ -1,4 +1,4 @@
-package com.driveu.server.global.config;
+package com.driveu.server.infra.s3.config;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;

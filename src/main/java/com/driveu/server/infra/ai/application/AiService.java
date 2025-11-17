@@ -1,16 +1,19 @@
-package com.driveu.server.infra.ai;
+package com.driveu.server.infra.ai.application;
 
 import com.driveu.server.domain.summary.dto.response.AISummaryResponse;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -44,10 +47,10 @@ public class AiService {
         );
 
         if (response.getBody() == null || response.getBody().getSummary() == null) {
-            throw new RuntimeException("AI Server 와 통신 오류: "+ response.getStatusCode());
+            throw new RuntimeException("AI Server 와 통신 오류: " + response.getStatusCode());
         }
 
-        return response.getBody().getSummary() == null ? "" : response.getBody().getSummary() ;
+        return response.getBody().getSummary();
     }
 
     public String generateQuestion(MultiValueMap<String, Object> requestBody) {
