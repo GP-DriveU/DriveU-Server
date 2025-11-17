@@ -5,7 +5,6 @@ import com.driveu.server.domain.ai.dto.response.AiQuestionResponse;
 import com.driveu.server.infra.ai.client.OpenAiClient;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,15 +40,8 @@ public class AiQuestionService {
             return Mono.error(new IllegalArgumentException("잘못된 파일 형식입니다. 'files' 키의 값은 ByteArrayResource여야 합니다.", e));
         }
 
-        List<String> uploadedFileIds = new ArrayList<>();
         return Flux.fromIterable(fileResources)
-                .flatMap(resource ->
-                        openAiClient.uploadFile(resource)
-                                .doOnNext(fileId -> {
-                                    uploadedFileIds.add(fileId);
-                                    log.info("파일 업로드 성공 → ID: {}", fileId);
-                                })
-                )
+                .flatMap(openAiClient::uploadFile)
                 .collectList()
                 .flatMap(fileIds -> {
                     if (fileIds.isEmpty()) {
@@ -62,39 +54,36 @@ public class AiQuestionService {
                                     openAiClient.createAndPollRun(threadId)
                                             // 4. 메시지 가져오기
                                             .then(openAiClient.getLatestAssistantMessage(threadId))
-                            );
-                })
-                .flatMap(rawText -> {
-                    log.info("문제 텍스트 생성 완료");
+                            ).flatMap(rawText -> {
+                                log.info("문제 텍스트 생성 완료");
 
-                    if (rawText.contains("파일 읽기에 실패")) {
-                        return Mono.error(new RuntimeException("AI가 파일을 읽는 데 실패했습니다."));
-                    }
-                    String cleaned = rawText
-                            .replaceAll("(?s)^```json\\s*", "")
-                            .replaceAll("(?s)```\\s*$", "")
-                            .trim();
+                                if (rawText.contains("파일 읽기에 실패")) {
+                                    return Mono.error(new RuntimeException("AI가 파일을 읽는 데 실패했습니다."));
+                                }
+                                String cleaned = rawText
+                                        .replaceAll("(?s)^```json\\s*", "")
+                                        .replaceAll("(?s)```\\s*$", "")
+                                        .trim();
 
-                    // JSON이 유효한지 파싱을 시도합니다. (유효성 검사)
-                    try {
-                        objectMapper.readTree(cleaned);
-                    } catch (JsonProcessingException e) {
-                        log.error("JSON 파싱 실패", e);
-                        return Mono.error(new RuntimeException("AI 응답이 JSON 형식이 아닙니다.", e));
-                    }
+                                // JSON이 유효한지 파싱을 시도합니다. (유효성 검사)
+                                try {
+                                    objectMapper.readTree(cleaned);
+                                } catch (JsonProcessingException e) {
+                                    log.error("JSON 파싱 실패", e);
+                                    return Mono.error(new RuntimeException("AI 응답이 JSON 형식이 아닙니다.", e));
+                                }
 
-                    return Mono.just(
-                            AiQuestionResponse.builder()
-                                    .questionJson(cleaned)
-                                    .build()
-                    );
+                                return Mono.just(
+                                        AiQuestionResponse.builder()
+                                                .questionJson(cleaned)
+                                                .build()
+                                );
 
-                })
-                .doFinally(signal -> {
-                    if (!uploadedFileIds.isEmpty()) {
-                        log.info("파일 삭제 시작...");
-                        uploadedFileIds.forEach(openAiClient::deleteFile);
-                    }
+                            })
+                            .doFinally(signal -> {
+                                log.info("파일 삭제 시작...");
+                                fileIds.forEach(openAiClient::deleteFile);
+                            });
                 });
     }
 }
