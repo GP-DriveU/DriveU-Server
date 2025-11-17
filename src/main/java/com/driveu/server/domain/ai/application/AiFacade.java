@@ -9,6 +9,7 @@ import com.driveu.server.domain.ai.service.AiSummaryService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 
 @Component
 @RequiredArgsConstructor
@@ -17,7 +18,7 @@ public class AiFacade {
     private final AiSummaryService aiSummaryService;
     private final AiQuestionService aiQuestionService;
 
-    public AiSummaryResponse summarize(AiSummaryRequest request) throws JsonProcessingException {
+    public Mono<AiSummaryResponse> summarize(AiSummaryRequest request) throws JsonProcessingException {
         return aiSummaryService.summarize(request);
     }
 

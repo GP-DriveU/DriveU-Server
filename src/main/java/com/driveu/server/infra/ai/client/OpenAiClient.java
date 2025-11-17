@@ -17,6 +17,7 @@ import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 @Slf4j
 @Component
@@ -40,7 +41,7 @@ public class OpenAiClient {
         this.openAiFileWebClient = openAiFileWebClient;
     }
 
-    public String summarize(AiSummaryRequest request) {
+    public Mono<String> summarize(AiSummaryRequest request) {
         String userPromptContent = String.format(SummaryPrompt.TASK_TEMPLATE, request.getContent());
 
         OpenAiRequest payload = OpenAiRequest.builder()
@@ -59,34 +60,30 @@ public class OpenAiClient {
                 ))
                 .build();
 
-        JsonNode response = openAiWebClient.post()
+        return openAiWebClient.post()
                 .uri("/responses")
                 .bodyValue(payload)
                 .retrieve()
                 .bodyToMono(JsonNode.class)
-                .block();
+                .map(response -> {
+                    if (response != null &&
+                            response.has("output") &&
+                            response.get("output").isArray() &&
+                            !response.get("output").isEmpty()) {
 
-        // 방어적 접근 (null, 배열, 필드 체크)
-        if (response != null &&
-                response.has("output") &&
-                response.get("output").isArray() &&
-                !response.get("output").isEmpty()) {
+                        JsonNode firstOutput = response.get("output").get(0);
+                        if (firstOutput.has("content") &&
+                                firstOutput.get("content").isArray() &&
+                                !firstOutput.get("content").isEmpty()) {
 
-            JsonNode firstOutput = response.get("output").get(0);
-            if (firstOutput.has("content") &&
-                    firstOutput.get("content").isArray() &&
-                    !firstOutput.get("content").isEmpty()) {
-
-                JsonNode textNode = firstOutput.get("content").get(0).get("text");
-                if (textNode != null && !textNode.isNull()) {
-                    return textNode.asText().strip();
-                }
-            }
-        }
-
-        // 실패 시 빈 문자열 반환
-        return "";
-
+                            JsonNode textNode = firstOutput.get("content").get(0).get("text");
+                            if (textNode != null && !textNode.isNull()) {
+                                return textNode.asText().strip();
+                            }
+                        }
+                    }
+                    throw new RuntimeException("Failed to parse OpenAI summary response");
+                });
     }
 
     public String uploadFile(ByteArrayResource resource) {

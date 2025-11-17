@@ -43,7 +43,7 @@ public class SummaryService {
     }
 
     @Transactional
-    public SummaryResponse createSummaryV2(Long noteId) {
+    public SummaryResponse createSummaryV2(Long noteId) throws JsonProcessingException {
         Note note = noteService.getNoteById(noteId);
 
         Summary findSummary = summaryRepository.findByNote(note);
@@ -52,14 +52,15 @@ public class SummaryService {
         }
 
         // ai 서버 호출, 응답에서 summary 파싱
-        AiSummaryResponse summaryResponse;
-        try {
-            summaryResponse = aiFacade.summarize(AiSummaryRequest.builder()
-                    .noteId(noteId)
-                    .content(note.getContent())
-                    .build());
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("GPT 서버 통신 오류");
+        AiSummaryResponse summaryResponse = aiFacade.summarize(
+                AiSummaryRequest.builder()
+                        .noteId(noteId)
+                        .content(note.getContent())
+                        .build()
+        ).block();  // ★ block() 필요
+
+        if (summaryResponse == null) {
+            throw new RuntimeException("GPT 서버 응답이 비어있습니다.");
         }
 
         Summary summary = Summary.of(note, summaryResponse.getContent());
