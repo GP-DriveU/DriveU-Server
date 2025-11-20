@@ -3,6 +3,7 @@ package com.driveu.server.global.config.security;
 import com.driveu.server.domain.auth.enhancer.JwtAuthenticationFilter;
 import com.driveu.server.domain.auth.infra.JwtProvider;
 import com.driveu.server.global.util.TokenExtractor;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,8 +20,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
-
 @RequiredArgsConstructor
 @Configuration
 @EnableWebSecurity
@@ -33,7 +32,10 @@ public class SecurityConfig {
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return web -> web.ignoring()
-                .requestMatchers("/h2-console/**","/error", "/favicon.ico");
+                .requestMatchers(
+                        "/h2-console/**", "/error", "/favicon.ico",
+                        "/actuator/health"
+                );
     }
 
     @Bean
@@ -59,7 +61,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests((registry) ->
                         registry
                                 .requestMatchers("/api/auth/google", "/api/auth/code/google").permitAll() // 로그인 api 허용
-                                .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/swagger-resources/**", "/webjars/**").permitAll() // 스웨거 허용
+                                .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**",
+                                        "/swagger-resources/**", "/webjars/**").permitAll() // 스웨거 허용
                                 .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtProvider, tokenExtractor),
@@ -71,7 +74,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("*")); // or use List.of("http://localhost:3000") if you want to restrict
+        config.setAllowedOriginPatterns(
+                List.of("*")); // or use List.of("http://localhost:3000") if you want to restrict
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true); // Authorization 헤더 포함 허용
