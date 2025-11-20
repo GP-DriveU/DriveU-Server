@@ -7,10 +7,9 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
+import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.List;
 
 @OpenAPIDefinition(
         info = @Info(
@@ -22,7 +21,7 @@ import java.util.List;
 @Configuration
 public class SwaggerConfig {
     @Bean
-    public OpenAPI openAPI(){
+    public OpenAPI openAPI() {
 
         SecurityScheme apiKey = new SecurityScheme()
                 .type(SecurityScheme.Type.HTTP)
@@ -34,6 +33,9 @@ public class SwaggerConfig {
         SecurityRequirement securityRequirement = new SecurityRequirement()
                 .addList("Bearer Token");
 
+        Server newHttpsServer = new Server();
+        newHttpsServer.setUrl("https://api.driveu.site");
+        newHttpsServer.setDescription("driveu https new server url");
 
         Server httpsServer = new Server();
         httpsServer.setUrl("https://www.driveu.site");
@@ -50,7 +52,9 @@ public class SwaggerConfig {
         return new OpenAPI()
                 .components(new Components().addSecuritySchemes("Bearer Token", apiKey))
                 .addSecurityItem(securityRequirement)
-                .servers(List.of(httpsServer, localServer, prodServer));}
+                .servers(List.of(newHttpsServer, httpsServer, localServer, prodServer));
+    }
+
     ;
 
 }
