@@ -45,12 +45,22 @@ public class SummaryService {
     public SummaryResponse createSummaryV2(Long noteId) {
         Note note = noteService.getNoteById(noteId);
 
-        Summary findSummary = summaryRepository.findByNote(note);
-        if (findSummary != null) {
-            throw new IllegalStateException("Summary already exists");
-        }
+        Summary oldSummary = summaryRepository.findByNote(note);
 
         // ai 서버 호출, 응답에서 summary 파싱
+        AiSummaryResponse summaryResponse = getAiSummaryResponse(noteId, note);
+
+        if (oldSummary != null) {
+            oldSummary.updateContect(summaryResponse.getContent());
+            return SummaryResponse.from(oldSummary);
+        }
+        Summary summary = Summary.of(note, summaryResponse.getContent());
+        Summary savedSummary = summaryRepository.save(summary);
+
+        return SummaryResponse.from(savedSummary);
+    }
+
+    private AiSummaryResponse getAiSummaryResponse(Long noteId, Note note) {
         AiSummaryResponse summaryResponse = aiFacade.summarize(
                 AiSummaryRequest.builder()
                         .noteId(noteId)
@@ -61,11 +71,7 @@ public class SummaryService {
         if (summaryResponse == null) {
             throw new RuntimeException("GPT 서버 응답이 비어있습니다.");
         }
-
-        Summary summary = Summary.of(note, summaryResponse.getContent());
-        Summary savedSummary = summaryRepository.save(summary);
-
-        return SummaryResponse.from(savedSummary);
+        return summaryResponse;
     }
 
     @Transactional(readOnly = true)
