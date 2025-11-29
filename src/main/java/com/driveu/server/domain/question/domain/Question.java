@@ -2,11 +2,18 @@ package com.driveu.server.domain.question.domain;
 
 import com.driveu.server.domain.resource.domain.Resource;
 import com.driveu.server.global.entity.BaseEntity;
-import jakarta.persistence.*;
-import lombok.*;
-
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -40,5 +47,9 @@ public class Question extends BaseEntity {
     public void addResource(Resource resource) {
         QuestionResource mapping = QuestionResource.of(this, resource);
         this.questionResources.add(mapping);
+    }
+
+    public void updateTitle(String title) {
+        this.title = title;
     }
 }

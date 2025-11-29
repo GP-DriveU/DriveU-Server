@@ -1,5 +1,6 @@
 package com.driveu.server.domain.question.application;
 
+import com.amazonaws.services.kms.model.NotFoundException;
 import com.driveu.server.domain.ai.application.AiFacade;
 import com.driveu.server.domain.ai.dto.request.AiQuestionRequest;
 import com.driveu.server.domain.ai.dto.response.AiQuestionResponse;
@@ -9,7 +10,9 @@ import com.driveu.server.domain.question.dao.QuestionRepository;
 import com.driveu.server.domain.question.dao.QuestionResourceRepository;
 import com.driveu.server.domain.question.domain.Question;
 import com.driveu.server.domain.question.dto.request.QuestionCreateRequest;
+import com.driveu.server.domain.question.dto.request.QuestionTitleUpdateRequest;
 import com.driveu.server.domain.question.dto.response.QuestionResponse;
+import com.driveu.server.domain.question.dto.response.QuestionTitleUpdateResponse;
 import com.driveu.server.domain.resource.application.ResourceService;
 import com.driveu.server.domain.resource.domain.Resource;
 import com.driveu.server.infra.ai.application.AiService;
@@ -112,5 +115,16 @@ public class QuestionCreatorService {
             version = maxVersion + 1;
         }
         return version;
+    }
+
+    @Transactional
+    public QuestionTitleUpdateResponse updateQuestionTitle(Long questionId, QuestionTitleUpdateRequest request) {
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new NotFoundException("Question not found"));
+
+        question.updateTitle(request.getTitle());
+        questionRepository.saveAndFlush(question);
+
+        return QuestionTitleUpdateResponse.from(question);
     }
 }
