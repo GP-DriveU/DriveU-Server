@@ -40,6 +40,10 @@ public class Question extends BaseEntity {
     @Builder.Default
     private List<QuestionResource> questionResources = new ArrayList<>();
 
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<QuestionItem> questionItems = new ArrayList<>();
+
     public static Question of(String title, int version, String questionsData) {
         return Question.builder()
                 .title(title)

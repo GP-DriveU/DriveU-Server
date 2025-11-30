@@ -15,22 +15,27 @@ import com.driveu.server.domain.question.dto.request.QuestionCreateRequest;
 import com.driveu.server.domain.question.dto.request.QuestionSubmissionListRequest;
 import com.driveu.server.domain.question.dto.request.QuestionSubmissionListRequest.QuestionSubmissionRequest;
 import com.driveu.server.domain.question.dto.request.QuestionTitleUpdateRequest;
+import com.driveu.server.domain.question.dto.response.AiQuestionItemListResponse;
+import com.driveu.server.domain.question.dto.response.AiQuestionItemListResponse.AiQuestionItemResponse;
 import com.driveu.server.domain.question.dto.response.QuestionResponse;
 import com.driveu.server.domain.question.dto.response.QuestionSubmissionListResponse;
 import com.driveu.server.domain.question.dto.response.QuestionTitleUpdateResponse;
 import com.driveu.server.domain.resource.application.ResourceService;
 import com.driveu.server.domain.resource.domain.Resource;
 import com.driveu.server.infra.ai.application.AiService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class QuestionCreatorService {
@@ -94,6 +99,36 @@ public class QuestionCreatorService {
         }
         // QuestionResource 매핑까지 모두 EntityManager에 반영되도록 flush
         questionRepository.flush();
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            System.out.println(savedQuestion.getQuestionsData());
+
+            AiQuestionItemListResponse parsed = mapper.readValue(savedQuestion.getQuestionsData(),
+                    AiQuestionItemListResponse.class);
+
+            if (parsed.getQuestions() != null) {
+                List<AiQuestionItemResponse> parsedList = parsed.getQuestions();
+
+                for (int index = 0; index < parsedList.size(); index++) {
+                    AiQuestionItemResponse aiQuestionItemResponse = parsedList.get(index);
+                    QuestionItem item;
+                    if (aiQuestionItemResponse.getType().equals("multiple_choice")) {
+                        item = QuestionItem.createMultipleQuestion(savedQuestion, aiQuestionItemResponse.getQuestion(),
+                                aiQuestionItemResponse.getOptions(), aiQuestionItemResponse.getAnswer(), index);
+                    } else {
+                        item = QuestionItem.createShortAnswerQuestion(savedQuestion,
+                                aiQuestionItemResponse.getQuestion(), aiQuestionItemResponse.getAnswer(), index);
+                    }
+                    System.out.println(item.getQuestionText());
+                    questionItemRepository.save(item);
+
+                }
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new RuntimeException("QuestionItem 파싱 중 오류 발생", e);
+        }
 
         return QuestionResponse.fromEntity(savedQuestion);
     }
