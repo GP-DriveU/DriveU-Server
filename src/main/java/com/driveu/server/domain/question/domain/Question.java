@@ -29,8 +29,15 @@ public class Question extends BaseEntity {
     @Column(nullable = false)
     private int version;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean isSolved = false;
+
     @Column(columnDefinition = "JSON")
     private String questionsData;
+
+    @Column(columnDefinition = "JSON")
+    private String gradingResult;
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
@@ -51,5 +58,9 @@ public class Question extends BaseEntity {
 
     public void updateTitle(String title) {
         this.title = title;
+    }
+
+    public void markSolved() {
+        this.isSolved = true;
     }
 }

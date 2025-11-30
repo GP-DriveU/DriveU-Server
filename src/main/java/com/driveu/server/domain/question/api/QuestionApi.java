@@ -3,9 +3,11 @@ package com.driveu.server.domain.question.api;
 import com.driveu.server.domain.question.application.QuestionCreatorService;
 import com.driveu.server.domain.question.application.QuestionQueryService;
 import com.driveu.server.domain.question.dto.request.QuestionCreateRequest;
+import com.driveu.server.domain.question.dto.request.QuestionSubmissionListRequest;
 import com.driveu.server.domain.question.dto.request.QuestionTitleUpdateRequest;
 import com.driveu.server.domain.question.dto.response.QuestionListResponse;
 import com.driveu.server.domain.question.dto.response.QuestionResponse;
+import com.driveu.server.domain.question.dto.response.QuestionSubmissionListResponse;
 import com.driveu.server.domain.question.dto.response.QuestionTitleUpdateResponse;
 import com.driveu.server.global.config.security.auth.IsOwner;
 import io.swagger.v3.oas.annotations.Operation;
@@ -189,6 +191,38 @@ public class QuestionApi {
     ) {
         try {
             QuestionTitleUpdateResponse response = questionCreatorService.updateQuestionTitle(questionId, request);
+            return ResponseEntity.ok(response);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "서버 에러가 발생했습니다."));
+        }
+    }
+
+    @PostMapping("/questions/{questionId}/submit")
+    @Operation(summary = "ai 문제 풀이 결과 저장", description = "문제 풀이 결과를 저장합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공적으로 ai 문제 풀이가 저장되었습니다.",
+                    content = @Content(schema = @Schema(implementation = QuestionTitleUpdateResponse.class))),
+            @ApiResponse(responseCode = "404", description = "해당 Resource 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(example = "{\"message\": \"Resource not found\"}")
+                    )),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
+    @IsOwner(resourceType = "question", idParamName = "questionId")
+    public ResponseEntity<?> submitQuestion(
+            @PathVariable Long questionId,
+            @RequestBody QuestionSubmissionListRequest request
+    ) {
+        try {
+            QuestionSubmissionListResponse response = questionCreatorService.submitsQuestion(questionId, request);
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

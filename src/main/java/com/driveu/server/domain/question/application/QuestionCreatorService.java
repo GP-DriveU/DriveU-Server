@@ -6,17 +6,23 @@ import com.driveu.server.domain.ai.dto.request.AiQuestionRequest;
 import com.driveu.server.domain.ai.dto.response.AiQuestionResponse;
 import com.driveu.server.domain.directory.application.DirectoryService;
 import com.driveu.server.domain.directory.domain.Directory;
+import com.driveu.server.domain.question.dao.QuestionItemRepository;
 import com.driveu.server.domain.question.dao.QuestionRepository;
 import com.driveu.server.domain.question.dao.QuestionResourceRepository;
 import com.driveu.server.domain.question.domain.Question;
+import com.driveu.server.domain.question.domain.QuestionItem;
 import com.driveu.server.domain.question.dto.request.QuestionCreateRequest;
+import com.driveu.server.domain.question.dto.request.QuestionSubmissionListRequest;
+import com.driveu.server.domain.question.dto.request.QuestionSubmissionListRequest.QuestionSubmissionRequest;
 import com.driveu.server.domain.question.dto.request.QuestionTitleUpdateRequest;
 import com.driveu.server.domain.question.dto.response.QuestionResponse;
+import com.driveu.server.domain.question.dto.response.QuestionSubmissionListResponse;
 import com.driveu.server.domain.question.dto.response.QuestionTitleUpdateResponse;
 import com.driveu.server.domain.resource.application.ResourceService;
 import com.driveu.server.domain.resource.domain.Resource;
 import com.driveu.server.infra.ai.application.AiService;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +38,7 @@ public class QuestionCreatorService {
     private final DirectoryService directoryService;
     private final QuestionRepository questionRepository;
     private final QuestionResourceRepository questionResourceRepository;
+    private final QuestionItemRepository questionItemRepository;
     private final ResourceService resourceService;
     private final AiService aiService;
     private final QuestionResourceService questionResourceService;
@@ -126,5 +133,29 @@ public class QuestionCreatorService {
         questionRepository.saveAndFlush(question);
 
         return QuestionTitleUpdateResponse.from(question);
+    }
+
+    @Transactional
+    public QuestionSubmissionListResponse submitsQuestion(Long questionId, QuestionSubmissionListRequest request) {
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new NotFoundException("Question not found"));
+
+        List<QuestionItem> questionItems = questionItemRepository.findByQuestionOrderByQuestionIndex(question);
+
+        Map<Integer, String> submittedMap = request.getSubmissions().stream()
+                .collect(Collectors.toMap(
+                        QuestionSubmissionRequest::getQuestionIndex,
+                        QuestionSubmissionRequest::getUserAnswer
+                ));
+
+        // 채점 결과 저장
+        for (QuestionItem questionItem : questionItems) {
+            String userAnswer = submittedMap.get(questionItem.getQuestionIndex());
+            questionItem.submitAnswer(userAnswer);
+        }
+
+        question.markSolved();
+
+        return QuestionSubmissionListResponse.of(question, questionItems);
     }
 }
