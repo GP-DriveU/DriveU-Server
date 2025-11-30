@@ -209,7 +209,7 @@ public class QuestionApi {
     @Operation(summary = "ai 문제 풀이 결과 저장", description = "문제 풀이 결과를 저장합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "성공적으로 ai 문제 풀이가 저장되었습니다.",
-                    content = @Content(schema = @Schema(implementation = QuestionTitleUpdateResponse.class))),
+                    content = @Content(schema = @Schema(implementation = QuestionSubmissionListResponse.class))),
             @ApiResponse(responseCode = "404", description = "해당 Resource 없음",
                     content = @Content(
                             mediaType = "application/json",
