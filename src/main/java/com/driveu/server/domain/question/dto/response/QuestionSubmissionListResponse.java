@@ -29,23 +29,4 @@ public class QuestionSubmissionListResponse {
                 )
                 .build();
     }
-
-    @Getter
-    @AllArgsConstructor
-    @Builder
-    public static class QuestionSubmissionResponse {
-        private int questionIndex;
-        private boolean isCorrect;
-        private String userAnswer;
-        private String correctAnswer;
-
-        public static QuestionSubmissionResponse from(QuestionItem item) {
-            return QuestionSubmissionResponse.builder()
-                    .questionIndex(item.getQuestionIndex())
-                    .isCorrect(item.getIsCorrect())
-                    .userAnswer(item.getUserAnswer())
-                    .correctAnswer(item.getAnswer())
-                    .build();
-        }
-    }
 }
