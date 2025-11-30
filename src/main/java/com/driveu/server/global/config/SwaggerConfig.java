@@ -37,14 +37,6 @@ public class SwaggerConfig {
         newHttpsServer.setUrl("https://api.driveu.site");
         newHttpsServer.setDescription("driveu https new server url");
 
-        Server httpsServer = new Server();
-        httpsServer.setUrl("https://www.driveu.site");
-        httpsServer.setDescription("driveu https server url");
-
-        Server prodServer = new Server();
-        prodServer.setUrl("http://43.202.232.100:8080");
-        prodServer.setDescription("AWS EC2 서버");
-
         Server localServer = new Server();
         localServer.setUrl("http://localhost:8080");
         localServer.setDescription("Local server for testing");
@@ -52,10 +44,7 @@ public class SwaggerConfig {
         return new OpenAPI()
                 .components(new Components().addSecuritySchemes("Bearer Token", apiKey))
                 .addSecurityItem(securityRequirement)
-                .servers(List.of(newHttpsServer, httpsServer, localServer, prodServer));
+                .servers(List.of(newHttpsServer, localServer));
     }
-
-    ;
-
 }
 

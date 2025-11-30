@@ -1,4 +1,4 @@
-package com.driveu.server.infra.ai.dto;
+package com.driveu.server.infra.ai.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;

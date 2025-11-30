@@ -5,23 +5,37 @@ import com.driveu.server.domain.ai.dto.request.AiQuestionRequest;
 import com.driveu.server.domain.ai.dto.response.AiQuestionResponse;
 import com.driveu.server.domain.directory.application.DirectoryService;
 import com.driveu.server.domain.directory.domain.Directory;
+import com.driveu.server.domain.question.dao.QuestionItemRepository;
 import com.driveu.server.domain.question.dao.QuestionRepository;
 import com.driveu.server.domain.question.dao.QuestionResourceRepository;
 import com.driveu.server.domain.question.domain.Question;
+import com.driveu.server.domain.question.domain.QuestionItem;
 import com.driveu.server.domain.question.dto.request.QuestionCreateRequest;
-import com.driveu.server.domain.question.dto.response.QuestionResponse;
+import com.driveu.server.domain.question.dto.request.QuestionSubmissionListRequest;
+import com.driveu.server.domain.question.dto.request.QuestionSubmissionListRequest.QuestionSubmissionRequest;
+import com.driveu.server.domain.question.dto.request.QuestionTitleUpdateRequest;
+import com.driveu.server.domain.question.dto.response.AiQuestionItemListResponse;
+import com.driveu.server.domain.question.dto.response.AiQuestionItemListResponse.AiQuestionItemResponse;
+import com.driveu.server.domain.question.dto.response.QuestionCreateResponse;
+import com.driveu.server.domain.question.dto.response.QuestionSubmissionListResponse;
+import com.driveu.server.domain.question.dto.response.QuestionTitleUpdateResponse;
 import com.driveu.server.domain.resource.application.ResourceService;
 import com.driveu.server.domain.resource.domain.Resource;
 import com.driveu.server.infra.ai.application.AiService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class QuestionCreatorService {
@@ -29,13 +43,16 @@ public class QuestionCreatorService {
     private final DirectoryService directoryService;
     private final QuestionRepository questionRepository;
     private final QuestionResourceRepository questionResourceRepository;
+    private final QuestionItemRepository questionItemRepository;
     private final ResourceService resourceService;
     private final AiService aiService;
     private final QuestionResourceService questionResourceService;
     private final AiFacade aiFacade;
+    private final ObjectMapper objectMapper;
 
     @Transactional
-    public QuestionResponse createQuestion(Long directoryId, List<QuestionCreateRequest> requestList, boolean v1) {
+    public QuestionCreateResponse createQuestion(Long directoryId, List<QuestionCreateRequest> requestList,
+                                                 boolean v1) {
         Directory directory = directoryService.getDirectoryById(directoryId);
 
         // question title 생성
@@ -85,7 +102,33 @@ public class QuestionCreatorService {
         // QuestionResource 매핑까지 모두 EntityManager에 반영되도록 flush
         questionRepository.flush();
 
-        return QuestionResponse.fromEntity(savedQuestion);
+        try {
+            AiQuestionItemListResponse parsed = objectMapper.readValue(savedQuestion.getQuestionsData(),
+                    AiQuestionItemListResponse.class);
+
+            if (parsed.getQuestions() != null) {
+                List<AiQuestionItemResponse> parsedList = parsed.getQuestions();
+
+                for (int index = 0; index < parsedList.size(); index++) {
+                    AiQuestionItemResponse aiQuestionItemResponse = parsedList.get(index);
+                    QuestionItem item;
+                    if (aiQuestionItemResponse.getType().equals("multiple_choice")) {
+                        item = QuestionItem.createMultipleQuestion(savedQuestion, aiQuestionItemResponse.getQuestion(),
+                                aiQuestionItemResponse.getOptions(), aiQuestionItemResponse.getAnswer(), index);
+                    } else {
+                        item = QuestionItem.createShortAnswerQuestion(savedQuestion,
+                                aiQuestionItemResponse.getQuestion(), aiQuestionItemResponse.getAnswer(), index);
+                    }
+                    questionItemRepository.save(item);
+
+                }
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new RuntimeException("QuestionItem 파싱 중 오류 발생", e);
+        }
+
+        return QuestionCreateResponse.fromEntity(savedQuestion);
     }
 
     private @NotNull String createTitle(List<QuestionCreateRequest> requestList, Directory directory) {
@@ -112,5 +155,40 @@ public class QuestionCreatorService {
             version = maxVersion + 1;
         }
         return version;
+    }
+
+    @Transactional
+    public QuestionTitleUpdateResponse updateQuestionTitle(Long questionId, QuestionTitleUpdateRequest request) {
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new EntityNotFoundException("Question not found"));
+
+        question.updateTitle(request.getTitle());
+        questionRepository.saveAndFlush(question);
+
+        return QuestionTitleUpdateResponse.from(question);
+    }
+
+    @Transactional
+    public QuestionSubmissionListResponse submitsQuestion(Long questionId, QuestionSubmissionListRequest request) {
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new EntityNotFoundException("Question not found"));
+
+        List<QuestionItem> questionItems = questionItemRepository.findByQuestionOrderByQuestionIndex(question);
+
+        Map<Integer, String> submittedMap = request.getSubmissions().stream()
+                .collect(Collectors.toMap(
+                        QuestionSubmissionRequest::getQuestionIndex,
+                        QuestionSubmissionRequest::getUserAnswer
+                ));
+
+        // 채점 결과 저장
+        for (QuestionItem questionItem : questionItems) {
+            String userAnswer = submittedMap.get(questionItem.getQuestionIndex());
+            questionItem.submitAnswer(userAnswer);
+        }
+
+        question.markSolved();
+
+        return QuestionSubmissionListResponse.of(question, questionItems);
     }
 }

@@ -3,7 +3,7 @@ package com.driveu.server.infra.ai.client;
 import com.driveu.server.domain.ai.dto.request.AiSummaryRequest;
 import com.driveu.server.domain.ai.prompt.QuestionPrompt;
 import com.driveu.server.domain.ai.prompt.SummaryPrompt;
-import com.driveu.server.infra.ai.dto.OpenAiRequest;
+import com.driveu.server.infra.ai.dto.request.OpenAiRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.time.Duration;
 import java.util.List;
@@ -217,7 +217,7 @@ public class OpenAiClient {
                 .bodyToMono(JsonNode.class)
                 .flatMap(messagesResponse -> {
                     if (messagesResponse == null || !messagesResponse.has("data")) {
-                        throw new RuntimeException("메시지 목록을 가져오는 데 실패했습니다.");
+                        return Mono.error(new RuntimeException("메시지 목록을 가져오는 데 실패했습니다."));
                     }
 
                     for (JsonNode messageNode : messagesResponse.get("data")) {
