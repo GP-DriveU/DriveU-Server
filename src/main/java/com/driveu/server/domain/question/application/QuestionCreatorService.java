@@ -17,7 +17,7 @@ import com.driveu.server.domain.question.dto.request.QuestionSubmissionListReque
 import com.driveu.server.domain.question.dto.request.QuestionTitleUpdateRequest;
 import com.driveu.server.domain.question.dto.response.AiQuestionItemListResponse;
 import com.driveu.server.domain.question.dto.response.AiQuestionItemListResponse.AiQuestionItemResponse;
-import com.driveu.server.domain.question.dto.response.QuestionResponse;
+import com.driveu.server.domain.question.dto.response.QuestionCreateResponse;
 import com.driveu.server.domain.question.dto.response.QuestionSubmissionListResponse;
 import com.driveu.server.domain.question.dto.response.QuestionTitleUpdateResponse;
 import com.driveu.server.domain.resource.application.ResourceService;
@@ -50,7 +50,8 @@ public class QuestionCreatorService {
     private final AiFacade aiFacade;
 
     @Transactional
-    public QuestionResponse createQuestion(Long directoryId, List<QuestionCreateRequest> requestList, boolean v1) {
+    public QuestionCreateResponse createQuestion(Long directoryId, List<QuestionCreateRequest> requestList,
+                                                 boolean v1) {
         Directory directory = directoryService.getDirectoryById(directoryId);
 
         // question title 생성
@@ -130,7 +131,7 @@ public class QuestionCreatorService {
             throw new RuntimeException("QuestionItem 파싱 중 오류 발생", e);
         }
 
-        return QuestionResponse.fromEntity(savedQuestion);
+        return QuestionCreateResponse.fromEntity(savedQuestion);
     }
 
     private @NotNull String createTitle(List<QuestionCreateRequest> requestList, Directory directory) {

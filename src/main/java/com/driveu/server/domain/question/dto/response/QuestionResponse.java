@@ -18,29 +18,21 @@ import lombok.Getter;
 @Builder
 public class QuestionResponse {
     private Long questionId;
+
     private String title;
+
     private int version;
+
     @JsonProperty("isSolved")
-    private boolean solved;
+    private Boolean solved;
+
     private LocalDateTime createdAt;
+
     private List<SingleQuestionDto> questions;
+
     private List<QuestionSubmissionResponse> results;
 
-    // 정적 팩토리 메서드 (엔티티 → DTO 변환)
-    public static QuestionResponse fromEntity(Question question) {
-        List<SingleQuestionDto> list = getSingleQuestionDtos(question);
-
-        // 3) DTO에 값 채워서 반환
-        return QuestionResponse.builder()
-                .questionId(question.getId())
-                .title(question.getTitle())
-                .version(question.getVersion())
-                .createdAt(question.getCreatedAt())
-                .questions(list)
-                .build();
-    }
-
-    private static List<SingleQuestionDto> getSingleQuestionDtos(Question question) {
+    public static List<SingleQuestionDto> getSingleQuestionDtos(Question question) {
         ObjectMapper mapper = new ObjectMapper();
 
         // 1) DB에서 꺼낸 문자열
@@ -79,7 +71,7 @@ public class QuestionResponse {
         try {
             list = mapper.readValue(
                     questionsArrayNode.toString(),
-                    new TypeReference<List<SingleQuestionDto>>() {
+                    new TypeReference<>() {
                     }
             );
         } catch (JsonProcessingException e) {
@@ -99,11 +91,11 @@ public class QuestionResponse {
                 .createdAt(question.getCreatedAt())
                 .questions(list)
                 .results(
-                        (questionItems == null || questionItems.isEmpty())
-                                ? null
-                                : questionItems.stream()
-                                        .map(QuestionSubmissionResponse::from)
-                                        .toList()
+                        (question.isSolved())
+                                ? questionItems.stream()
+                                .map(QuestionSubmissionResponse::from)
+                                .toList()
+                                : null
                 )
                 .build();
     }

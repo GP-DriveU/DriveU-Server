@@ -5,6 +5,7 @@ import com.driveu.server.domain.question.application.QuestionQueryService;
 import com.driveu.server.domain.question.dto.request.QuestionCreateRequest;
 import com.driveu.server.domain.question.dto.request.QuestionSubmissionListRequest;
 import com.driveu.server.domain.question.dto.request.QuestionTitleUpdateRequest;
+import com.driveu.server.domain.question.dto.response.QuestionCreateResponse;
 import com.driveu.server.domain.question.dto.response.QuestionListResponse;
 import com.driveu.server.domain.question.dto.response.QuestionResponse;
 import com.driveu.server.domain.question.dto.response.QuestionSubmissionListResponse;
@@ -41,7 +42,7 @@ public class QuestionApi {
     @Operation(summary = "ai 문제 생성", description = "해당 리소스들에 대한 ai 문제를 생성합니다. (questions의 type: multiple_choice /  short_answer, short_answer의 경우 options = null)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "성공적으로 ai 문제가 생성되었습니다.",
-                    content = @Content(schema = @Schema(implementation = QuestionResponse.class))),
+                    content = @Content(schema = @Schema(implementation = QuestionCreateResponse.class))),
             @ApiResponse(responseCode = "404", description = "해당 Resource 없음",
                     content = @Content(
                             mediaType = "application/json",
@@ -55,7 +56,7 @@ public class QuestionApi {
             @RequestBody List<QuestionCreateRequest> requestList
     ) {
         try {
-            QuestionResponse response = questionCreatorService.createQuestion(directoryId, requestList, true);
+            QuestionCreateResponse response = questionCreatorService.createQuestion(directoryId, requestList, true);
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -76,7 +77,7 @@ public class QuestionApi {
     @Operation(summary = "ai 문제 생성 V2", description = "해당 리소스들에 대한 ai 문제를 생성합니다. (questions의 type: multiple_choice /  short_answer, short_answer의 경우 options = null)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "성공적으로 ai 문제가 생성되었습니다.",
-                    content = @Content(schema = @Schema(implementation = QuestionResponse.class))),
+                    content = @Content(schema = @Schema(implementation = QuestionCreateResponse.class))),
             @ApiResponse(responseCode = "404", description = "해당 Resource 없음",
                     content = @Content(
                             mediaType = "application/json",
@@ -90,7 +91,7 @@ public class QuestionApi {
             @RequestBody List<QuestionCreateRequest> requestList
     ) {
         try {
-            QuestionResponse response = questionCreatorService.createQuestion(directoryId, requestList, false);
+            QuestionCreateResponse response = questionCreatorService.createQuestion(directoryId, requestList, false);
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
