@@ -36,9 +36,6 @@ public class Question extends BaseEntity {
     @Column(columnDefinition = "JSON")
     private String questionsData;
 
-    @Column(columnDefinition = "JSON")
-    private String gradingResult;
-
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<QuestionResource> questionResources = new ArrayList<>();
