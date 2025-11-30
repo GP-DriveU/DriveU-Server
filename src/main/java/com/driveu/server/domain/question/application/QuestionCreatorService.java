@@ -48,6 +48,7 @@ public class QuestionCreatorService {
     private final AiService aiService;
     private final QuestionResourceService questionResourceService;
     private final AiFacade aiFacade;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public QuestionCreateResponse createQuestion(Long directoryId, List<QuestionCreateRequest> requestList,
@@ -102,10 +103,7 @@ public class QuestionCreatorService {
         questionRepository.flush();
 
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            System.out.println(savedQuestion.getQuestionsData());
-
-            AiQuestionItemListResponse parsed = mapper.readValue(savedQuestion.getQuestionsData(),
+            AiQuestionItemListResponse parsed = objectMapper.readValue(savedQuestion.getQuestionsData(),
                     AiQuestionItemListResponse.class);
 
             if (parsed.getQuestions() != null) {
@@ -121,7 +119,6 @@ public class QuestionCreatorService {
                         item = QuestionItem.createShortAnswerQuestion(savedQuestion,
                                 aiQuestionItemResponse.getQuestion(), aiQuestionItemResponse.getAnswer(), index);
                     }
-                    System.out.println(item.getQuestionText());
                     questionItemRepository.save(item);
 
                 }
