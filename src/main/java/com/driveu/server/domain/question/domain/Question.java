@@ -58,6 +58,9 @@ public class Question extends BaseEntity {
     }
 
     public void updateTitle(String title) {
+        if (title == null || title.isEmpty()) {
+            throw new IllegalArgumentException("Title cannot be empty");
+        }
         this.title = title;
     }
 
