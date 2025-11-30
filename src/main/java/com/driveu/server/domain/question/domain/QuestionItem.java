@@ -103,11 +103,16 @@ public class QuestionItem extends BaseEntity {
     }
 
     private boolean isNumeric(String s) {
-        return s.matches("-?\\d+");
+        try {
+            Long.parseLong(s);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
-    private int parseNumber(String s) {
-        return Integer.parseInt(s);
+    private long parseNumber(String s) {
+        return Long.parseLong(s);
     }
 
 }
