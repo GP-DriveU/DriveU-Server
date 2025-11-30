@@ -1,6 +1,5 @@
 package com.driveu.server.domain.question.application;
 
-import com.amazonaws.services.kms.model.NotFoundException;
 import com.driveu.server.domain.ai.application.AiFacade;
 import com.driveu.server.domain.ai.dto.request.AiQuestionRequest;
 import com.driveu.server.domain.ai.dto.response.AiQuestionResponse;
@@ -24,6 +23,7 @@ import com.driveu.server.domain.resource.application.ResourceService;
 import com.driveu.server.domain.resource.domain.Resource;
 import com.driveu.server.infra.ai.application.AiService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -163,7 +163,7 @@ public class QuestionCreatorService {
     @Transactional
     public QuestionTitleUpdateResponse updateQuestionTitle(Long questionId, QuestionTitleUpdateRequest request) {
         Question question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new NotFoundException("Question not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Question not found"));
 
         question.updateTitle(request.getTitle());
         questionRepository.saveAndFlush(question);
@@ -174,7 +174,7 @@ public class QuestionCreatorService {
     @Transactional
     public QuestionSubmissionListResponse submitsQuestion(Long questionId, QuestionSubmissionListRequest request) {
         Question question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new NotFoundException("Question not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Question not found"));
 
         List<QuestionItem> questionItems = questionItemRepository.findByQuestionOrderByQuestionIndex(question);
 
