@@ -36,7 +36,7 @@ public class Summary extends BaseEntity {
                 .build();
     }
 
-    public void updateContect(String content) {
+    public void updateContent(String content) {
         this.content = content;
     }
 }

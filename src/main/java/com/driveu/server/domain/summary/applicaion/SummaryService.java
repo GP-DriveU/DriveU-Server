@@ -51,7 +51,7 @@ public class SummaryService {
         AiSummaryResponse summaryResponse = getAiSummaryResponse(noteId, note);
 
         if (oldSummary != null) {
-            oldSummary.updateContect(summaryResponse.getContent());
+            oldSummary.updateContent(summaryResponse.getContent());
             return SummaryResponse.from(oldSummary);
         }
         Summary summary = Summary.of(note, summaryResponse.getContent());
