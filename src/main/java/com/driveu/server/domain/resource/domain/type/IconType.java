@@ -4,7 +4,7 @@ public enum IconType {
     YOUTUBE, GITHUB, DEFAULT;
 
     public static IconType fromUrl(String url) {
-        if (url == null) {
+        if (url == null || url.isEmpty()) {
             throw new IllegalArgumentException("url cannot be null");
         }
         if (url.startsWith("https://github.com/")) {
