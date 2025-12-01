@@ -1,7 +1,7 @@
 package com.driveu.server.domain.resource.api;
 
-import com.driveu.server.domain.resource.application.ResourceService;
 import com.driveu.server.domain.file.application.S3FileStorageService;
+import com.driveu.server.domain.resource.application.ResourceService;
 import com.driveu.server.domain.resource.dto.request.FileSaveMetaDataRequest;
 import com.driveu.server.domain.resource.dto.response.ResourceDeleteResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceFavoriteResponse;
@@ -17,14 +17,21 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
@@ -58,10 +65,10 @@ public class ResourceApi {
         try {
             Long fileId = resourceService.saveFile(user, directoryId, request);
             return ResponseEntity.ok(Map.of("fileId", fileId));
-        } catch (EntityNotFoundException e){
+        } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", e.getMessage()));
-        } catch (IllegalStateException e){
+        } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", e.getMessage()));
         }
@@ -89,25 +96,27 @@ public class ResourceApi {
         try {
             URL presignedUrl = s3FileStorageService.generateDownloadUrl(resourceId);
             return ResponseEntity.ok(Map.of("url", presignedUrl.toString()));
-        } catch (EntityNotFoundException e){
+        } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", e.getMessage()));
-        } catch (Exception e){
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", e.getMessage()));
         }
     }
 
     @GetMapping("/directories/{directoryId}/resources")
-    @Operation(summary = "디렉토리 별 리소스(파일, 링크, 노트) 필터링 조회", description = "sort (선택): 정렬 기준 (name, updatedAt, createdAt)\t\n" +
-            "favoriteOnly (선택): true일 경우 즐겨찾기 파일만 조회")
+    @Operation(summary = "디렉토리 별 리소스(파일, 링크, 노트) 필터링 조회", description =
+            "sort (선택): 정렬 기준 (name, updatedAt, createdAt)\t\n" +
+                    "favoriteOnly (선택): true일 경우 즐겨찾기 파일만 조회\t\n +"
+                    + "link 의 iconType은 ‘GITHUB’, ‘YOUTUBE’, ‘DEFAULT’ ENUM 입니다.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "링크 바로가기 url 조회 성공",
+            @ApiResponse(responseCode = "200", description = "디렉토리 별 리소스 조회 성공",
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = ResourceResponse.class)))),
-            @ApiResponse(responseCode = "404", description = "해당 Link 없음",
+            @ApiResponse(responseCode = "404", description = "해당 디렉토리 없음",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(example = "{\"message\": \"Link not found\"}")
+                            schema = @Schema(example = "{\"message\": \"Directory not found\"}")
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
@@ -116,14 +125,14 @@ public class ResourceApi {
             @PathVariable Long directoryId,
             @RequestParam(required = false, defaultValue = "updatedAt") String sort,
             @RequestParam(required = false, defaultValue = "false") Boolean favoriteOnly
-    ){
+    ) {
         try {
             List<ResourceResponse> response = resourceService.getResourcesByDirectory(directoryId, sort, favoriteOnly);
             return ResponseEntity.ok(response);
-        } catch (EntityNotFoundException e){
+        } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", e.getMessage()));
-        } catch (IllegalStateException e){
+        } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", e.getMessage()));
         }
@@ -145,14 +154,14 @@ public class ResourceApi {
     @IsOwner(resourceType = "resource", idParamName = "resourceId")
     public ResponseEntity<?> toggleFavorite(
             @PathVariable("resourceId") Long resourceId
-    ){
+    ) {
         try {
             ResourceFavoriteResponse response = resourceService.toggleFavorite(resourceId);
             return ResponseEntity.ok(response);
-        } catch (EntityNotFoundException e){
+        } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", e.getMessage()));
-        } catch (IllegalStateException e){
+        } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", e.getMessage()));
         }
@@ -175,14 +184,14 @@ public class ResourceApi {
     public ResponseEntity<?> deleteResource(
             @PathVariable("resourceId") Long resourceId,
             @Parameter(hidden = true) @LoginUser User user
-    ){
+    ) {
         try {
             ResourceDeleteResponse response = resourceService.deleteResource(user, resourceId);
             return ResponseEntity.ok(response);
-        } catch (EntityNotFoundException e){
+        } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", e.getMessage()));
-        } catch (IllegalStateException e){
+        } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", e.getMessage()));
         }
