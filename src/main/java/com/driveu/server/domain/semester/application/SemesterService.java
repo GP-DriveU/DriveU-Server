@@ -12,14 +12,13 @@ import com.driveu.server.domain.semester.dto.request.UserSemesterRequest;
 import com.driveu.server.domain.semester.dto.response.UserSemesterResponse;
 import com.driveu.server.domain.user.domain.User;
 import com.driveu.server.domain.user.dto.response.MainPageResponse;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +32,7 @@ public class SemesterService {
 
     // user 최초 로그인 시 자동으로 생성되는 UserSemester
     @Transactional
-    public UserSemester createUserSemesterFromNow(User user){
+    public UserSemester createUserSemesterFromNow(User user) {
         LocalDate now = LocalDate.now();
         int year = now.getYear();
         Term term = Term.fromMonth(now.getMonthValue());
@@ -52,7 +51,7 @@ public class SemesterService {
     }
 
     @Transactional
-    public UserSemesterResponse createUserSemester(User user, UserSemesterRequest request){
+    public UserSemesterResponse createUserSemester(User user, UserSemesterRequest request) {
         Term term = Term.valueOf(request.getTerm().toUpperCase());
 
         Semester semester = semesterRepository.findByYearAndTerm(request.getYear(), term)
@@ -86,7 +85,7 @@ public class SemesterService {
     }
 
     @Transactional
-    public UserSemesterResponse updateUserSemester(User user, Long userSemesterId ,UserSemesterRequest request){
+    public UserSemesterResponse updateUserSemester(User user, Long userSemesterId, UserSemesterRequest request) {
         Term term = Term.valueOf(request.getTerm().toUpperCase());
 
         // 변경 대상 학기 조회 또는 생성
@@ -126,7 +125,6 @@ public class SemesterService {
                             .filter(us -> !us.getId().equals(userSemester.getId())) // 수정 대상 제외
                             .toList();
 
-
                     if (latestYearSemesters.isEmpty()) {
                         System.out.println("latestYearSemesters is empty");
                     }
@@ -140,8 +138,9 @@ public class SemesterService {
 
                     if (latestFromOthers.isEmpty()) {
                         System.out.println("latestFromOthers is empty");
-                    }else{
-                        System.out.println("latestFromOthers: " + latestFromOthers.get().getSemester().getYear() + " " + latestFromOthers.get().getSemester().getTerm());
+                    } else {
+                        System.out.println("latestFromOthers: " + latestFromOthers.get().getSemester().getYear() + " "
+                                + latestFromOthers.get().getSemester().getTerm());
                     }
 
                     System.out.println("newSemester: " + newSemester.getYear() + " " + newSemester.getTerm());
@@ -157,7 +156,7 @@ public class SemesterService {
                 }
             }
             // 현재 학기가 아닌 다른 학기의 내용을 수정하려는 경우
-            else{
+            else {
                 if (!current.getSemester().isAfter(newSemester)) {
                     current.setCurrent(false);
                     isCurrent = true;
@@ -170,7 +169,7 @@ public class SemesterService {
     }
 
     @Transactional
-    public void deleteUserSemester(User user, Long userSemesterId){
+    public void deleteUserSemester(User user, Long userSemesterId) {
         UserSemester userSemester = userSemesterQueryService.getUserSemester(userSemesterId);
 
         boolean CurrentDelete = userSemester.isCurrent();
@@ -208,7 +207,7 @@ public class SemesterService {
     }
 
     @Transactional(readOnly = true)
-    public MainPageResponse getMainPage(Long semesterId) {
+    public MainPageResponse getMainPage(Long semesterId, User user) {
 
         List<DirectoryTreeResponse> directoryTreeResponses = directoryService.getDirectoryTree(semesterId);
 
@@ -216,6 +215,7 @@ public class SemesterService {
                 .directories(directoryTreeResponses)
                 .recentFiles(resourceService.getTop3RecentFiles(semesterId))
                 .favoriteFiles(resourceService.getTop3FavoriteFiles(semesterId))
+                .remainingStorage(user.getMaxStorage() - user.getUsedStorage())
                 .build();
     }
 }
