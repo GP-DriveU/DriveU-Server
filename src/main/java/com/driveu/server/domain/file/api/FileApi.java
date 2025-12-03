@@ -2,8 +2,8 @@ package com.driveu.server.domain.file.api;
 
 import com.driveu.server.domain.file.application.FileUploadService;
 import com.driveu.server.domain.file.dto.request.MultipartCompleteRequest;
+import com.driveu.server.domain.file.dto.response.FileUploadResponse;
 import com.driveu.server.domain.file.dto.response.MultipartUploadInitResponse;
-import com.driveu.server.domain.resource.dto.response.FileUploadResponse;
 import com.driveu.server.domain.user.domain.User;
 import com.driveu.server.global.config.security.auth.LoginUser;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,12 +12,16 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
@@ -44,9 +48,9 @@ public class FileApi {
     ) {
         try {
             FileUploadResponse fileUploadResponse = (FileUploadResponse)
-                    fileUploadService.startUpload("single", user, filename, fileSize,1 );
+                    fileUploadService.startUpload("single", user, filename, fileSize, 1);
             return ResponseEntity.ok(fileUploadResponse);
-        } catch (IllegalStateException e){
+        } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", e.getMessage()));
         }
@@ -62,13 +66,13 @@ public class FileApi {
             @RequestParam String filename,
             @RequestParam int size,
             @RequestParam int totalParts,
-            @Parameter(hidden = true) @LoginUser  User user
+            @Parameter(hidden = true) @LoginUser User user
     ) {
         try {
             MultipartUploadInitResponse multipartUploadInitResponse = (MultipartUploadInitResponse)
                     fileUploadService.startUpload("multipart", user, filename, size, totalParts);
             return ResponseEntity.ok(multipartUploadInitResponse);
-        } catch (IllegalStateException e){
+        } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", e.getMessage()));
         }
@@ -81,10 +85,10 @@ public class FileApi {
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     public ResponseEntity<?> completeMultipartUpload(@RequestBody MultipartCompleteRequest request) {
-        try{
+        try {
             fileUploadService.completeUpload("multipart", request);
             return ResponseEntity.ok("Multipart upload completed successfully!");
-        } catch (IllegalStateException e){
+        } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", e.getMessage()));
         }

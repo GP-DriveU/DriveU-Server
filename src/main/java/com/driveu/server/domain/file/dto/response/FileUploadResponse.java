@@ -1,10 +1,9 @@
-package com.driveu.server.domain.resource.dto.response;
+package com.driveu.server.domain.file.dto.response;
 
+import java.net.URL;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-
-import java.net.URL;
 
 @Getter
 @AllArgsConstructor

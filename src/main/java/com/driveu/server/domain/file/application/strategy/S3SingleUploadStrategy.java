@@ -1,16 +1,15 @@
 package com.driveu.server.domain.file.application.strategy;
 
 import com.driveu.server.domain.file.dto.request.MultipartCompleteRequest;
+import com.driveu.server.domain.file.dto.response.FileUploadResponse;
 import com.driveu.server.domain.resource.domain.type.FileExtension;
-import com.driveu.server.domain.resource.dto.response.FileUploadResponse;
+import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
-
-import java.time.Duration;
 
 @Service("single")
 @RequiredArgsConstructor

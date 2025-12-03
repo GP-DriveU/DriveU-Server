@@ -1,23 +1,22 @@
 package com.driveu.server.domain.file.application;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.driveu.server.domain.file.dto.request.MultipartCompleteRequest;
 import com.driveu.server.domain.file.dto.request.PartETag;
+import com.driveu.server.domain.file.dto.response.FileUploadResponse;
 import com.driveu.server.domain.file.dto.response.MultipartUploadInitResponse;
-import com.driveu.server.domain.resource.dto.response.FileUploadResponse;
 import com.driveu.server.domain.user.TestUserFactory;
 import com.driveu.server.domain.user.domain.User;
+import java.net.HttpURLConnection;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-
-import java.net.HttpURLConnection;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -101,7 +100,8 @@ public class MultipartUploadIntegrationTest {
         // ----------------------------
         long startSingle = System.nanoTime();
 
-        FileUploadResponse singleResponse = (FileUploadResponse) fileUploadService.startUpload("single", testUser, "single-test-2.txt", fileSize, 1);
+        FileUploadResponse singleResponse = (FileUploadResponse) fileUploadService.startUpload("single", testUser,
+                "single-test-2.txt", fileSize, 1);
         HttpURLConnection singleConn = (HttpURLConnection) singleResponse.getUrl().openConnection();
         singleConn.setDoOutput(true);
         singleConn.setRequestMethod("PUT");
