@@ -5,23 +5,32 @@ import com.driveu.server.domain.directory.dao.DirectoryHierarchyRepository;
 import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.directory.domain.DirectoryHierarchy;
-import com.driveu.server.domain.resource.dao.*;
-import com.driveu.server.domain.resource.domain.*;
+import com.driveu.server.domain.file.dao.FileRepository;
+import com.driveu.server.domain.link.dao.LinkRepository;
+import com.driveu.server.domain.note.dao.NoteRepository;
+import com.driveu.server.domain.resource.dao.ResourceDirectoryRepository;
+import com.driveu.server.domain.resource.dao.ResourceRepository;
+import com.driveu.server.domain.resource.domain.File;
+import com.driveu.server.domain.resource.domain.Link;
+import com.driveu.server.domain.resource.domain.Note;
+import com.driveu.server.domain.resource.domain.Resource;
+import com.driveu.server.domain.resource.domain.ResourceDirectory;
 import com.driveu.server.domain.resource.domain.type.FileExtension;
 import com.driveu.server.domain.resource.dto.request.FileSaveMetaDataRequest;
 import com.driveu.server.domain.resource.dto.response.ResourceDeleteResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceFavoriteResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceResponse;
 import com.driveu.server.domain.resource.dto.response.TagResponse;
-import com.driveu.server.domain.file.dao.FileRepository;
-import com.driveu.server.domain.resource.domain.File;
-import com.driveu.server.domain.link.dao.LinkRepository;
-import com.driveu.server.domain.resource.domain.Link;
-import com.driveu.server.domain.note.dao.NoteRepository;
-import com.driveu.server.domain.resource.domain.Note;
 import com.driveu.server.domain.user.dao.UserRepository;
 import com.driveu.server.domain.user.domain.User;
 import jakarta.persistence.EntityNotFoundException;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,9 +38,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -96,8 +102,9 @@ public class ResourceService {
     }
 
     @Transactional
-    public List<ResourceResponse> getResourcesByDirectory(Long directoryId, String sort, Boolean favoriteOnly){
-        List<ResourceDirectory> resourceDirectories = resourceDirectoryRepository.findAllByDirectory_IdAndDirectory_IsDeletedFalseAndResource_IsDeletedFalse(directoryId);
+    public List<ResourceResponse> getResourcesByDirectory(Long directoryId, String sort, Boolean favoriteOnly) {
+        List<ResourceDirectory> resourceDirectories = resourceDirectoryRepository.findAllByDirectory_IdAndDirectory_IsDeletedFalseAndResource_IsDeletedFalse(
+                directoryId);
 
         // 중복 제거를 위해 Resource를 기준으로 그룹핑
         Map<Resource, List<ResourceDirectory>> grouped = resourceDirectories.stream()
@@ -129,7 +136,8 @@ public class ResourceService {
 
     private @Nullable TagResponse getTagResponseByDirectoryIdAndResource(Long directoryId, Resource resource) {
         // 이 리소스가 연결된 모든 ResourceDirectory 조회
-        List<ResourceDirectory> allAssociations = resourceDirectoryRepository.findAllByResourceAndResource_IsDeletedFalse(resource);
+        List<ResourceDirectory> allAssociations = resourceDirectoryRepository.findAllByResourceAndResource_IsDeletedFalse(
+                resource);
 
         // tag는 현재 directoryId와 다른 연결 디렉토리 중 첫 번째
         Directory tagDirectory = allAssociations.stream()
@@ -145,23 +153,27 @@ public class ResourceService {
         if ("name".equalsIgnoreCase(sort)) {
             return Comparator.comparing(ResourceResponse::getTitle, Comparator.nullsLast(String::compareToIgnoreCase));
         } else if ("createdAt".equalsIgnoreCase(sort)) {
-            return Comparator.comparing(ResourceResponse::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()));
+            return Comparator.comparing(ResourceResponse::getCreatedAt,
+                    Comparator.nullsLast(Comparator.naturalOrder()));
         } else { // 기본은 updatedAt
-            return Comparator.comparing(ResourceResponse::getUpdatedAt, Comparator.nullsLast(Comparator.naturalOrder())).reversed();
+            return Comparator.comparing(ResourceResponse::getUpdatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                    .reversed();
         }
     }
 
     public List<ResourceResponse> getTop3RecentFiles(Long userSemesterId) {
 
         Pageable top3 = PageRequest.of(0, 3);
-        List<Resource> recentResources = resourceRepository.findTop3ByUserSemesterIdAndIsDeletedFalseOrderByUpdatedAtDesc(userSemesterId, top3);
+        List<Resource> recentResources = resourceRepository.findTop3ByUserSemesterIdAndIsDeletedFalseOrderByUpdatedAtDesc(
+                userSemesterId, top3);
 
         return getResourceResponseList(recentResources);
     }
 
     public List<ResourceResponse> getTop3FavoriteFiles(Long userSemesterId) {
         Pageable top3 = PageRequest.of(0, 3);
-        List<Resource> recentResources = resourceRepository.findTop3FavoriteByUserSemesterIdAndIsDeletedFalseOrderByUpdatedAtDesc(userSemesterId, top3);
+        List<Resource> recentResources = resourceRepository.findTop3FavoriteByUserSemesterIdAndIsDeletedFalseOrderByUpdatedAtDesc(
+                userSemesterId, top3);
 
         return getResourceResponseList(recentResources);
     }
@@ -179,11 +191,13 @@ public class ResourceService {
 
     public @Nullable TagResponse getTagResponseByResource(Resource resource) {
         // 이 리소스가 연결된 모든 ResourceDirectory 조회
-        List<ResourceDirectory> allAssociations = resourceDirectoryRepository.findAllByResourceAndResource_IsDeletedFalse(resource);
+        List<ResourceDirectory> allAssociations = resourceDirectoryRepository.findAllByResourceAndResource_IsDeletedFalse(
+                resource);
 
         // 리소스를 생성한 디렉토리에만 연결이 존재한다면 태그가 없다고 판단하고 리턴
-        if (allAssociations.size() == 1)
+        if (allAssociations.size() == 1) {
             return null;
+        }
 
         // tag는 부모로 name이 "과목"인 디렉토리를 가지는 디렉토리
         Directory tagDirectory = null;
@@ -209,7 +223,9 @@ public class ResourceService {
                     }
                 }
             }
-            if (tagDirectory != null) break;
+            if (tagDirectory != null) {
+                break;
+            }
         }
 
         return (tagDirectory != null)
@@ -222,11 +238,11 @@ public class ResourceService {
         Resource resource = resourceRepository.findById(resourceId)
                 .orElseThrow(() -> new EntityNotFoundException("Resource not found."));
 
-       boolean isFavorite = resource.isFavorite();
+        boolean isFavorite = resource.isFavorite();
 
-       resource.updateFavorite(!isFavorite);
+        resource.updateFavorite(!isFavorite);
 
-       return ResourceFavoriteResponse.of(resourceId, !isFavorite);
+        return ResourceFavoriteResponse.of(resourceId, !isFavorite);
 
     }
 
@@ -242,7 +258,8 @@ public class ResourceService {
         Resource resourceObject = getResourceById(resource.getId());
 
         if (resourceObject instanceof File file) {
-            user.setUsedStorage(user.getUsedStorage() + file.getSize());
+            long newUsedStorage = user.getUsedStorage() - file.getSize();
+            user.setUsedStorage(Math.max(newUsedStorage, 0)); // 음수 방지
             userRepository.save(user);
         }
 
@@ -264,7 +281,8 @@ public class ResourceService {
             Long dirId = dir.getId();
 
             // 디렉토리가 삭제되지 않았으므로, Directory_IsDeletedFalse 조건은 이미 만족한다.
-            List<ResourceDirectory> rds = resourceDirectoryRepository.findAllByDirectory_IdAndDirectory_IsDeletedFalseAndResource_IsDeletedFalse(dirId);
+            List<ResourceDirectory> rds = resourceDirectoryRepository.findAllByDirectory_IdAndDirectory_IsDeletedFalseAndResource_IsDeletedFalse(
+                    dirId);
 
             for (ResourceDirectory rd : rds) {
                 Resource res = rd.getResource();
