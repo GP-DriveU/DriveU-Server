@@ -17,6 +17,7 @@ import com.driveu.server.domain.resource.domain.Resource;
 import com.driveu.server.domain.resource.domain.ResourceDirectory;
 import com.driveu.server.domain.resource.domain.type.FileExtension;
 import com.driveu.server.domain.resource.dto.request.FileSaveMetaDataRequest;
+import com.driveu.server.domain.resource.dto.response.FileSaveResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceDeleteResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceFavoriteResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceResponse;
@@ -53,7 +54,7 @@ public class ResourceService {
     private final UserRepository userRepository;
 
     @Transactional
-    public Long saveFile(User user, Long directoryId, FileSaveMetaDataRequest request) {
+    public FileSaveResponse saveFile(User user, Long directoryId, FileSaveMetaDataRequest request) {
         Directory directory = directoryRepository.findById(directoryId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 디렉토리입니다."));
 
@@ -79,7 +80,10 @@ public class ResourceService {
 
         File saved = fileRepository.save(file); // cascade 설정으로 resource_directory도 함께 저장
 
-        return saved.getId();
+        return FileSaveResponse.builder()
+                .fileId(saved.getId())
+                .remainingStorage(user.getRemainingStorage())
+                .build();
     }
 
     public Resource getResourceById(Long resourceId) {

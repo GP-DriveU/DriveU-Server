@@ -215,7 +215,7 @@ public class SemesterService {
                 .directories(directoryTreeResponses)
                 .recentFiles(resourceService.getTop3RecentFiles(semesterId))
                 .favoriteFiles(resourceService.getTop3FavoriteFiles(semesterId))
-                .remainingStorage(user.getMaxStorage() - user.getUsedStorage())
+                .remainingStorage(user.getRemainingStorage())
                 .build();
     }
 }
