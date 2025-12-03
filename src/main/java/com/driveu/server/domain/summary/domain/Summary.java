@@ -2,8 +2,17 @@ package com.driveu.server.domain.summary.domain;
 
 import com.driveu.server.domain.resource.domain.Note;
 import com.driveu.server.global.entity.BaseEntity;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -25,5 +34,9 @@ public class Summary extends BaseEntity {
                 .note(note)
                 .content(content)
                 .build();
+    }
+
+    public void updateContent(String content) {
+        this.content = content;
     }
 }

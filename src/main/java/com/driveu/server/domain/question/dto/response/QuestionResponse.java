@@ -1,28 +1,38 @@
 package com.driveu.server.domain.question.dto.response;
 
 import com.driveu.server.domain.question.domain.Question;
-
+import com.driveu.server.domain.question.domain.QuestionItem;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-
-import java.util.List;
 
 @Getter
 @AllArgsConstructor
 @Builder
 public class QuestionResponse {
     private Long questionId;
+
     private String title;
+
     private int version;
+
+    @JsonProperty("isSolved")
+    private Boolean solved;
+
+    private LocalDateTime createdAt;
+
     private List<SingleQuestionDto> questions;
 
-    // 정적 팩토리 메서드 (엔티티 → DTO 변환)
-    public static QuestionResponse fromEntity(Question question) {
+    private List<QuestionSubmissionResponse> results;
+
+    public static List<SingleQuestionDto> getSingleQuestionDtos(Question question) {
         ObjectMapper mapper = new ObjectMapper();
 
         // 1) DB에서 꺼낸 문자열
@@ -61,18 +71,32 @@ public class QuestionResponse {
         try {
             list = mapper.readValue(
                     questionsArrayNode.toString(),
-                    new TypeReference<List<SingleQuestionDto>>() {}
+                    new TypeReference<>() {
+                    }
             );
         } catch (JsonProcessingException e) {
             throw new RuntimeException("질문 배열 변환 실패: " + e.getMessage(), e);
         }
+        return list;
+    }
 
-        // 3) DTO에 값 채워서 반환
+    public static QuestionResponse fromQuestionAndItems(Question question, List<QuestionItem> questionItems) {
+        List<SingleQuestionDto> list = getSingleQuestionDtos(question);
+
         return QuestionResponse.builder()
                 .questionId(question.getId())
                 .title(question.getTitle())
                 .version(question.getVersion())
+                .solved(question.isSolved())
+                .createdAt(question.getCreatedAt())
                 .questions(list)
+                .results(
+                        (question.isSolved())
+                                ? questionItems.stream()
+                                .map(QuestionSubmissionResponse::from)
+                                .toList()
+                                : null
+                )
                 .build();
     }
 }

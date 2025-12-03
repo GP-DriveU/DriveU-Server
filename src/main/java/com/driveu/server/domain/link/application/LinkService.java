@@ -26,8 +26,8 @@ public class LinkService {
             tagDirectory = directoryService.getDirectoryById(request.getTagId());
         }
 
-        IconType iconType = IconType.fromUrl(request.getUrl());
-        Link link = Link.of(request.getTitle(), request.getUrl(), iconType);
+        IconType iconType = IconType.fromUrl(request.getUrl().trim());
+        Link link = Link.of(request.getTitle(), request.getUrl().trim(), iconType);
 
         // 디렉토리 연결
         link.addDirectory(directory);

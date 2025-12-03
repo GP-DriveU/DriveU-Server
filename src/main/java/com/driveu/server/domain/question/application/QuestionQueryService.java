@@ -5,15 +5,15 @@ import com.driveu.server.domain.directory.application.DirectoryService;
 import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.question.dao.QuestionRepository;
 import com.driveu.server.domain.question.domain.Question;
+import com.driveu.server.domain.question.domain.QuestionItem;
 import com.driveu.server.domain.question.dto.response.QuestionListResponse;
 import com.driveu.server.domain.question.dto.response.QuestionResponse;
 import com.driveu.server.domain.resource.application.ResourceService;
+import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +28,9 @@ public class QuestionQueryService {
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new NotFoundException("Question not found"));
 
-        return QuestionResponse.fromEntity(question);
+        List<QuestionItem> items = question.getQuestionItems();
+
+        return QuestionResponse.fromQuestionAndItems(question, items);
     }
 
     @Transactional(readOnly = true)
