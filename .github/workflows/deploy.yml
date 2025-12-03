@@ -32,19 +32,19 @@ jobs:
       - name: Build & Run Docker Container
         run: |
           echo "1. 기존 컨테이너 중지 및 삭제"
-          docker pull ${{ secrets.DOCKER_USERNAME }}/new-driveu:latest
-          docker stop new-driveu || true
-          docker rm new-driveu || true
+          docker stop driveu-server || true
+          docker rm driveu-server || true
           
           echo "2. 도커 이미지 빌드 (로컬)"
           docker build -t new-driveu:latest .
           
           echo "3. 새 컨테이너 실행"
           docker run -d \
-            --name new-driveu \
+            --name driveu-server \
             -p 8080:8080 \
-            -m 500m \
+            -m 800m \
             -e TZ=Asia/Seoul \
+            -e JAVA_OPTS="-Xms256m -Xmx512m" \
             new-driveu:latest
           
           echo "4. 쓰레기 이미지 정리"
