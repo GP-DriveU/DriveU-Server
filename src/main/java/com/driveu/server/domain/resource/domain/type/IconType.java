@@ -9,7 +9,7 @@ public enum IconType {
         }
         if (url.startsWith("https://github.com/")) {
             return IconType.GITHUB;
-        } else if (url.startsWith("https://www.youtube.com/")) {
+        } else if (url.startsWith("https://www.youtube.com/") || url.startsWith("https://youtube.com/")) {
             return IconType.YOUTUBE;
         } else {
             return IconType.DEFAULT;

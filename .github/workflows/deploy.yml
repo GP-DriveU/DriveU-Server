@@ -1,4 +1,4 @@
-name: CI/CD for Spring Boot with Docker
+name: Private Subnet Deploy (Self-Hosted Runner)
 
 on:
   push:
@@ -6,51 +6,96 @@ on:
       - main
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '21'
-
-    - name: Setup Environment
-      run: |
-        mkdir -p ./src/main/resources
-        echo -e "${{ secrets.APPLICATION }}" > ./src/main/resources/application.yml
-
-    - name: Build with Gradle
-      run: ./gradlew clean build -x test
-
-    - name: Login to DockerHub
-      uses: docker/login-action@v1
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
-
-    - name: Build and Push Docker image
-      run: |
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/driveu .
-        docker push ${{ secrets.DOCKER_USERNAME }}/driveu:latest
-
   deploy:
-    runs-on: ubuntu-latest
-    needs: build
+    runs-on: self-hosted
 
     steps:
-    - name: SSH to EC2 and deploy
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ubuntu
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          docker pull ${{ secrets.DOCKER_USERNAME }}/driveu:latest
-          docker stop driveu || true
-          docker rm driveu || true
-          docker run -d -p 8080:8080 --name driveu ${{ secrets.DOCKER_USERNAME }}/driveu:latest
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Environment
+        run: |
+          mkdir -p ./src/main/resources
+          echo -e "${{ secrets.APPLICATION }}" > ./src/main/resources/application.yml
+
+      - name: Build with Gradle
+        run: |
+          chmod +x gradlew
+          ./gradlew clean build -x test
+
+      - name: Build & Run Docker Container
+        run: |
+          echo "0. 롤백을 위한 백업 이미지 생성"
+          if docker image inspect new-driveu:latest > /dev/null 2>&1; then
+            docker tag new-driveu:latest new-driveu:previous
+            echo "✅ 기존 이미지 백업 완료 (new-driveu:previous)"
+          else
+            echo "ℹ️ 백업할 이미지가 없습니다. (첫 배포인 경우)"
+          fi
+          
+          echo "1. 기존 컨테이너 중지 및 삭제"
+          docker stop driveu-server || true
+          docker rm driveu-server || true
+          
+          echo "2. 도커 이미지 빌드 (로컬)"
+          docker build -t new-driveu:latest .
+          
+          echo "3. 새 컨테이너 실행"
+          docker run -d \
+            --name driveu-server \
+            -p 8080:8080 \
+            -m 800m \
+            -e TZ=Asia/Seoul \
+            -e JAVA_OPTS="-Xms256m -Xmx512m" \
+            new-driveu:latest
+          
+          echo "🏥 4. 헬스체크 대기 (최대 60초)"
+          for i in {1..12}; do
+            # 헬스체크 성공 시
+            if curl -s -f http://localhost:8080/actuator/health > /dev/null; then
+              echo "✅ 컨테이너 정상 구동 확인"
+              # 정상 배포되었으니 백업 이미지는 삭제 (용량 확보)
+              docker rmi new-driveu:previous || true
+              break
+            fi
+          
+            # 헬스체크 최종 실패 시 (롤백 로직)
+            if [ $i -eq 12 ]; then
+              echo "❌ 헬스체크 실패 - 롤백(Rollback) 시작"
+              docker logs driveu-server
+          
+              # 1. 망가진 새 컨테이너 삭제
+              docker stop driveu-server || true
+              docker rm driveu-server || true
+          
+              # 2. 백업해둔 이미지(previous)가 있는지 확인
+              if docker image inspect new-driveu:previous > /dev/null 2>&1; then
+                echo "🔄 이전 버전으로 복구 중..."
+                docker run -d \
+                  --name driveu-server \
+                  -p 8080:8080 \
+                  -m 800m \
+                  -e TZ=Asia/Seoul \
+                  -e JAVA_OPTS="-Xms256m -Xmx512m" \
+                  new-driveu:previous
+                echo "✅ 롤백 완료: 이전 버전으로 서버가 재시작되었습니다."
+              else
+                echo "🚨 롤백 실패: 백업된 이미지가 없습니다."
+              fi
+          
+              # 파이프라인 실패 처리
+              exit 1
+            fi
+          
+            echo "⏳ 헬스체크 대기 중... ($i/12)"
+            sleep 5
+          done
+          
+          echo "5. 쓰레기 이미지 정리"
+          docker image prune -f
