@@ -52,6 +52,7 @@ public class User extends BaseEntity {
     }
 
     public Long getRemainingStorage() {
-        return this.maxStorage - this.usedStorage;
+        long remaining = this.maxStorage - this.usedStorage;
+        return Math.max(remaining, 0L);
     }
 }
