@@ -14,12 +14,18 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.persistence.EntityNotFoundException;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
@@ -43,14 +49,14 @@ public class UserSemesterApi {
     public ResponseEntity<?> createUserSemester(
             @Parameter(hidden = true) @LoginUser User user,
             @RequestBody UserSemesterRequest request
-    ){
+    ) {
         try {
             UserSemesterResponse userSemesterResponse = semesterService.createUserSemester(user, request);
             return ResponseEntity.ok(userSemesterResponse);
-        } catch (EntityNotFoundException e){
+        } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", e.getMessage()));
-        } catch (IllegalStateException e){
+        } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", e.getMessage()));
         }
@@ -73,14 +79,14 @@ public class UserSemesterApi {
             @PathVariable Long id,
             @RequestBody UserSemesterRequest request,
             @Parameter(hidden = true) @LoginUser User user
-    ){
+    ) {
         try {
             UserSemesterResponse userSemesterResponse = semesterService.updateUserSemester(user, id, request);
             return ResponseEntity.ok(userSemesterResponse);
-        } catch (EntityNotFoundException e){
+        } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", e.getMessage()));
-        } catch (IllegalStateException e){
+        } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", e.getMessage()));
         }
@@ -105,15 +111,15 @@ public class UserSemesterApi {
     public ResponseEntity<?> deleteUserSemester(
             @PathVariable Long id,
             @Parameter(hidden = true) @LoginUser User user
-    ){
+    ) {
         try {
             semesterService.deleteUserSemester(user, id);
             return ResponseEntity.status(HttpStatus.OK)
                     .body(Map.of("message", "해당 학기 및 관련 리소스가 성공적으로 삭제되었습니다."));
-        } catch (EntityNotFoundException e){
+        } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", e.getMessage()));
-        } catch (IllegalStateException e){
+        } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", e.getMessage()));
         }
@@ -133,16 +139,17 @@ public class UserSemesterApi {
     })
     @IsOwner(resourceType = "userSemester", idParamName = "semesterId")
     public ResponseEntity<?> getMainPage(
-            @PathVariable Long semesterId
-    ){
+            @PathVariable Long semesterId,
+            @Parameter(hidden = true) @LoginUser User user
+    ) {
         try {
-            MainPageResponse mainPageResponse = semesterService.getMainPage(semesterId);
+            MainPageResponse mainPageResponse = semesterService.getMainPage(semesterId, user);
             return ResponseEntity.status(HttpStatus.OK)
                     .body(mainPageResponse);
-        } catch (EntityNotFoundException e){
+        } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", e.getMessage()));
-        } catch (IllegalStateException e){
+        } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", e.getMessage()));
         }

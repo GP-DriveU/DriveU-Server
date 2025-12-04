@@ -2,8 +2,16 @@ package com.driveu.server.domain.user.domain;
 
 import com.driveu.server.domain.auth.domain.oauth.OauthProvider;
 import com.driveu.server.global.entity.BaseEntity;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -41,5 +49,10 @@ public class User extends BaseEntity {
 
     public void setUsedStorage(long updatedUsedStorage) {
         this.usedStorage = updatedUsedStorage;
+    }
+
+    public Long getRemainingStorage() {
+        long remaining = this.maxStorage - this.usedStorage;
+        return Math.max(remaining, 0L);
     }
 }

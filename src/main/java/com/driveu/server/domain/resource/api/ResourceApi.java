@@ -3,6 +3,7 @@ package com.driveu.server.domain.resource.api;
 import com.driveu.server.domain.file.application.S3FileStorageService;
 import com.driveu.server.domain.resource.application.ResourceService;
 import com.driveu.server.domain.resource.dto.request.FileSaveMetaDataRequest;
+import com.driveu.server.domain.resource.dto.response.FileSaveResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceDeleteResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceFavoriteResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceResponse;
@@ -45,10 +46,7 @@ public class ResourceApi {
     @Operation(summary = "파일 업로드 후 메타 데이터 등록", description = "extension 은 TXT, PDF, MD, DOCS, PNG, JPEG, JPG 만 가능합니다.\n size 는 byte 단위 입니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "파일 메타 데이터 등록 성공",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(example = "{\"fileId\": \"1\"}")
-                    )),
+                    content = @Content(schema = @Schema(implementation = FileSaveResponse.class))),
             @ApiResponse(responseCode = "404", description = "해당 Directory 없음",
                     content = @Content(
                             mediaType = "application/json",
@@ -63,8 +61,8 @@ public class ResourceApi {
             @Parameter(hidden = true) @LoginUser User user
     ) {
         try {
-            Long fileId = resourceService.saveFile(user, directoryId, request);
-            return ResponseEntity.ok(Map.of("fileId", fileId));
+            FileSaveResponse response = resourceService.saveFile(user, directoryId, request);
+            return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", e.getMessage()));
