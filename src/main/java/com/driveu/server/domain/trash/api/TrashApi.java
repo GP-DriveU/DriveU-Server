@@ -1,6 +1,7 @@
 package com.driveu.server.domain.trash.api;
 
 import com.driveu.server.domain.trash.application.TrashService;
+import com.driveu.server.domain.trash.dto.response.TrashDeleteResponse;
 import com.driveu.server.domain.trash.dto.response.TrashDirectoryChildrenResponse;
 import com.driveu.server.domain.trash.dto.response.TrashResponse;
 import com.driveu.server.domain.user.domain.User;
@@ -12,15 +13,20 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.persistence.EntityNotFoundException;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.SortDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
@@ -44,7 +50,7 @@ public class TrashApi {
             @RequestParam(defaultValue = "ALL", required = false) String type,
             @ParameterObject @SortDefault(sort = "deletedAt", direction = Sort.Direction.DESC) Sort sort,
             @Parameter(hidden = true) @LoginUser User user
-    ){
+    ) {
         try {
             TrashResponse response = trashService.getTrash(user, type, sort);
             return ResponseEntity.ok(response);
@@ -95,7 +101,7 @@ public class TrashApi {
             @ApiResponse(responseCode = "200", description = "성공적으로 파일이 삭제되었습니다.",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(example = "{\"message\": \"휴지통의 파일이 삭제되었습니다.\"}")
+                            schema = @Schema(implementation = TrashDeleteResponse.class)
                     )),
             @ApiResponse(responseCode = "404", description = "휴지통에 요청한 파일이 존재하지 않습니다.",
                     content = @Content(
@@ -103,11 +109,12 @@ public class TrashApi {
                             schema = @Schema(example = "{\"message\": \"Deleted file not found\"}")
                     ))
     })
-    public ResponseEntity<Map<String, String>> deleteResourcePermanently(@PathVariable Long resourceId) {
+    public ResponseEntity<?> deleteResourcePermanently(@PathVariable Long resourceId,
+                                                       @Parameter(hidden = true) @LoginUser User user) {
         try {
-             trashService.deleteResourcePermanently(resourceId);
+            TrashDeleteResponse trashDeleteResponse = trashService.deleteResourcePermanently(resourceId, user);
             return ResponseEntity.status(HttpStatus.OK)
-                    .body(Map.of("message", "휴지통의 파일이 삭제되었습니다."));
+                    .body(trashDeleteResponse);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", e.getMessage()));
@@ -123,7 +130,7 @@ public class TrashApi {
             @ApiResponse(responseCode = "200", description = "성공적으로 디렉토리가 삭제되었습니다.",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(example = "{\"message\": \"휴지통의 디렉토리가 삭제되었습니다.\"}")
+                            schema = @Schema(implementation = TrashDeleteResponse.class)
                     )),
             @ApiResponse(responseCode = "404", description = "휴지통에 요청한 디렉토리가 존재하지 않습니다.",
                     content = @Content(
@@ -131,11 +138,12 @@ public class TrashApi {
                             schema = @Schema(example = "{\"message\": \"Deleted file not found\"}")
                     ))
     })
-    public ResponseEntity<Map<String, String>> deleteDirectoryPermanently(@PathVariable Long directoryId) {
+    public ResponseEntity<?> deleteDirectoryPermanently(@PathVariable Long directoryId,
+                                                        @Parameter(hidden = true) @LoginUser User user) {
         try {
-            trashService.deleteDirectoryPermanently(directoryId);
+            TrashDeleteResponse trashDeleteResponse = trashService.deleteDirectoryPermanently(directoryId, user);
             return ResponseEntity.status(HttpStatus.OK)
-                    .body(Map.of("message", "휴지통의 디렉토리가 삭제되었습니다."));
+                    .body(trashDeleteResponse);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", e.getMessage()));
@@ -151,7 +159,7 @@ public class TrashApi {
             @ApiResponse(responseCode = "200", description = "성공적으로 휴지통의 모든 리소스가 삭제되었습니다.",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(example = "{\"message\": \"휴지통의 모든 파일과 디렉토리가 삭제되었습니다.\"}")
+                            schema = @Schema(implementation = TrashDeleteResponse.class)
                     )),
             @ApiResponse(responseCode = "404", description = "휴지통에 요청한 디렉토리가 존재하지 않습니다.",
                     content = @Content(
@@ -159,11 +167,11 @@ public class TrashApi {
                             schema = @Schema(example = "{\"message\": \"Deleted file not found\"}")
                     ))
     })
-    public ResponseEntity<Map<String, String>> emptyTrash(@Parameter(hidden = true) @LoginUser User user) {
+    public ResponseEntity<?> emptyTrash(@Parameter(hidden = true) @LoginUser User user) {
         try {
-            trashService.emptyTrash(user);
+            TrashDeleteResponse trashDeleteResponse = trashService.emptyTrash(user);
             return ResponseEntity.status(HttpStatus.OK)
-                    .body(Map.of("message", "휴지통의 모든 파일과 디렉토리가 삭제되었습니다."));
+                    .body(trashDeleteResponse);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", e.getMessage()));
