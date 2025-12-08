@@ -154,15 +154,39 @@ public class ResourceService {
     }
 
     private Comparator<ResourceResponse> getComparator(String sort) {
-        if ("name".equalsIgnoreCase(sort)) {
-            return Comparator.comparing(ResourceResponse::getTitle, Comparator.nullsLast(String::compareToIgnoreCase));
-        } else if ("createdAt".equalsIgnoreCase(sort)) {
-            return Comparator.comparing(ResourceResponse::getCreatedAt,
-                    Comparator.nullsLast(Comparator.naturalOrder()));
-        } else { // 기본은 updatedAt
-            return Comparator.comparing(ResourceResponse::getUpdatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
-                    .reversed();
+        // 기본값 설정
+        String sortKey = "updatedAt";
+        String direction = "desc"; // 기본 내림차순
+
+        if (sort != null && !sort.isBlank()) {
+            String[] parts = sort.split(",");
+            sortKey = parts[0];
+            if (parts.length > 1) {
+                direction = parts[1];
+            }
         }
+
+        Comparator<ResourceResponse> comparator = switch (sortKey.toLowerCase()) {
+            case "name" -> Comparator.comparing(
+                    ResourceResponse::getTitle,
+                    Comparator.nullsLast(String::compareToIgnoreCase)
+            );
+            case "createdat" -> Comparator.comparing(
+                    ResourceResponse::getCreatedAt,
+                    Comparator.nullsLast(Comparator.naturalOrder())
+            );
+            default -> Comparator.comparing(
+                    ResourceResponse::getUpdatedAt,
+                    Comparator.nullsLast(Comparator.naturalOrder())
+            );
+        };
+
+        // 정렬 방향(desc면 뒤집기)
+        if ("desc".equalsIgnoreCase(direction)) {
+            comparator = comparator.reversed();
+        }
+
+        return comparator;
     }
 
     public List<ResourceResponse> getTop3RecentFiles(Long userSemesterId) {
