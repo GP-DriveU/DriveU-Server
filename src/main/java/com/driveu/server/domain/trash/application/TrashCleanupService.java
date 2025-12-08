@@ -152,11 +152,14 @@ public class TrashCleanupService {
         Map<Long, Long> sizePerUser = new HashMap<>();
 
         for (File file : expiredFiles) {
-            Directory dir = file.getResourceDirectories().getFirst()
-                    .getDirectory(); // 파일이 속한 디렉토리 중 첫 번째 것을 기준으로 사용자 찾기
-            Long ownerId = dir.getUserSemester().getUser().getId();
-
-            sizePerUser.merge(ownerId, file.getSize(), Long::sum);
+            if (!file.getResourceDirectories().isEmpty()) {
+                Directory dir = file.getResourceDirectories().getFirst()
+                        .getDirectory(); // 파일이 속한 디렉토리 중 첫 번째 것을 기준으로 사용자 찾기
+                Long ownerId = dir.getUserSemester().getUser().getId();
+                sizePerUser.merge(ownerId, file.getSize(), Long::sum);
+            } else {
+                log.warn("[TrashCleanup] File without ResourceDirectory: fileId={}", file.getId());
+            }
         }
         return sizePerUser;
     }
