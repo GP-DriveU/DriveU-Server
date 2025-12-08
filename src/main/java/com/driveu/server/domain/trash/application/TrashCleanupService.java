@@ -138,13 +138,16 @@ public class TrashCleanupService {
             Long userId = entry.getKey();
             Long recoveredSize = entry.getValue();
 
-            User owner = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalStateException("User not found while recovering storage"));
+            User owner = userRepository.findById(userId).orElse(null);
 
-            long newUsed = owner.getUsedStorage() - recoveredSize;
-            owner.setUsedStorage(Math.max(newUsed, 0)); // 음수 방지
-
-            userRepository.save(owner);
+            if (owner != null) {
+                long newUsed = owner.getUsedStorage() - recoveredSize;
+                owner.setUsedStorage(Math.max(newUsed, 0));
+                userRepository.save(owner);
+            } else {
+                log.warn("[TrashCleanup] User not found while recovering storage: userId={}, recoveredSize={}",
+                        userId, recoveredSize);
+            }
         }
     }
 

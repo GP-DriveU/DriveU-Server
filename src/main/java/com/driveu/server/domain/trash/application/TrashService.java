@@ -286,7 +286,10 @@ public class TrashService {
         List<UserSemester> userSemesters = userSemesterRepository.findAllByUser(user);
 
         if (userSemesters.isEmpty()) {
-            return null;
+            return TrashDeleteResponse.builder()
+                    .remainingStorage(user.getRemainingStorage())
+                    .message("휴지통의 모든 파일과 디렉토리가 삭제되었습니다.")
+                    .build();
         }
 
         // 1. 휴지통에 있는 현재 사용자의 모든 리소스와 디렉토리를 조회합니다.
