@@ -5,26 +5,34 @@ import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.resource.dao.ResourceDirectoryRepository;
 import com.driveu.server.domain.resource.dao.ResourceRepository;
+import com.driveu.server.domain.resource.domain.File;
 import com.driveu.server.domain.resource.domain.Resource;
 import com.driveu.server.domain.resource.domain.ResourceDirectory;
 import com.driveu.server.domain.semester.dao.UserSemesterRepository;
 import com.driveu.server.domain.semester.domain.UserSemester;
 import com.driveu.server.domain.trash.domain.Type;
+import com.driveu.server.domain.trash.dto.response.TrashDeleteResponse;
 import com.driveu.server.domain.trash.dto.response.TrashDirectoryChildrenResponse;
 import com.driveu.server.domain.trash.dto.response.TrashItemResponse;
 import com.driveu.server.domain.trash.dto.response.TrashResponse;
+import com.driveu.server.domain.user.dao.UserRepository;
 import com.driveu.server.domain.user.domain.User;
 import jakarta.persistence.EntityNotFoundException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +43,7 @@ public class TrashService {
     private final DirectoryRepository directoryRepository;
     private final ResourceDirectoryRepository resourceDirectoryRepository;
     private final DirectoryHierarchyRepository directoryHierarchyRepository;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public TrashResponse getTrash(User user, String typesStr, Sort sort) {
@@ -58,7 +67,8 @@ public class TrashService {
         // 3. 리소스와 부모 디렉토리 관계 정보를 미리 가져와 Map으로 만듦
         Map<Long, Long> resourceToParentDirIdMap;
         if (!allDeletedResources.isEmpty()) {
-            List<ResourceDirectory> activeLinks = resourceDirectoryRepository.findByResourceInAndIsDeletedFalse(allDeletedResources);
+            List<ResourceDirectory> activeLinks = resourceDirectoryRepository.findByResourceInAndIsDeletedFalse(
+                    allDeletedResources);
             // 리소스 ID를 Key, 부모 디렉토리 ID를 Value로 하는 Map 생성
             resourceToParentDirIdMap = activeLinks.stream()
                     .collect(Collectors.toMap(
@@ -114,7 +124,6 @@ public class TrashService {
                     .toList());
         }
 
-
         Comparator<TrashItemResponse> comparator = buildComparator(sort);
         results.sort(comparator);
 
@@ -135,14 +144,14 @@ public class TrashService {
 
     private Comparator<TrashItemResponse> buildComparator(Sort sort) {
         if (sort.isUnsorted()) {
-            return  Comparator.comparing(TrashItemResponse::getDeletedAt).reversed();
+            return Comparator.comparing(TrashItemResponse::getDeletedAt).reversed();
         }
 
         Sort.Order order = sort.iterator().next();
         String property = order.getProperty();
         boolean ascending = order.isAscending();
 
-        Comparator<TrashItemResponse> comparator = switch (property){
+        Comparator<TrashItemResponse> comparator = switch (property) {
             case "name" -> Comparator.comparing(TrashItemResponse::getName);
             case "deletedAt" -> Comparator.comparing(TrashItemResponse::getDeletedAt);
             default -> Comparator.comparing(TrashItemResponse::getDeletedAt).reversed();
@@ -166,7 +175,6 @@ public class TrashService {
                 .collect(Collectors.toList());
 
         Sort newSort = Sort.by(newOrders);
-
 
         Directory parentDirectory = directoryRepository.findByIdAndIsDeletedTrue(directoryId)
                 .orElseThrow(() -> new EntityNotFoundException("Deleted directory not found or not deleted"));
@@ -200,7 +208,7 @@ public class TrashService {
     }
 
     @Transactional
-    public void deleteResourcePermanently(Long resourceId) {
+    public TrashDeleteResponse deleteResourcePermanently(Long resourceId, User user) {
         // 1. ID로 파일을 찾습니다. 없으면 예외를 발생시킵니다.
         Resource resource = resourceRepository.findById(resourceId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 파일을 찾을 수 없습니다. ID: " + resourceId));
@@ -208,17 +216,32 @@ public class TrashService {
         // 2. ResourceDirectory 테이블에서 연관된 레코드를 먼저 삭제합니다.
         resourceDirectoryRepository.deleteByResource(resource);
 
-        // 3. 마지막으로 파일(Resource) 자체를 삭제합니다.
+        // 3. 파일 저장 공간 복구
+        if (resource instanceof File file) {
+            long newUsedStorage = user.getUsedStorage() - file.getSize();
+            user.setUsedStorage(Math.max(newUsedStorage, 0)); // 음수 방지
+            userRepository.save(user);
+        }
+
+        // 4. 파일 삭제
         resourceRepository.delete(resource);
+
+        return TrashDeleteResponse.builder()
+                .remainingStorage(user.getRemainingStorage())
+                .message("휴지통의 파일이 삭제되었습니다.")
+                .build();
     }
 
     @Transactional
-    public void deleteDirectoryPermanently(Long directoryId) {
+    public TrashDeleteResponse deleteDirectoryPermanently(Long directoryId, User user) {
         Directory directory = directoryRepository.findById(directoryId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 디렉토리를 찾을 수 없습니다."));
 
         // 2. 해당 디렉토리 내부에 있는 모든 파일(Resource) 목록을 조회합니다.
         List<Resource> resourcesToDelete = resourceDirectoryRepository.findResourcesByDirectory(directory);
+
+        // 삭제되는 파일들의 총 용량 계산
+        long totalFileSize = getTotalFileSize(resourcesToDelete);
 
         // 3. 파일이 존재하면, 파일과 관련된 연관관계를 먼저 삭제합니다.
         if (!resourcesToDelete.isEmpty()) {
@@ -233,14 +256,41 @@ public class TrashService {
 
         // 5. 마지막으로 디렉토리(Directory) 자체를 삭제합니다.
         directoryRepository.delete(directory);
+
+        // 저장 용량 복구 로직
+        restoreUsedStorage(user, totalFileSize);
+        return TrashDeleteResponse.builder()
+                .remainingStorage(user.getRemainingStorage())
+                .message("휴지통의 디렉토리가 삭제되었습니다.")
+                .build();
+    }
+
+    private void restoreUsedStorage(User user, long totalFileSize) {
+        if (totalFileSize > 0) {
+            long newUsed = user.getUsedStorage() - totalFileSize;
+            user.setUsedStorage(Math.max(newUsed, 0)); // 음수 방지
+            userRepository.save(user);
+        }
+    }
+
+    private static long getTotalFileSize(List<Resource> resourcesToDelete) {
+        return resourcesToDelete.stream()
+                .filter(r -> r instanceof File)
+                .mapToLong(r -> ((File) r).getSize())
+                .sum();
     }
 
     @Transactional
-    public void emptyTrash(User user) {
+    public TrashDeleteResponse emptyTrash(User user) {
         // 유저의 모든 학기 조회
         List<UserSemester> userSemesters = userSemesterRepository.findAllByUser(user);
 
-        if (userSemesters.isEmpty()) return;
+        if (userSemesters.isEmpty()) {
+            return TrashDeleteResponse.builder()
+                    .remainingStorage(user.getRemainingStorage())
+                    .message("휴지통의 모든 파일과 디렉토리가 삭제되었습니다.")
+                    .build();
+        }
 
         // 1. 휴지통에 있는 현재 사용자의 모든 리소스와 디렉토리를 조회합니다.
         List<Directory> directoriesInTrash =
@@ -249,7 +299,12 @@ public class TrashService {
         List<Resource> resourcesInTrash = resourceRepository.findAllDeletedByUserSemesters(userSemesters);
 
         // 삭제할 내용이 없으면 바로 종료
-        if (resourcesInTrash.isEmpty() && directoriesInTrash.isEmpty()) return;
+        if (resourcesInTrash.isEmpty() && directoriesInTrash.isEmpty()) {
+            return TrashDeleteResponse.builder()
+                    .remainingStorage(user.getRemainingStorage())
+                    .message("휴지통의 모든 파일과 디렉토리가 삭제되었습니다.")
+                    .build();
+        }
 
         // --- 2. 연관 관계 데이터(연결고리)를 먼저 삭제합니다. ---
         if (!resourcesInTrash.isEmpty()) {
@@ -264,12 +319,18 @@ public class TrashService {
         // --- 3. 실제 엔티티 데이터를 삭제합니다. ---
         if (!resourcesInTrash.isEmpty()) {
             // ★★★ 핵심: deleteAll()을 사용하여 자식 테이블(File, Link, Note)까지 안전하게 삭제 ★★★
+            long totalFileSize = getTotalFileSize(resourcesInTrash);
             resourceRepository.deleteAll(resourcesInTrash);
+            restoreUsedStorage(user, totalFileSize);
         }
         if (!directoriesInTrash.isEmpty()) {
             // Directory는 상속 관계가 복잡하지 않으므로 deleteAllInBatch 사용 가능
             directoryRepository.deleteAllInBatch(directoriesInTrash);
         }
+        return TrashDeleteResponse.builder()
+                .remainingStorage(user.getRemainingStorage())
+                .message("휴지통의 모든 파일과 디렉토리가 삭제되었습니다.")
+                .build();
     }
 
     @Transactional

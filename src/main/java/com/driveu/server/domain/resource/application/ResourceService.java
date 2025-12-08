@@ -251,21 +251,12 @@ public class ResourceService {
     }
 
     @Transactional
-    public ResourceDeleteResponse deleteResource(User user, Long resourceId) {
+    public ResourceDeleteResponse deleteResource(Long resourceId) {
         Resource resource = resourceRepository.findById(resourceId)
                 .orElseThrow(() -> new EntityNotFoundException("Resource not found."));
 
         // resource soft delete
         resource.softDelete();
-
-        // 사용자 usedStorage 누적 업데이트
-        Resource resourceObject = getResourceById(resource.getId());
-
-        if (resourceObject instanceof File file) {
-            long newUsedStorage = user.getUsedStorage() - file.getSize();
-            user.setUsedStorage(Math.max(newUsedStorage, 0)); // 음수 방지
-            userRepository.save(user);
-        }
 
         return ResourceDeleteResponse.from(resource);
 

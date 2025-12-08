@@ -179,12 +179,9 @@ public class ResourceApi {
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @IsOwner(resourceType = "resource", idParamName = "resourceId")
-    public ResponseEntity<?> deleteResource(
-            @PathVariable("resourceId") Long resourceId,
-            @Parameter(hidden = true) @LoginUser User user
-    ) {
+    public ResponseEntity<?> deleteResource(@PathVariable("resourceId") Long resourceId) {
         try {
-            ResourceDeleteResponse response = resourceService.deleteResource(user, resourceId);
+            ResourceDeleteResponse response = resourceService.deleteResource(resourceId);
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
