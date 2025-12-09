@@ -121,7 +121,7 @@ public class ResourceApi {
     @IsOwner(resourceType = "directory", idParamName = "directoryId")
     public ResponseEntity<?> getResourcesByDirectoryID(
             @PathVariable Long directoryId,
-            @RequestParam(required = false, defaultValue = "updatedAt") String sort,
+            @RequestParam(required = false, defaultValue = "updatedAt,desc") String sort,
             @RequestParam(required = false, defaultValue = "false") Boolean favoriteOnly
     ) {
         try {
