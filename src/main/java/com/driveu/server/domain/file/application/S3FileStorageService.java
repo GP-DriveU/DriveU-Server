@@ -38,17 +38,18 @@ public class S3FileStorageService {
     @Transactional
     public URL generateDownloadUrl(Long resourceId) {
         Resource resource = resourceService.getResourceById(resourceId);
-        String key = null;
+        String key;
+        String filename;
 
         if (resource instanceof File file) {
             key = file.getS3Path();
-        } else if (resource instanceof Note note) {
+            filename = file.getTitle();
+        } else if (resource instanceof Note) {
             throw new IllegalArgumentException("note 는 다운로드 미구현");
         } else {
             throw new IllegalArgumentException("link 는 다운로드 할 수 없습니다.");
         }
 
-        String filename = file.getTitle();
         String encodedFilename = URLEncoder.encode(filename, StandardCharsets.UTF_8).replace("+", "%20");
         String asciiFallback = "file";
         String contentDisposition =
