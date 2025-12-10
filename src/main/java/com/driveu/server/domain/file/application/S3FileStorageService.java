@@ -7,6 +7,11 @@ import com.driveu.server.domain.resource.application.ResourceService;
 import com.driveu.server.domain.resource.domain.File;
 import com.driveu.server.domain.resource.domain.Note;
 import com.driveu.server.domain.resource.domain.Resource;
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,12 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
-
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 
 @Slf4j
 @Service
@@ -43,25 +42,25 @@ public class S3FileStorageService {
 
         if (resource instanceof File file) {
             key = file.getS3Path();
-        }
-        else if (resource instanceof Note note){
+        } else if (resource instanceof Note note) {
             throw new IllegalArgumentException("note 는 다운로드 미구현");
-        }
-        else{
+        } else {
             throw new IllegalArgumentException("link 는 다운로드 할 수 없습니다.");
         }
 
         // S3 객체 키에서 파일명만 뽑아내기
-        String filename = key.substring(key.lastIndexOf('/') + 1);
+        String filename = file.getTitle();
         String encodedFilename = URLEncoder.encode(filename, StandardCharsets.UTF_8).replace("+", "%20");
+        String asciiFallback = "file";
+        String contentDisposition =
+                "attachment; filename=\"" + asciiFallback + "\"; filename*=UTF-8''" + encodedFilename;
 
         Duration duration = Duration.ofMinutes(5);
 
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
-                // 여기서 Content-Disposition 헤더를 attachment 로 지정
-                .responseContentDisposition("attachment; filename*=UTF-8''" + encodedFilename)
+                .responseContentDisposition(contentDisposition)
                 .build();
 
         GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
@@ -92,7 +91,7 @@ public class S3FileStorageService {
     }
 
     @Async("asyncExecutor")
-    public void deleteFile(String key){
+    public void deleteFile(String key) {
         try {
             amazonS3Client.deleteObject(bucketName, key);
             log.info("[S3Service] S3 파일 삭제 성공: {}", key);
