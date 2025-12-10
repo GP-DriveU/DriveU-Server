@@ -48,7 +48,6 @@ public class S3FileStorageService {
             throw new IllegalArgumentException("link 는 다운로드 할 수 없습니다.");
         }
 
-        // S3 객체 키에서 파일명만 뽑아내기
         String filename = file.getTitle();
         String encodedFilename = URLEncoder.encode(filename, StandardCharsets.UTF_8).replace("+", "%20");
         String asciiFallback = "file";
