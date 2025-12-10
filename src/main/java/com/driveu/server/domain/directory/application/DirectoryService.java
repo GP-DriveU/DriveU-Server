@@ -4,21 +4,36 @@ import com.driveu.server.domain.directory.dao.DirectoryHierarchyRepository;
 import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.directory.domain.DirectoryHierarchy;
-import com.driveu.server.domain.directory.dto.request.*;
-import com.driveu.server.domain.directory.dto.response.*;
+import com.driveu.server.domain.directory.dto.request.DirectoryCreateRequest;
+import com.driveu.server.domain.directory.dto.request.DirectoryMoveParentRequest;
+import com.driveu.server.domain.directory.dto.request.DirectoryOrderPair;
+import com.driveu.server.domain.directory.dto.request.DirectoryOrderUpdateRequest;
+import com.driveu.server.domain.directory.dto.request.DirectoryRenameRequest;
+import com.driveu.server.domain.directory.dto.response.DirectoryCreateResponse;
+import com.driveu.server.domain.directory.dto.response.DirectoryMoveParentResponse;
+import com.driveu.server.domain.directory.dto.response.DirectoryOrderResult;
+import com.driveu.server.domain.directory.dto.response.DirectoryOrderUpdateResponse;
+import com.driveu.server.domain.directory.dto.response.DirectoryRenameResponse;
+import com.driveu.server.domain.directory.dto.response.DirectoryTreeResponse;
 import com.driveu.server.domain.resource.dao.ResourceDirectoryRepository;
 import com.driveu.server.domain.resource.domain.Resource;
 import com.driveu.server.domain.resource.domain.ResourceDirectory;
 import com.driveu.server.domain.semester.application.UserSemesterQueryService;
 import com.driveu.server.domain.semester.domain.UserSemester;
 import jakarta.persistence.EntityNotFoundException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -73,7 +88,8 @@ public class DirectoryService {
 
     @Transactional
     public List<DirectoryTreeResponse> getDirectoryTree(Long userSemesterId) {
-        List<Object[]> result = directoryHierarchyRepository.findAllHierarchiesWithDescendantsByUserSemesterId(userSemesterId);
+        List<Object[]> result = directoryHierarchyRepository.findAllHierarchiesWithDescendantsByUserSemesterId(
+                userSemesterId);
 
         // 모든 DirectoryResponse 객체를 저장
         Map<Long, DirectoryTreeResponse> directoryMap = new HashMap<>();
@@ -145,7 +161,8 @@ public class DirectoryService {
         return DirectoryCreateResponse.from(newDirectory);
     }
 
-    private DirectoryCreateResponse createDescendentDirectory(UserSemester userSemester, DirectoryCreateRequest request) {
+    private DirectoryCreateResponse createDescendentDirectory(UserSemester userSemester,
+                                                              DirectoryCreateRequest request) {
         // 부모 디렉토리 존재 확인
         Directory parent = getDirectoryById(request.getParentDirectoryId());
 
@@ -194,8 +211,11 @@ public class DirectoryService {
         // 1. 삭제 기준 시간을 트랜잭션 시작 시 한 번만 생성
         LocalDateTime deletionTime = LocalDateTime.now();
 
-        System.out.println("start delete");
         Directory directory = getDirectoryById(directoryId);
+
+        if (directory.isDefault()) {
+            throw new IllegalArgumentException("디폴트 디렉토리는 삭제할 수 없습니다.");
+        }
 
         // 재귀적으로 삭제
         List<Long> descendantIds = directoryHierarchyRepository.findAllDescendantIdsByAncestorId(directoryId);
@@ -303,14 +323,14 @@ public class DirectoryService {
     }
 
     @Transactional
-    public DirectoryOrderUpdateResponse updateDirectoryOrder(DirectoryOrderUpdateRequest request){
+    public DirectoryOrderUpdateResponse updateDirectoryOrder(DirectoryOrderUpdateRequest request) {
         Long parentId = request.getParentDirectoryId();
 
         List<DirectoryOrderResult> resultList = new ArrayList<>();
 
         //Todo: update directory id 들이 parentId 의 자식인지(depth=1) 검증
 
-        for (DirectoryOrderPair update: request.getUpdates()){
+        for (DirectoryOrderPair update : request.getUpdates()) {
             Directory directory = getDirectoryById(update.getDirectoryId());
 
             directory.setOrder(update.getOrder());
