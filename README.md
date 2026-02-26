@@ -122,8 +122,8 @@ src/main/java/com/driveu/server/
 - 사용자별 저장 용량 추적 및 제한 (기본 5GB)
 
 ### 🤖 AI 기능 (OpenAI 연동)
-- **노트 요약 (v2)**: OpenAI Responses API 직접 호출 (WebFlux 비동기 처리)
-- **문제 생성 (v2)**: OpenAI Assistants API (File Search) 활용
+- **노트 요약**: OpenAI Responses API 직접 호출 (WebFlux 비동기 처리)
+- **문제 생성**: OpenAI Assistants API (File Search) 활용
   1. 파일 업로드 → Thread 생성 → Run 생성 및 상태 폴링 → 메시지 추출 → 임시 파일 삭제
 - **PromptFilter**: 시스템 지침 우회 시도 문자열 사전 차단
 
