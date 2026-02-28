@@ -11,7 +11,13 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Table(name = "directory")
+@Table(
+        name = "directory",
+        indexes = {
+                @Index(name = "idx_directory_user_semester_id_is_deleted", columnList = "user_semester_id, is_deleted"),
+                @Index(name = "idx_directory_is_deleted_deleted_at",        columnList = "is_deleted, deleted_at")
+        }
+)
 @Builder
 public class Directory extends BaseEntity {
 

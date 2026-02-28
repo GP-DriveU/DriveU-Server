@@ -17,7 +17,14 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Inheritance(strategy = InheritanceType.JOINED)
-@Table(name = "resource")
+@Table(
+        name = "resource",
+        indexes = {
+                @Index(name = "idx_resource_is_deleted_updated_at",          columnList = "is_deleted, updated_at"),
+                @Index(name = "idx_resource_is_deleted_favorite_updated_at", columnList = "is_deleted, is_favorite, updated_at"),
+                @Index(name = "idx_resource_is_deleted_deleted_at",          columnList = "is_deleted, deleted_at")
+        }
+)
 public abstract class Resource extends BaseEntity {
 
     @Column(name = "title")
