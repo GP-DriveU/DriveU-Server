@@ -11,7 +11,13 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-@Table(name = "user_semester")
+@Table(
+        name = "user_semester",
+        indexes = {
+                @Index(name = "idx_user_semester_user_id_is_deleted",            columnList = "user_id, is_deleted"),
+                @Index(name = "idx_user_semester_user_id_is_current_is_deleted", columnList = "user_id, is_current, is_deleted")
+        }
+)
 public class UserSemester extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -9,7 +9,13 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 @AllArgsConstructor
-@Table(name = "directory_hierarchy")
+@Table(
+        name = "directory_hierarchy",
+        indexes = {
+                @Index(name = "idx_dh_ancestor_depth",   columnList = "ancestor_id, depth"),
+                @Index(name = "idx_dh_descendant_depth", columnList = "descendant_id, depth")
+        }
+)
 public class DirectoryHierarchy extends BaseEntity {
 
     @Column(name = "ancestor_id", nullable = false)
