@@ -25,8 +25,8 @@ public class JwtGenerator {
         this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 
-    // user email 로 토큰을 생성
-    public JwtToken generateToken(String userEmail) {
+    // user email, userId 로 토큰을 생성
+    public JwtToken generateToken(String userEmail, Long userId) {
         long now = (new Date()).getTime();
 
         // Access Token 생성
@@ -35,6 +35,7 @@ public class JwtGenerator {
         String accessToken = Jwts.builder()
                 .setSubject(userEmail)
                 .claim("auth", "ROLE_USER")
+                .claim("userId", userId)
                 .setExpiration(accessTokenExpiresIn)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();

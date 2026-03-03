@@ -10,7 +10,7 @@ import com.driveu.server.domain.question.dto.response.QuestionListResponse;
 import com.driveu.server.domain.question.dto.response.QuestionResponse;
 import com.driveu.server.domain.question.dto.response.QuestionSubmissionListResponse;
 import com.driveu.server.domain.question.dto.response.QuestionTitleUpdateResponse;
-import com.driveu.server.global.config.security.auth.IsOwner;
+import org.springframework.security.access.prepost.PreAuthorize;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -50,7 +50,7 @@ public class QuestionApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "directory", idParamName = "directoryId")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.directory.domain.Directory), #directoryId)")
     public ResponseEntity<?> createQuestion(
             @PathVariable Long directoryId,
             @RequestBody List<QuestionCreateRequest> requestList
@@ -85,7 +85,7 @@ public class QuestionApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "directory", idParamName = "directoryId")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.directory.domain.Directory), #directoryId)")
     public ResponseEntity<?> createQuestionV2(
             @PathVariable Long directoryId,
             @RequestBody List<QuestionCreateRequest> requestList
@@ -120,7 +120,7 @@ public class QuestionApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "question", idParamName = "questionId")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.question.domain.Question), #questionId)")
     public ResponseEntity<?> getQuestionById(
             @PathVariable Long questionId
     ) {
@@ -154,7 +154,7 @@ public class QuestionApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "userSemester", idParamName = "userSemesterId")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.semester.domain.UserSemester), #userSemesterId)")
     public ResponseEntity<?> getQuestionsByUserSemester(
             @PathVariable Long userSemesterId
     ) {
@@ -185,7 +185,7 @@ public class QuestionApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "question", idParamName = "questionId")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.question.domain.Question), #questionId)")
     public ResponseEntity<?> updateQuestionTitle(
             @PathVariable Long questionId,
             @RequestBody QuestionTitleUpdateRequest request
@@ -217,7 +217,7 @@ public class QuestionApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "question", idParamName = "questionId")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.question.domain.Question), #questionId)")
     public ResponseEntity<?> submitQuestion(
             @PathVariable Long questionId,
             @RequestBody QuestionSubmissionListRequest request

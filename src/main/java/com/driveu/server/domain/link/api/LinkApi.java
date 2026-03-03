@@ -2,7 +2,7 @@ package com.driveu.server.domain.link.api;
 
 import com.driveu.server.domain.link.application.LinkService;
 import com.driveu.server.domain.resource.dto.request.LinkSaveRequest;
-import com.driveu.server.global.config.security.auth.IsOwner;
+import org.springframework.security.access.prepost.PreAuthorize;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -42,7 +42,7 @@ public class LinkApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "directory", idParamName = "directoryId")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.directory.domain.Directory), #directoryId)")
     public ResponseEntity<?> uploadLink(
             @PathVariable Long directoryId,
             @RequestBody LinkSaveRequest request
@@ -77,7 +77,7 @@ public class LinkApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "link", idParamName = "linkId")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.resource.domain.Link), #linkId)")
     public ResponseEntity<?> getLinkUrl(
             @PathVariable Long linkId
     ) {

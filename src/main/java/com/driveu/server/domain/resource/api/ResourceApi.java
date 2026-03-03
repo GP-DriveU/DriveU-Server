@@ -8,7 +8,7 @@ import com.driveu.server.domain.resource.dto.response.ResourceDeleteResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceFavoriteResponse;
 import com.driveu.server.domain.resource.dto.response.ResourceResponse;
 import com.driveu.server.domain.user.domain.User;
-import com.driveu.server.global.config.security.auth.IsOwner;
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.driveu.server.global.config.security.auth.LoginUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -54,7 +54,7 @@ public class ResourceApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "directory", idParamName = "directoryId")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.directory.domain.Directory), #directoryId)")
     public ResponseEntity<?> uploadFileMetadata(
             @PathVariable Long directoryId,
             @RequestBody FileSaveMetaDataRequest request,
@@ -87,7 +87,7 @@ public class ResourceApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "resource", idParamName = "resourceId")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.resource.domain.Resource), #resourceId)")
     public ResponseEntity<?> getDownloadUrl(
             @PathVariable Long resourceId
     ) {
@@ -118,7 +118,7 @@ public class ResourceApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "directory", idParamName = "directoryId")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.directory.domain.Directory), #directoryId)")
     public ResponseEntity<?> getResourcesByDirectoryID(
             @PathVariable Long directoryId,
             @RequestParam(required = false, defaultValue = "updatedAt,desc") String sort,
@@ -149,7 +149,7 @@ public class ResourceApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "resource", idParamName = "resourceId")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.resource.domain.Resource), #resourceId)")
     public ResponseEntity<?> toggleFavorite(
             @PathVariable("resourceId") Long resourceId
     ) {
@@ -178,7 +178,7 @@ public class ResourceApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "resource", idParamName = "resourceId")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.resource.domain.Resource), #resourceId)")
     public ResponseEntity<?> deleteResource(@PathVariable("resourceId") Long resourceId) {
         try {
             ResourceDeleteResponse response = resourceService.deleteResource(resourceId);

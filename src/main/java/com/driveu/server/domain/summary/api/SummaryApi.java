@@ -2,7 +2,7 @@ package com.driveu.server.domain.summary.api;
 
 import com.driveu.server.domain.summary.applicaion.SummaryService;
 import com.driveu.server.domain.summary.dto.response.SummaryResponse;
-import com.driveu.server.global.config.security.auth.IsOwner;
+import org.springframework.security.access.prepost.PreAuthorize;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -38,7 +38,7 @@ public class SummaryApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "note", idParamName = "noteId")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.resource.domain.Note), #noteId)")
     public ResponseEntity<?> createSummary(
             @PathVariable Long noteId
     ) {
@@ -70,7 +70,7 @@ public class SummaryApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "note", idParamName = "noteId")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.resource.domain.Note), #noteId)")
     public ResponseEntity<?> getSummaryByNoteId(
             @PathVariable Long noteId
     ) {
@@ -101,7 +101,7 @@ public class SummaryApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "note", idParamName = "noteId")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.resource.domain.Note), #noteId)")
     public ResponseEntity<?> createSummaryV2(
             @PathVariable Long noteId
     ) {

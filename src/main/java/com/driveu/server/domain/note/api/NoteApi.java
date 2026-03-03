@@ -9,7 +9,7 @@ import com.driveu.server.domain.note.dto.response.NoteCreateResponse;
 import com.driveu.server.domain.note.dto.response.NoteResponse;
 import com.driveu.server.domain.note.dto.response.NoteUpdateTagResponse;
 import com.driveu.server.domain.note.dto.response.NoteUpdateTitleResponse;
-import com.driveu.server.global.config.security.auth.IsOwner;
+import org.springframework.security.access.prepost.PreAuthorize;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -42,7 +42,7 @@ public class NoteApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "directory", idParamName = "directoryId")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.directory.domain.Directory), #directoryId)")
     public ResponseEntity<?> createNote(
             @PathVariable Long directoryId,
             @RequestBody NoteCreateRequest request
@@ -74,7 +74,7 @@ public class NoteApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "note", idParamName = "noteId")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.resource.domain.Note), #noteId)")
     public ResponseEntity<?> getNoteById(
             @PathVariable Long noteId
     ){
@@ -105,7 +105,7 @@ public class NoteApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "note", idParamName = "noteId")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.resource.domain.Note), #noteId)")
     public ResponseEntity<?> updateNoteTitle(
             @PathVariable Long noteId,
             @RequestBody NoteUpdateTitleRequest request
@@ -137,7 +137,7 @@ public class NoteApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "note", idParamName = "noteId")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.resource.domain.Note), #noteId)")
     public ResponseEntity<?> updateNoteContent(
             @PathVariable Long noteId,
             @RequestBody NoteUpdateContentRequest request
@@ -169,7 +169,7 @@ public class NoteApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "note", idParamName = "noteId")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.resource.domain.Note), #noteId)")
     public ResponseEntity<?> updateNoteTag(
             @PathVariable Long noteId,
             @RequestBody NoteUpdateTagRequest request

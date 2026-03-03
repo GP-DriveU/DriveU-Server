@@ -10,7 +10,7 @@ import com.driveu.server.domain.directory.dto.response.DirectoryMoveParentRespon
 import com.driveu.server.domain.directory.dto.response.DirectoryOrderUpdateResponse;
 import com.driveu.server.domain.directory.dto.response.DirectoryRenameResponse;
 import com.driveu.server.domain.directory.dto.response.DirectoryTreeResponse;
-import com.driveu.server.global.config.security.auth.IsOwner;
+import org.springframework.security.access.prepost.PreAuthorize;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -51,7 +51,7 @@ public class DirectoryApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "userSemester", idParamName = "userSemesterId")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.semester.domain.UserSemester), #userSemesterId)")
     public ResponseEntity<?> getDirectories(
             @PathVariable Long userSemesterId
     ) {
@@ -82,7 +82,7 @@ public class DirectoryApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "userSemester", idParamName = "userSemesterId")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.semester.domain.UserSemester), #userSemesterId)")
     public ResponseEntity<?> createDirectory(
             @PathVariable Long userSemesterId,
             @RequestBody DirectoryCreateRequest request
@@ -111,7 +111,7 @@ public class DirectoryApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @IsOwner(resourceType = "directory", idParamName = "id")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.directory.domain.Directory), #id)")
     public ResponseEntity<?> renameDirectory(
             @PathVariable Long id,
             @RequestBody DirectoryRenameRequest request
@@ -140,7 +140,7 @@ public class DirectoryApi {
                     )),
             @ApiResponse(responseCode = "403", description = "삭제 권한이 없음")
     })
-    @IsOwner(resourceType = "directory", idParamName = "id")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.directory.domain.Directory), #id)")
     public ResponseEntity<?> deleteDirectory(
             @PathVariable Long id
     ) {
@@ -171,7 +171,7 @@ public class DirectoryApi {
                     )),
             @ApiResponse(responseCode = "403", description = "권한 없음")
     })
-    @IsOwner(resourceType = "directory", idParamName = "id")
+    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.directory.domain.Directory), #id)")
     public ResponseEntity<?> moveDirectoryParent(
             @PathVariable Long id,
             @RequestBody DirectoryMoveParentRequest request

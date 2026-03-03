@@ -55,7 +55,7 @@ public class OauthTokenService {
                 ));
 
         // JWT Token 생성
-        JwtToken jwtToken = jwtGenerator.generateToken(user.getEmail());
+        JwtToken jwtToken = jwtGenerator.generateToken(user.getEmail(), user.getId());
 
         // 현재 학기 조회 or 현재 날짜 기준 Semester 자동 생성
         UserSemester userSemester = semesterService.getCurrentUserSemester(user)

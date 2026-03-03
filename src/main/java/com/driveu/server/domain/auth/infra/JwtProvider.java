@@ -9,8 +9,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
+import com.driveu.server.global.config.security.auth.UserPrincipal;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -42,9 +41,11 @@ public class JwtProvider {
                 .map(SimpleGrantedAuthority::new)
                 .toList();
 
-        // UserDetails 객체를 만들어서 Authentication return
-        // UserDetails: interface, User: UserDetails를 구현한 class
-        UserDetails principal = new User(claims.getSubject(), "", authorities);
+        if (claims.get("userId") == null) {
+            throw new RuntimeException("userId 정보가 없는 토큰입니다. 재로그인이 필요합니다.");
+        }
+        Long userId = ((Number) claims.get("userId")).longValue();
+        UserPrincipal principal = new UserPrincipal(userId, claims.getSubject(), authorities);
         return new UsernamePasswordAuthenticationToken(principal, "", authorities);
     }
 
