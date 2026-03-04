@@ -42,7 +42,7 @@ public class LinkApi {
                     )),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @PreAuthorize("@guard.owns(principal.id, T(com.driveu.server.domain.directory.domain.Directory), #directoryId)")
+    @PreAuthorize("@guard.ownsAll(principal.id, T(com.driveu.server.domain.directory.domain.Directory), #directoryId, T(com.driveu.server.domain.directory.domain.Directory), #request.tagId)")
     public ResponseEntity<?> uploadLink(
             @PathVariable Long directoryId,
             @RequestBody LinkSaveRequest request

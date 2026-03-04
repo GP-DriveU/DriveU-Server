@@ -32,6 +32,7 @@ public class ResourceAccessGuard {
         for (int i = 0; i < typesAndIds.length; i += 2) {
             Class<?> type = (Class<?>) typesAndIds[i];
             Long resourceId = (Long) typesAndIds[i + 1];
+            if (resourceId == null) continue; // nullable 필드는 검증 생략
             if (!registry.getVerifier(type).isOwner(resourceId, userId)) {
                 return false;
             }
