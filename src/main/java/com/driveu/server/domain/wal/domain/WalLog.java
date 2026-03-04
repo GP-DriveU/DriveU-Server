@@ -32,10 +32,6 @@ public class WalLog {
     @Column(nullable = false)
     private OperationType operationType;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TargetType targetType;
-
     @Column(nullable = false)
     private Long targetId;
 

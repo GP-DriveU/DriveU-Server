@@ -7,6 +7,11 @@ import com.driveu.server.domain.resource.application.ResourceService;
 import com.driveu.server.domain.resource.domain.File;
 import com.driveu.server.domain.resource.domain.Note;
 import com.driveu.server.domain.resource.domain.Resource;
+import com.driveu.server.domain.wal.application.WalLogWriter;
+import com.driveu.server.domain.wal.domain.OperationType;
+import com.driveu.server.domain.wal.domain.WalLog;
+import com.driveu.server.domain.wal.dto.WalLogPayload;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -31,6 +36,8 @@ public class S3FileStorageService {
     private final S3Presigner s3Presigner;
     private final ResourceService resourceService;
     private final AmazonS3Client amazonS3Client;
+    private final WalLogWriter walLogWriter;
+    private final ObjectMapper objectMapper;
 
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucketName;
@@ -92,11 +99,28 @@ public class S3FileStorageService {
 
     @Async("asyncExecutor")
     public void deleteFile(String key) {
+        // @Async라 AOP 기반 @WalLogged를 사용할 수 없어 직접 WAL 기록
+        String payload;
+        try {
+            payload = objectMapper.writeValueAsString(
+                    WalLogPayload.builder()
+                            .s3Key(key)
+                            .bucketName(bucketName)
+                            .build()
+            );
+        } catch (Exception e) {
+            payload = "{}";
+        }
+
+        WalLog walLog = walLogWriter.pending(OperationType.DELETE, -1L, payload);
+
         try {
             amazonS3Client.deleteObject(bucketName, key);
             log.info("[S3Service] S3 파일 삭제 성공: {}", key);
+            walLogWriter.commit(walLog.getId());
         } catch (Exception e) {
             log.error("[S3Service] S3 파일 삭제 실패: {}", key, e);
+            walLogWriter.fail(walLog.getId());
         }
     }
 }

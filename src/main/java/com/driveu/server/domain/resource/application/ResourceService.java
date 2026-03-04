@@ -24,6 +24,8 @@ import com.driveu.server.domain.resource.dto.response.ResourceResponse;
 import com.driveu.server.domain.resource.dto.response.TagResponse;
 import com.driveu.server.domain.user.dao.UserRepository;
 import com.driveu.server.domain.user.domain.User;
+import com.driveu.server.domain.wal.aop.WalLogged;
+import com.driveu.server.domain.wal.domain.OperationType;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -53,6 +55,7 @@ public class ResourceService {
     private final DirectoryHierarchyRepository directoryHierarchyRepository;
     private final UserRepository userRepository;
 
+    @WalLogged(operationType = OperationType.UPLOAD)
     @Transactional
     public FileSaveResponse saveFile(User user, Long directoryId, FileSaveMetaDataRequest request) {
         Directory directory = directoryRepository.findById(directoryId)

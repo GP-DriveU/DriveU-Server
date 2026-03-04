@@ -37,7 +37,6 @@ public class WalLogAspect {
 
         WalLog walLog = walLogWriter.pending(
                 walLogged.operationType(),
-                walLogged.targetType(),
                 targetId,
                 payload
         );

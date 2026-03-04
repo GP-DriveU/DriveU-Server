@@ -1,5 +1,5 @@
 package com.driveu.server.domain.wal.domain;
 
 public enum WalLogStatus {
-    PENDING, COMMITTED, FAILED, RECOVERED, DEAD
+    PENDING, COMMITTED, RECOVERING, FAILED, RECOVERED, DEAD
 }

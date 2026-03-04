@@ -2,7 +2,6 @@ package com.driveu.server.domain.wal.application;
 
 import com.driveu.server.domain.wal.dao.WalLogRepository;
 import com.driveu.server.domain.wal.domain.OperationType;
-import com.driveu.server.domain.wal.domain.TargetType;
 import com.driveu.server.domain.wal.domain.WalLog;
 import com.driveu.server.domain.wal.domain.WalLogStatus;
 import java.time.LocalDateTime;
@@ -23,11 +22,9 @@ public class WalLogWriter {
      * 본 작업이 실패하더라도 로그가 남는다.
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public WalLog pending(OperationType operationType, TargetType targetType,
-                          Long targetId, String payload) {
+    public WalLog pending(OperationType operationType, Long targetId, String payload) {
         WalLog walLog = WalLog.builder()
                 .operationType(operationType)
-                .targetType(targetType)
                 .targetId(targetId)
                 .payload(payload)
                 .status(WalLogStatus.PENDING)

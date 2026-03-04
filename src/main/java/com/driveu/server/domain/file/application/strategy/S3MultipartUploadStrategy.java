@@ -4,6 +4,8 @@ import com.driveu.server.domain.file.dto.request.MultipartCompleteRequest;
 import com.driveu.server.domain.file.dto.response.MultipartPartInfo;
 import com.driveu.server.domain.file.dto.response.MultipartUploadInitResponse;
 import com.driveu.server.domain.resource.domain.type.FileExtension;
+import com.driveu.server.domain.wal.aop.WalLogged;
+import com.driveu.server.domain.wal.domain.OperationType;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -66,6 +68,7 @@ public class S3MultipartUploadStrategy implements FileUploadStrategy {
     }
 
     @Override
+    @WalLogged(operationType = OperationType.UPLOAD)
     public void completeUpload(MultipartCompleteRequest request) {
         // 클라이언트에서 받은 partNumber + ETag 리스트를 CompletedPart로 변환
         List<CompletedPart> completedParts = request.getParts().stream()

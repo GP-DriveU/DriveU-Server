@@ -1,7 +1,6 @@
 package com.driveu.server.domain.wal.aop;
 
 import com.driveu.server.domain.wal.domain.OperationType;
-import com.driveu.server.domain.wal.domain.TargetType;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -13,12 +12,10 @@ public @interface WalLogged {
 
     OperationType operationType();
 
-    TargetType targetType();
-
     /**
      * targetId를 메서드 파라미터에서 추출하는 SpEL 표현식.
-     * 예: "#directoryId", "#noteId"
-     * 비어 있으면 CREATE 작업으로 간주해 -1L을 임시 ID로 사용.
+     * 예: "#fileId"
+     * 비어 있으면 -1L을 임시 ID로 사용 (CREATE 시 DB ID 미확정).
      */
     String targetIdExpression() default "";
 }
