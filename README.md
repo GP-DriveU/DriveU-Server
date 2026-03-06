@@ -45,6 +45,30 @@ Frontend  ──▶  CloudFront  ──▶  S3 (빌드 결과물)
 <img width="1210" height="1075" alt="image" src="https://github.com/user-attachments/assets/a46b6d15-067c-46c9-95d6-e398c8b872fa" />
 
 ---
+## 🗄 DB Index Strategy
+
+> Repository 쿼리 패턴을 분석하여 실제 조회에 사용되는 컬럼 조합에 복합 인덱스를 적용, 풀 테이블 스캔을 제거했습니다.
+
+5개 엔티티에 총 10개의 인덱스를 추가했습니다.
+
+| 테이블 | 인덱스 컬럼 | 사용 쿼리 |
+|---|---|---|
+| `directory_hierarchy` | `(ancestor_id, depth)` | 하위 디렉토리 탐색 |
+| `directory_hierarchy` | `(descendant_id, depth)` | 상위 디렉토리 탐색 |
+| `resource` | `(is_deleted, updated_at)` | 최근 리소스 목록 조회 |
+| `resource` | `(is_deleted, is_favorite, updated_at)` | 즐겨찾기 목록 조회 |
+| `resource` | `(is_deleted, deleted_at)` | 휴지통 자동 삭제 스케줄러 |
+| `directory` | `(user_semester_id, is_deleted)` | 디렉토리 트리 조회 |
+| `directory` | `(is_deleted, deleted_at)` | 휴지통 자동 삭제 스케줄러 |
+| `user_semester` | `(user_id, is_deleted)` | 학기 목록 조회 |
+| `user_semester` | `(user_id, is_current, is_deleted)` | 현재 학기 조회 |
+| `user` | `email` (UNIQUE) | 로그인 시 이메일 조회 |
+
+> **Note:** `directory_hierarchy`의 `ancestor_id`, `descendant_id`는 FK가 아닌 `@Column`으로 선언되어 인덱스가 전혀 없었습니다. 디렉토리 트리를 그리는 모든 요청에서 풀 스캔이 발생하던 문제를 해결했습니다.
+
+
+---
+
 ## 🛠 Tech Stack
 
 ### Backend
@@ -113,6 +137,7 @@ src/main/java/com/driveu/server/
 
 ### 🗂 디렉토리 구조 관리
 - **Closure Table** 패턴으로 무한 깊이의 계층 구조 지원
+- Index 기반 최적화: FK로 선언되지 않은 컬럼에 인덱스를 직접 생성하여, 트리 탐색 시 발생하던 성능 병목 해결
 - 디렉토리 생성, 이름 변경, 부모 이동, 정렬 순서 변경
 - 학기 생성 시 기본 디렉토리 자동 생성 (`학업`, `과목`, `대외활동` 등)
 
