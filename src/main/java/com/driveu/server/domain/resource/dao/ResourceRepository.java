@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface ResourceRepository extends JpaRepository<Resource, Long> {
 
@@ -65,5 +66,17 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
     List<Resource> findChildrenInTrash(@Param("directoryId") Long directoryId, @Param("deletionTime") LocalDateTime deletionTime, Sort sort);
 
     List<Resource> findAllByIsDeletedTrueAndDeletedAtBefore(LocalDateTime deletedAtBefore);
+
+    @Query("""
+        SELECT r FROM Resource r
+        WHERE r.isDeleted = true
+        AND r.deletedAt < :baseTime
+        AND r.id > :lastId
+        ORDER BY r.id ASC
+        LIMIT 1
+        """)
+    Optional<Resource> findFirstExpiredResource(
+        @Param("baseTime") LocalDateTime baseTime,
+        @Param("lastId") long lastId);
 
 }
