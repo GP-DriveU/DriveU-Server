@@ -11,7 +11,6 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 public interface ResourceRepository extends JpaRepository<Resource, Long> {
 
@@ -73,10 +72,11 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
         AND r.deletedAt < :baseTime
         AND r.id > :lastId
         ORDER BY r.id ASC
-        LIMIT 1
+        LIMIT :limit
         """)
-    Optional<Resource> findFirstExpiredResource(
+    List<Resource> findExpiredResources(
         @Param("baseTime") LocalDateTime baseTime,
-        @Param("lastId") long lastId);
+        @Param("lastId") long lastId,
+        @Param("limit") int limit);
 
 }

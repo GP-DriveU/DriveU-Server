@@ -84,9 +84,10 @@ public interface DirectoryRepository extends JpaRepository<Directory, Long> {
         AND d.deletedAt < :baseTime
         AND d.id > :lastId
         ORDER BY d.id ASC
-        LIMIT 1
+        LIMIT :limit
         """)
-    Optional<Directory> findFirstExpiredDirectory(
+    List<Directory> findExpiredDirectories(
         @Param("baseTime") LocalDateTime baseTime,
-        @Param("lastId") long lastId);
+        @Param("lastId") long lastId,
+        @Param("limit") int limit);
 }

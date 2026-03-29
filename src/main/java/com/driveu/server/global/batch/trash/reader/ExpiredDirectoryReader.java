@@ -3,6 +3,8 @@ package com.driveu.server.global.batch.trash.reader;
 import com.driveu.server.domain.directory.dao.DirectoryRepository;
 import com.driveu.server.domain.directory.domain.Directory;
 import java.time.LocalDateTime;
+import java.util.ArrayDeque;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.configuration.annotation.StepScope;
@@ -17,12 +19,15 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ExpiredDirectoryReader implements ItemStreamReader<Directory> {
 
+    private static final int BUFFER_SIZE = 500;
+
     private final DirectoryRepository directoryRepository;
 
     @Value("#{jobParameters['baseTime']}")
     private LocalDateTime baseTime;
 
     private long lastProcessedId = 0;
+    private final ArrayDeque<Directory> buffer = new ArrayDeque<>();
 
     @Override
     public void open(ExecutionContext ctx) {
@@ -39,15 +44,20 @@ public class ExpiredDirectoryReader implements ItemStreamReader<Directory> {
 
     @Override
     public Directory read() {
-        return directoryRepository.findFirstExpiredDirectory(baseTime, lastProcessedId)
-                .map(directory -> {
-                    lastProcessedId = directory.getId();
-                    return directory;
-                })
-                .orElse(null);
+        if (buffer.isEmpty()) {
+            List<Directory> batch = directoryRepository.findExpiredDirectories(baseTime, lastProcessedId, BUFFER_SIZE);
+            buffer.addAll(batch);
+        }
+        if (buffer.isEmpty()) {
+            return null;
+        }
+        Directory directory = buffer.poll();
+        lastProcessedId = directory.getId();
+        return directory;
     }
 
     @Override
     public void close() {
+        buffer.clear();
     }
 }
