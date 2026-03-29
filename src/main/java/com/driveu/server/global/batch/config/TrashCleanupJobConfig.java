@@ -62,6 +62,7 @@ public class TrashCleanupJobConfig {
                 .reader(expiredResourceReader)
                 .writer(resourceCleanupWriter)
                 .faultTolerant()
+
                 // Retry
                 .retry(AmazonS3Exception.class) // 재시도 대상 예외
                 .retry(TransientDataAccessException.class) // DB 커넥션 일시적으로 못 얻음
