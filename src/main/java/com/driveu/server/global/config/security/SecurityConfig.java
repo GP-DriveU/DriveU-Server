@@ -62,7 +62,8 @@ public class SecurityConfig {
                         registry
                                 .requestMatchers("/api/auth/google", "/api/auth/code/google").permitAll() // 로그인 api 허용
                                 .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**",
-                                        "/swagger-resources/**", "/webjars/**").permitAll() // 스웨거 허용
+                                        "/swagger-resources/**", "/webjars/**", "/internal/batch/trash-cleanup")
+                                .permitAll() // 스웨거 허용
                                 .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtProvider, tokenExtractor),
