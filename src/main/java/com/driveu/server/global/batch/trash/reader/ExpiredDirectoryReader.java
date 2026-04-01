@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ExpiredDirectoryReader implements ItemStreamReader<Directory> {
 
-    private static final int BUFFER_SIZE = 500;
+    private static final int BUFFER_SIZE = 100;
 
     private final DirectoryRepository directoryRepository;
 
