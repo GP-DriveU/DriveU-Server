@@ -1,4 +1,4 @@
-package com.driveu.server.domain.summary.applicaion;
+package com.driveu.server.domain.summary.application;
 
 import com.amazonaws.services.kms.model.NotFoundException;
 import com.driveu.server.domain.ai.application.AiFacade;

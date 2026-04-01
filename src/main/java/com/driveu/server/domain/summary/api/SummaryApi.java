@@ -1,6 +1,6 @@
 package com.driveu.server.domain.summary.api;
 
-import com.driveu.server.domain.summary.applicaion.SummaryService;
+import com.driveu.server.domain.summary.application.SummaryService;
 import com.driveu.server.domain.summary.dto.response.SummaryResponse;
 import com.driveu.server.global.config.security.auth.IsOwner;
 import io.swagger.v3.oas.annotations.Operation;
