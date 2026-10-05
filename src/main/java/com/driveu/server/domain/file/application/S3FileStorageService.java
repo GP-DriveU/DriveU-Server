@@ -16,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
@@ -90,13 +89,8 @@ public class S3FileStorageService {
         }
     }
 
-    @Async("asyncExecutor")
     public void deleteFile(String key) {
-        try {
-            amazonS3Client.deleteObject(bucketName, key);
-            log.info("[S3Service] S3 파일 삭제 성공: {}", key);
-        } catch (Exception e) {
-            log.error("[S3Service] S3 파일 삭제 실패: {}", key, e);
-        }
+        amazonS3Client.deleteObject(bucketName, key);
+        log.info("[S3Service] S3 파일 삭제 성공: {}", key);
     }
 }

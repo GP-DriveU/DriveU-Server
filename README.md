@@ -259,6 +259,142 @@ docker run -p 8080:8080 \
 
 ---
 
+## ♻️ 배치 시스템 - 휴지통 리소스 자동 정리
+
+### 개요
+
+`trashCleanupJob`은 휴지통에 30일 이상 보관된 리소스와 디렉토리를 영구 삭제하는 Spring Batch Job입니다.
+두 개의 Step이 순서대로 실행되며, 각 Step은 `ItemStreamReader` 기반 커서 버퍼 방식으로 대용량 데이터를 처리합니다.
+
+| Job | Step | 처리 대상 | Chunk Size |
+|---|---|---|---|
+| `trashCleanupJob` | `resourceCleanupStep` | 만료된 `Resource` (File / Note / Link) | 100 |
+| `trashCleanupJob` | `directoryCleanupStep` | 만료된 `Directory` | 100 |
+
+---
+
+### 처리 흐름
+
+**Step 1 — resourceCleanupStep**
+
+```
+ExpiredResourceReader
+  └─ DB에서 baseTime 이전에 삭제된 Resource를 100건씩 커서 조회
+       │
+       ▼ (no Processor)
+ResourceCleanupWriter
+  ├─ 1. QuestionResource 연결 삭제
+  ├─ 2. Summary 삭제 (Note 타입인 경우)
+  ├─ 3. ResourceDirectory 삭제
+  ├─ 4. S3 파일 삭제 (CircuitBreaker: s3Delete)
+  ├─ 5. Resource DB 영구 삭제
+  └─ 6. 사용자 usedStorage 차감 (벌크 UPDATE)
+```
+
+**Step 2 — directoryCleanupStep**
+
+```
+ExpiredDirectoryReader
+  └─ DB에서 baseTime 이전에 삭제된 Directory를 100건씩 커서 조회
+       │
+       ▼ (no Processor)
+DirectoryCleanupWriter
+  ├─ 1. DirectoryHierarchy 삭제 (Closure Table 연결 행 제거)
+  ├─ 2. ResourceDirectory 삭제
+  └─ 3. Directory DB 영구 삭제
+```
+
+---
+
+### 내결함성 전략
+
+#### Retry (`resourceCleanupStep`)
+
+| 항목 | 값 |
+|---|---|
+| 재시도 대상 예외 | `AmazonS3Exception`, `TransientDataAccessException` |
+| 최대 재시도 횟수 | 3회 (`retryLimit = 3`) |
+| 백오프 전략 | Exponential Backoff — 초기 1초, 배수 2.0x, 최대 10초 |
+| 리스너 | `S3RetryListener` — 재시도 횟수·예외 로깅 |
+
+```java
+.retryLimit(3)
+.backOffPolicy(new ExponentialBackOffPolicy() {{
+    setInitialInterval(1000);  // 1초
+    setMultiplier(2.0);        // 2배씩
+    setMaxInterval(10000);     // 최대 10초
+}})
+```
+
+#### Skip
+
+| Step | Skip 대상 예외 | skipLimit | 리스너 |
+|---|---|---|---|
+| `resourceCleanupStep` | `AmazonS3Exception` (retry 소진 후), `CallNotPermittedException` (Circuit OPEN 즉시) | 50 | `ResourceSkipListener` |
+| `directoryCleanupStep` | [TODO: 명시적 skip 예외 미설정] | 20 | `DirectorySkipListener` |
+
+Skip 발생 시 `SkipLog` 엔티티가 `skip_log` 테이블에 기록됩니다.
+
+```
+skip_log { stepName, resourceId, reason, skippedAt }
+  예) stepName = "RESOURCE_WRITE_CIRCUIT_OPEN"
+      stepName = "RESOURCE_WRITE"
+      stepName = "RESOURCE_PROCESS"
+      stepName = "DIRECTORY_WRITE"
+```
+
+#### Circuit Breaker (Resilience4j)
+
+S3 삭제 요청에 `s3Delete` Circuit Breaker가 적용됩니다.
+Circuit이 OPEN 상태일 때 `CallNotPermittedException`이 발생하며, 이는 즉시 Skip 처리됩니다.
+
+#### Restart (체크포인트)
+
+두 Reader 모두 `ItemStreamReader`를 구현하여 청크 커밋마다 `ExecutionContext`에 마지막 처리 ID를 저장합니다.
+장애 재시작 시 저장된 ID 이후부터 재개하므로 중복·누락이 없습니다.
+
+| Step | ExecutionContext 키 | 저장 값 |
+|---|---|---|
+| `resourceCleanupStep` | `resource.last.id` | 마지막으로 처리된 `Resource` ID |
+| `directoryCleanupStep` | `directory.last.id` | 마지막으로 처리된 `Directory` ID |
+
+#### Step startLimit
+
+두 Step 모두 `startLimit = 3`으로 설정되어 있어, 동일 JobInstance 내에서 Step의 무한 재시작을 방지합니다.
+
+---
+
+### 실행 조건
+
+#### 자동 실행 (스케줄러)
+
+`TrashCleanupScheduler`가 매일 자정에 Job을 실행합니다.
+
+```
+cron = "0 0 0 * * *"   →   매일 00:00:00
+baseTime = 현재 시각 - 30일  →  30일 이전에 soft delete된 항목만 대상
+```
+
+실패 시 즉시 1회 자동 재시작을 시도합니다 (`MAX_ATTEMPTS = 2`).
+Spring Batch는 동일 JobParameters로 재실행하면 실패한 Step부터 이어서 처리합니다.
+
+#### 수동 실행 (dev 프로필 전용)
+
+`BatchJobController`는 `@Profile("dev")`로 제한되어 운영 환경에 노출되지 않습니다.
+
+```bash
+# 수동 실행 (기본 30일, 변경 가능)
+POST /internal/batch/trash-cleanup?daysAgo=30
+
+# 마지막 실패 실행 조회
+GET /internal/batch/trash-cleanup/last-failed
+
+# 마지막 실패 실행 재시작
+POST /internal/batch/trash-cleanup/restart
+```
+
+---
+
 ## 👥 Contributors
 
 2025 졸업 프로젝트 팀 — DriveU

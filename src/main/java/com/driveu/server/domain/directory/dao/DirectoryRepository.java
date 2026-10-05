@@ -3,13 +3,12 @@ package com.driveu.server.domain.directory.dao;
 import com.driveu.server.domain.directory.domain.Directory;
 import com.driveu.server.domain.semester.domain.UserSemester;
 import java.time.LocalDateTime;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface DirectoryRepository extends JpaRepository<Directory, Long> {
 
@@ -78,4 +77,17 @@ public interface DirectoryRepository extends JpaRepository<Directory, Long> {
     Optional<Directory> findByIdAndIsDeletedTrue(Long id);
 
     List<Directory> findAllByIsDeletedTrueAndDeletedAtBefore(LocalDateTime deletedAtBefore);
+
+    @Query("""
+        SELECT d FROM Directory d
+        WHERE d.isDeleted = true
+        AND d.deletedAt < :baseTime
+        AND d.id > :lastId
+        ORDER BY d.id ASC
+        LIMIT :limit
+        """)
+    List<Directory> findExpiredDirectories(
+        @Param("baseTime") LocalDateTime baseTime,
+        @Param("lastId") long lastId,
+        @Param("limit") int limit);
 }

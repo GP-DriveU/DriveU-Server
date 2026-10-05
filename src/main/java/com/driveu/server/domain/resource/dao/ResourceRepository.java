@@ -66,4 +66,17 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
 
     List<Resource> findAllByIsDeletedTrueAndDeletedAtBefore(LocalDateTime deletedAtBefore);
 
+    @Query("""
+        SELECT r FROM Resource r
+        WHERE r.isDeleted = true
+        AND r.deletedAt < :baseTime
+        AND r.id > :lastId
+        ORDER BY r.id ASC
+        LIMIT :limit
+        """)
+    List<Resource> findExpiredResources(
+        @Param("baseTime") LocalDateTime baseTime,
+        @Param("lastId") long lastId,
+        @Param("limit") int limit);
+
 }
